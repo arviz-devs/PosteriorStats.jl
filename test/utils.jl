@@ -145,7 +145,9 @@ using Test
                     ) == (name => observed_data[name], pred_name => pred[pred_name])
                 end
 
-                @test_throws ArgumentError PosteriorStats.observations_and_predictions(idata)
+                @test_throws ArgumentError PosteriorStats.observations_and_predictions(
+                    idata
+                )
                 @test_throws ArgumentError PosteriorStats.observations_and_predictions(
                     idata, nothing, nothing
                 )
@@ -219,7 +221,8 @@ using Test
             @test slices[i, j] == x[j, :, i]
         end
 
-        @test PosteriorStats._eachslice(x; dims=2) == PosteriorStats._eachslice(x; dims=(2,))
+        @test PosteriorStats._eachslice(x; dims=2) ==
+            PosteriorStats._eachslice(x; dims=(2,))
 
         if VERSION ≥ v"1.9-"
             for dims in ((3, 1), (2, 3), 3)
@@ -319,7 +322,9 @@ using Test
         @test_throws ArgumentError PosteriorStats.sigdigits_matching_se(
             123.456, 1; sigdigits_max=-1
         )
-        @test_throws ArgumentError PosteriorStats.sigdigits_matching_se(123.456, 1; scale=-1)
+        @test_throws ArgumentError PosteriorStats.sigdigits_matching_se(
+            123.456, 1; scale=-1
+        )
 
         # edge cases
         @test PosteriorStats.sigdigits_matching_se(0.0, 1) == 0
@@ -357,7 +362,8 @@ using Test
                 ft1 = PosteriorStats.ft_printf_sigdigits(sigdigits)
                 for i in 1:10, j in 1:5
                     v = randn()
-                    @test ft1(v, i, j) == PosteriorStats._printf_with_sigdigits(v, sigdigits)
+                    @test ft1(v, i, j) ==
+                        PosteriorStats._printf_with_sigdigits(v, sigdigits)
                     @test ft1("foo", i, j) == "foo"
                 end
             end
@@ -368,7 +374,8 @@ using Test
                 for i in 1:10, j in 1:5
                     v = randn()
                     if j ∈ [2, 3]
-                        @test ft(v, i, j) == PosteriorStats._printf_with_sigdigits(v, sigdigits)
+                        @test ft(v, i, j) ==
+                            PosteriorStats._printf_with_sigdigits(v, sigdigits)
                     else
                         @test ft(v, i, j) === v
                     end
@@ -400,7 +407,8 @@ using Test
                     v = randn()
                     if j ∈ [2, 3]
                         sigdigits = PosteriorStats.sigdigits_matching_se(v, se[i]; scale)
-                        @test ft(v, i, j) == PosteriorStats._printf_with_sigdigits(v, sigdigits)
+                        @test ft(v, i, j) ==
+                            PosteriorStats._printf_with_sigdigits(v, sigdigits)
                         @test ft("foo", i, j) == "foo"
                     else
                         @test ft(v, i, j) === v
