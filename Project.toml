@@ -1,0 +1,13 @@
+name = "PosteriorStats"
+uuid = "7f36be82-ad55-44ba-a5c0-b8b5480d7aa5"
+authors = ["Seth Axen <seth@sethaxen.com> and contributors"]
+version = "0.1.0-DEV"
+
+[compat]
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
