@@ -1,4 +1,4 @@
-module ArviZStats
+module PosteriorStats
 
 using ArviZ: ArviZ
 using DataInterpolations: DataInterpolations

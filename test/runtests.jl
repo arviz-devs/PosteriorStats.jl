@@ -2,10 +2,11 @@ using ArviZ, Random, Statistics, Test
 using ArviZ.ArviZStats
 using ArviZExampleData
 using Random
+using PosteriorStats
 
 Random.seed!(97)
 
-@testset "ArviZStats" begin
+@testset "PosteriorStats" begin
     include("helpers.jl")
     include("utils.jl")
     include("hdi.jl")
