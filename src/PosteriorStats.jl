@@ -1,6 +1,5 @@
 module PosteriorStats
 
-using ArviZ: ArviZ
 using DataInterpolations: DataInterpolations
 using DimensionalData: DimensionalData, Dimensions
 using Distributions: Distributions
@@ -38,9 +37,6 @@ export SummaryStats, summarystats
 
 # Others
 export hdi, hdi!, loo_pit, r2_score
-
-# load for docstrings
-using ArviZ: InferenceData, convert_to_dataset, ess
 
 const DEFAULT_INTERVAL_PROB = 0.94
 const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)

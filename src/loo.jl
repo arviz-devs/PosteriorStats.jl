@@ -119,7 +119,7 @@ function loo(
     log_like = _draw_chains_params_array(log_likelihood(data, var_name))
     result = loo(log_like; kwargs...)
     pointwise = Dimensions.rebuild(
-        ArviZ.convert_to_dataset(result.pointwise; default_dims=());
+        InferenceObjects.convert_to_dataset(result.pointwise; default_dims=());
         metadata=DimensionalData.NoMetadata(),
     )
     return PSISLOOResult(result.estimates, pointwise, result.psis_result)

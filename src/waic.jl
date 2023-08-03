@@ -91,7 +91,7 @@ function waic(
     log_like = _draw_chains_params_array(log_likelihood(data, var_name))
     result = waic(log_like)
     pointwise = Dimensions.rebuild(
-        ArviZ.convert_to_dataset(result.pointwise; default_dims=());
+        InferenceObjects.convert_to_dataset(result.pointwise; default_dims=());
         metadata=DimensionalData.NoMetadata(),
     )
     return WAICResult(result.estimates, pointwise)
