@@ -13,3 +13,5 @@ makedocs(;
     pages=["Home" => "index.md", "API" => "api.md"],
     strict=Documenter.except(:footnote, :missing_docs),
 )
+
+deploydocs(; repo="github.com/arviz-devs/PosteriorStats.jl.git", devbranch="main")
