@@ -43,8 +43,8 @@ Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (
   - `reff::Union{Real,AbstractArray{<:Real}}`: The relative effective sample size(s) of the
     _likelihood_ values. If an array, it must have the same data dimensions as the
     corresponding log-likelihood variable. If not provided, then this is estimated using
-    [`ess`](@ref).
-  - `kwargs`: Remaining keywords are forwarded to [`psis`](@ref).
+    `MCMCDiagnosticTools.ess`.
+  - `kwargs`: Remaining keywords are forwarded to [`PSIS.psis`].
 
 See also: [`PSISLOOResult`](@ref), [`waic`](@ref)
 
@@ -60,7 +60,7 @@ See also: [`PSISLOOResult`](@ref), [`waic`](@ref)
 Manually compute ``R_\\mathrm{eff}`` and calculate PSIS-LOO of a model:
 
 ```jldoctest
-julia> using ArviZExampleData, PosteriorStats
+julia> using ArviZExampleData, MCMCDiagnosticTools, PosteriorStats
 
 julia> idata = load_example_data("centered_eight");
 

@@ -10,5 +10,8 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true", edit_link="main", assets=String[]
     ),
-    pages=["Home" => "index.md"],
+    pages=["Home" => "index.md", "API" => "api.md"],
+    strict=Documenter.except(:footnote, :missing_docs),
 )
+
+deploydocs(; repo="github.com/arviz-devs/PosteriorStats.jl.git", devbranch="main")

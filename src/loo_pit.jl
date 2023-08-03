@@ -177,7 +177,7 @@ end
 
 Compute LOO-PIT from groups in `idata` using PSIS-LOO.
 
-See also: [`loo`](@ref), [`psis`](@ref)
+See also: [`loo`](@ref), `PSIS.psis`
 
 # Keywords
 
@@ -191,7 +191,7 @@ See also: [`loo`](@ref), [`psis`](@ref)
   - `reff::Union{Real,AbstractArray{<:Real}}`: The relative effective sample size(s) of the
     _likelihood_ values. If an array, it must have the same data dimensions as the
     corresponding log-likelihood variable. If not provided, then this is estimated using
-    [`ess`](@ref).
+    `MCMCDiagnosticTools.ess`.
   - `kwargs`: Remaining keywords are forwarded to [`loo_pit`](@ref).
 
 # Examples
