@@ -2,6 +2,7 @@ using ArviZExampleData
 using DimensionalData
 using InferenceObjects
 using IteratorInterfaceExtensions
+using MCMCDiagnosticTools
 using PosteriorStats
 using Statistics
 using Tables
