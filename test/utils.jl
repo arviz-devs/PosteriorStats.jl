@@ -1,9 +1,9 @@
-using Test
-using ArviZ
-using ArviZ.ArviZStats
 using DimensionalData
+using InferenceObjects
+using PosteriorStats
 using Random
 using StatsBase
+using Test
 
 @testset "utils" begin
     @testset "log_likelihood" begin
@@ -12,37 +12,37 @@ using StatsBase
         nparams = 3
         x = randn(ndraws, nchains, nparams)
         log_like = convert_to_dataset((; x))
-        @test ArviZStats.log_likelihood(log_like) == x
-        @test ArviZStats.log_likelihood(log_like, :x) == x
-        @test_throws Exception ArviZStats.log_likelihood(log_like, :y)
+        @test PosteriorStats.log_likelihood(log_like) == x
+        @test PosteriorStats.log_likelihood(log_like, :x) == x
+        @test_throws Exception PosteriorStats.log_likelihood(log_like, :y)
         idata = InferenceData(; log_likelihood=log_like)
-        @test ArviZStats.log_likelihood(idata) == x
-        @test ArviZStats.log_likelihood(idata, :x) == x
-        @test_throws Exception ArviZStats.log_likelihood(idata, :y)
+        @test PosteriorStats.log_likelihood(idata) == x
+        @test PosteriorStats.log_likelihood(idata, :x) == x
+        @test_throws Exception PosteriorStats.log_likelihood(idata, :y)
 
         y = randn(ndraws, nchains)
         log_like = convert_to_dataset((; x, y))
-        @test_throws Exception ArviZStats.log_likelihood(log_like)
-        @test ArviZStats.log_likelihood(log_like, :x) == x
-        @test ArviZStats.log_likelihood(log_like, :y) == y
+        @test_throws Exception PosteriorStats.log_likelihood(log_like)
+        @test PosteriorStats.log_likelihood(log_like, :x) == x
+        @test PosteriorStats.log_likelihood(log_like, :y) == y
 
         idata = InferenceData(; log_likelihood=log_like)
-        @test_throws Exception ArviZStats.log_likelihood(idata)
-        @test ArviZStats.log_likelihood(idata, :x) == x
-        @test ArviZStats.log_likelihood(idata, :y) == y
+        @test_throws Exception PosteriorStats.log_likelihood(idata)
+        @test PosteriorStats.log_likelihood(idata, :x) == x
+        @test PosteriorStats.log_likelihood(idata, :y) == y
 
         # test old InferenceData versions
         sample_stats = convert_to_dataset((; lp=randn(ndraws, nchains), log_likelihood=x))
         idata = InferenceData(; sample_stats)
-        @test ArviZStats.log_likelihood(idata) == x
+        @test PosteriorStats.log_likelihood(idata) == x
 
         sample_stats = convert_to_dataset((; lp=randn(ndraws, nchains), log_like=x))
         idata = InferenceData(; sample_stats)
-        @test_throws ArgumentError ArviZStats.log_likelihood(idata)
-        @test ArviZStats.log_likelihood(idata, :log_like) == x
+        @test_throws ArgumentError PosteriorStats.log_likelihood(idata)
+        @test PosteriorStats.log_likelihood(idata, :log_like) == x
 
         idata = InferenceData()
-        @test_throws ArgumentError ArviZStats.log_likelihood(idata)
+        @test_throws ArgumentError PosteriorStats.log_likelihood(idata)
     end
 
     @testset "observations_and_predictions" begin
@@ -63,19 +63,19 @@ using StatsBase
                 @testset for y_name_hint in (y_name, nothing),
                     y_pred_name_hint in (y_pred_name, nothing)
 
-                    obs_pred = @inferred ArviZStats.observations_and_predictions(
+                    obs_pred = @inferred PosteriorStats.observations_and_predictions(
                         idata, y_name_hint, y_pred_name_hint
                     )
                     @test obs_pred == obs_pred_exp
                 end
 
-                @test_throws Exception ArviZStats.observations_and_predictions(
+                @test_throws Exception PosteriorStats.observations_and_predictions(
                     idata, :foo, :bar
                 )
-                @test_throws Exception ArviZStats.observations_and_predictions(
+                @test_throws Exception PosteriorStats.observations_and_predictions(
                     idata, :foo, nothing
                 )
-                @test_throws Exception ArviZStats.observations_and_predictions(
+                @test_throws Exception PosteriorStats.observations_and_predictions(
                     idata, nothing, :bar
                 )
             end
@@ -101,19 +101,19 @@ using StatsBase
                     y_pred_name_hint in (y_pred_name, nothing)
 
                     y_name_hint === nothing && y_pred_name_hint !== nothing && continue
-                    obs_pred = ArviZStats.observations_and_predictions(
+                    obs_pred = PosteriorStats.observations_and_predictions(
                         idata, y_name_hint, y_pred_name_hint
                     )
                     @test obs_pred == obs_pred_exp
                 end
 
-                @test_throws Exception ArviZStats.observations_and_predictions(
+                @test_throws Exception PosteriorStats.observations_and_predictions(
                     idata, :foo, :bar
                 )
-                @test_throws Exception ArviZStats.observations_and_predictions(
+                @test_throws Exception PosteriorStats.observations_and_predictions(
                     idata, :foo, nothing
                 )
-                @test_throws Exception ArviZStats.observations_and_predictions(
+                @test_throws Exception PosteriorStats.observations_and_predictions(
                     idata, nothing, :bar
                 )
             end
@@ -140,19 +140,19 @@ using StatsBase
                 @testset for (name, pred_name) in ((:y, y_pred_name), (:z, z_pred_name)),
                     pred_name_hint in (pred_name, nothing)
 
-                    @test ArviZStats.observations_and_predictions(
+                    @test PosteriorStats.observations_and_predictions(
                         idata, name, pred_name_hint
                     ) == (name => observed_data[name], pred_name => pred[pred_name])
                 end
 
-                @test_throws ArgumentError ArviZStats.observations_and_predictions(idata)
-                @test_throws ArgumentError ArviZStats.observations_and_predictions(
+                @test_throws ArgumentError PosteriorStats.observations_and_predictions(idata)
+                @test_throws ArgumentError PosteriorStats.observations_and_predictions(
                     idata, nothing, nothing
                 )
-                @test_throws ErrorException ArviZStats.observations_and_predictions(
+                @test_throws ErrorException PosteriorStats.observations_and_predictions(
                     idata, :foo, :bar
                 )
-                @test_throws ErrorException ArviZStats.observations_and_predictions(
+                @test_throws ErrorException PosteriorStats.observations_and_predictions(
                     idata, :foo, nothing
                 )
             end
@@ -161,27 +161,27 @@ using StatsBase
         @testset "missing groups" begin
             observed_data = namedtuple_to_dataset((; y=randn(10)); default_dims=())
             idata = InferenceData(; observed_data)
-            @test_throws ArgumentError ArviZStats.observations_and_predictions(idata)
-            @test_throws ArgumentError ArviZStats.observations_and_predictions(
+            @test_throws ArgumentError PosteriorStats.observations_and_predictions(idata)
+            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
                 idata, :y, :y_pred
             )
-            @test_throws ArgumentError ArviZStats.observations_and_predictions(
+            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
                 idata, :y, nothing
             )
-            @test_throws ArgumentError ArviZStats.observations_and_predictions(
+            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
                 idata, nothing, :y_pred
             )
 
             posterior_predictive = namedtuple_to_dataset((; y_pred=randn(100, 4, 10)))
             idata = InferenceData(; posterior_predictive)
-            @test_throws ArgumentError ArviZStats.observations_and_predictions(idata)
-            @test_throws ArgumentError ArviZStats.observations_and_predictions(
+            @test_throws ArgumentError PosteriorStats.observations_and_predictions(idata)
+            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
                 idata, :y, :y_pred
             )
-            @test_throws ArgumentError ArviZStats.observations_and_predictions(
+            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
                 idata, :y, nothing
             )
-            @test_throws ArgumentError ArviZStats.observations_and_predictions(
+            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
                 idata, nothing, :y_pred
             )
         end
@@ -189,12 +189,12 @@ using StatsBase
 
     @testset "_assimilar" begin
         @testset for x in ([8, 2, 5], (8, 2, 5), (; a=8, b=2, c=5))
-            @test @inferred(ArviZStats._assimilar((x=1.0, y=2.0, z=3.0), x)) ==
+            @test @inferred(PosteriorStats._assimilar((x=1.0, y=2.0, z=3.0), x)) ==
                 (x=8, y=2, z=5)
-            @test @inferred(ArviZStats._assimilar((randn(3)...,), x)) == (8, 2, 5)
+            @test @inferred(PosteriorStats._assimilar((randn(3)...,), x)) == (8, 2, 5)
             dim = Dim{:foo}(["a", "b", "c"])
             y = DimArray(randn(3), dim)
-            @test @inferred(ArviZStats._assimilar(y, x)) == DimArray([8, 2, 5], dim)
+            @test @inferred(PosteriorStats._assimilar(y, x)) == DimArray([8, 2, 5], dim)
         end
     end
 
@@ -204,32 +204,32 @@ using StatsBase
             (3, 1, 4, 2) => (1, 2, 3, 4),
             (x=3, y=1, z=4, w=2) => (y=1, w=2, x=3, z=4),
         )
-            perm = ArviZStats._sortperm(x)
+            perm = PosteriorStats._sortperm(x)
             @test perm == [2, 4, 1, 3]
-            @test ArviZStats._permute(x, perm) == y
+            @test PosteriorStats._permute(x, perm) == y
         end
     end
 
     @testset "_eachslice" begin
         x = randn(2, 3, 4)
-        slices = ArviZStats._eachslice(x; dims=(3, 1))
+        slices = PosteriorStats._eachslice(x; dims=(3, 1))
         @test size(slices) == (size(x, 3), size(x, 1))
         slices = collect(slices)
         for i in axes(x, 3), j in axes(x, 1)
             @test slices[i, j] == x[j, :, i]
         end
 
-        @test ArviZStats._eachslice(x; dims=2) == ArviZStats._eachslice(x; dims=(2,))
+        @test PosteriorStats._eachslice(x; dims=2) == PosteriorStats._eachslice(x; dims=(2,))
 
         if VERSION ≥ v"1.9-"
             for dims in ((3, 1), (2, 3), 3)
-                @test ArviZStats._eachslice(x; dims) === eachslice(x; dims)
+                @test PosteriorStats._eachslice(x; dims) === eachslice(x; dims)
             end
         end
 
         da = DimArray(x, (Dim{:a}(1:2), Dim{:b}(['x', 'y', 'z']), Dim{:c}(0:3)))
         for dims in (2, (1, 3), (3, 1), (2, 3), (:c, :a))
-            @test ArviZStats._eachslice(da; dims) === eachslice(da; dims)
+            @test PosteriorStats._eachslice(da; dims) === eachslice(da; dims)
         end
     end
 
@@ -241,39 +241,39 @@ using StatsBase
         dims = (drawdim, chaindim, paramdim1, paramdim2)
         x = DimArray(randn(size(dims)), dims)
         xperm = permutedims(x, (chaindim, drawdim, paramdim1, paramdim2))
-        @test @inferred ArviZStats._draw_chains_params_array(xperm) ≈ x
+        @test @inferred PosteriorStats._draw_chains_params_array(xperm) ≈ x
         xperm = permutedims(x, (paramdim1, chaindim, drawdim, paramdim2))
-        @test @inferred ArviZStats._draw_chains_params_array(xperm) ≈ x
+        @test @inferred PosteriorStats._draw_chains_params_array(xperm) ≈ x
         xperm = permutedims(x, (paramdim1, drawdim, paramdim2, chaindim))
-        @test @inferred ArviZStats._draw_chains_params_array(xperm) ≈ x
+        @test @inferred PosteriorStats._draw_chains_params_array(xperm) ≈ x
     end
 
     @testset "_logabssubexp" begin
         x, y = rand(2)
-        @test @inferred(ArviZStats._logabssubexp(log(x), log(y))) ≈ log(abs(x - y))
-        @test ArviZStats._logabssubexp(log(y), log(x)) ≈ log(abs(y - x))
+        @test @inferred(PosteriorStats._logabssubexp(log(x), log(y))) ≈ log(abs(x - y))
+        @test PosteriorStats._logabssubexp(log(y), log(x)) ≈ log(abs(y - x))
     end
 
     @testset "_sum_and_se" begin
         @testset for n in (100, 1_000), scale in (1, 5)
             x = randn(n) * scale
-            s, se = @inferred ArviZ.ArviZStats._sum_and_se(x)
+            s, se = @inferred PosteriorStats._sum_and_se(x)
             @test s ≈ sum(x)
             @test se ≈ StatsBase.sem(x) * n
 
             x = randn(n, 10) * scale
-            s, se = @inferred ArviZ.ArviZStats._sum_and_se(x; dims=1)
+            s, se = @inferred PosteriorStats._sum_and_se(x; dims=1)
             @test s ≈ sum(x; dims=1)
             @test se ≈ mapslices(StatsBase.sem, x; dims=1) * n
 
             x = randn(10, n) * scale
-            s, se = @inferred ArviZ.ArviZStats._sum_and_se(x; dims=2)
+            s, se = @inferred PosteriorStats._sum_and_se(x; dims=2)
             @test s ≈ sum(x; dims=2)
             @test se ≈ mapslices(StatsBase.sem, x; dims=2) * n
         end
         @testset "::Number" begin
-            @test isequal(ArviZ.ArviZStats._sum_and_se(2), (2, NaN))
-            @test isequal(ArviZ.ArviZStats._sum_and_se(3.5f0; dims=()), (3.5f0, NaN32))
+            @test isequal(PosteriorStats._sum_and_se(2), (2, NaN))
+            @test isequal(PosteriorStats._sum_and_se(3.5f0; dims=()), (3.5f0, NaN32))
         end
     end
 
@@ -283,10 +283,10 @@ using StatsBase
         w = rand(1000)
         w ./= sum(w)
         logw = log.(w)
-        @test ArviZStats._log_mean(logx, logw) ≈ log(mean(x, StatsBase.fweights(w)))
+        @test PosteriorStats._log_mean(logx, logw) ≈ log(mean(x, StatsBase.fweights(w)))
         x = rand(1000, 4)
         logx = log.(x)
-        @test ArviZStats._log_mean(logx, logw; dims=1) ≈
+        @test PosteriorStats._log_mean(logx, logw; dims=1) ≈
             log.(mean(x, StatsBase.fweights(w); dims=1))
     end
 
@@ -298,77 +298,77 @@ using StatsBase
             w = StatsBase.weights(w ./ sum(w))
             logx = log.(x)
             logw = log.(w)
-            se = @inferred ArviZStats._se_log_mean(logx, logw)
+            se = @inferred PosteriorStats._se_log_mean(logx, logw)
             se_exp = std(log(mean(rand(n) * scale, w)) for _ in 1:ndraws)
             @test se ≈ se_exp rtol = 1e-1
         end
     end
 
     @testset "sigdigits_matching_se" begin
-        @test ArviZStats.sigdigits_matching_se(123.456, 0.01) == 5
-        @test ArviZStats.sigdigits_matching_se(123.456, 1) == 3
-        @test ArviZStats.sigdigits_matching_se(123.456, 0.0001) == 7
-        @test ArviZStats.sigdigits_matching_se(1e5, 0.1) == 7
-        @test ArviZStats.sigdigits_matching_se(1e5, 0.2; scale=5) == 6
-        @test ArviZStats.sigdigits_matching_se(1e4, 0.5) == 5
-        @test ArviZStats.sigdigits_matching_se(1e4, 0.5; scale=1) == 6
-        @test ArviZStats.sigdigits_matching_se(1e5, 0.1; sigdigits_max=2) == 2
+        @test PosteriorStats.sigdigits_matching_se(123.456, 0.01) == 5
+        @test PosteriorStats.sigdigits_matching_se(123.456, 1) == 3
+        @test PosteriorStats.sigdigits_matching_se(123.456, 0.0001) == 7
+        @test PosteriorStats.sigdigits_matching_se(1e5, 0.1) == 7
+        @test PosteriorStats.sigdigits_matching_se(1e5, 0.2; scale=5) == 6
+        @test PosteriorStats.sigdigits_matching_se(1e4, 0.5) == 5
+        @test PosteriorStats.sigdigits_matching_se(1e4, 0.5; scale=1) == 6
+        @test PosteriorStats.sigdigits_matching_se(1e5, 0.1; sigdigits_max=2) == 2
 
         # errors
-        @test_throws ArgumentError ArviZStats.sigdigits_matching_se(123.456, -1)
-        @test_throws ArgumentError ArviZStats.sigdigits_matching_se(
+        @test_throws ArgumentError PosteriorStats.sigdigits_matching_se(123.456, -1)
+        @test_throws ArgumentError PosteriorStats.sigdigits_matching_se(
             123.456, 1; sigdigits_max=-1
         )
-        @test_throws ArgumentError ArviZStats.sigdigits_matching_se(123.456, 1; scale=-1)
+        @test_throws ArgumentError PosteriorStats.sigdigits_matching_se(123.456, 1; scale=-1)
 
         # edge cases
-        @test ArviZStats.sigdigits_matching_se(0.0, 1) == 0
-        @test ArviZStats.sigdigits_matching_se(NaN, 1) == 0
-        @test ArviZStats.sigdigits_matching_se(Inf, 1) == 0
-        @test ArviZStats.sigdigits_matching_se(100, 1; scale=Inf) == 0
-        @test ArviZStats.sigdigits_matching_se(100, Inf) == 0
-        @test ArviZStats.sigdigits_matching_se(100, 0) == 7
-        @test ArviZStats.sigdigits_matching_se(100, 0; sigdigits_max=2) == 2
+        @test PosteriorStats.sigdigits_matching_se(0.0, 1) == 0
+        @test PosteriorStats.sigdigits_matching_se(NaN, 1) == 0
+        @test PosteriorStats.sigdigits_matching_se(Inf, 1) == 0
+        @test PosteriorStats.sigdigits_matching_se(100, 1; scale=Inf) == 0
+        @test PosteriorStats.sigdigits_matching_se(100, Inf) == 0
+        @test PosteriorStats.sigdigits_matching_se(100, 0) == 7
+        @test PosteriorStats.sigdigits_matching_se(100, 0; sigdigits_max=2) == 2
     end
 
     @testset "_printf_with_sigdigits" begin
-        @test ArviZStats._printf_with_sigdigits(123.456, 1) == "1.e+02"
-        @test ArviZStats._printf_with_sigdigits(-123.456, 1) == "-1.e+02"
-        @test ArviZStats._printf_with_sigdigits(123.456, 2) == "1.2e+02"
-        @test ArviZStats._printf_with_sigdigits(-123.456, 2) == "-1.2e+02"
-        @test ArviZStats._printf_with_sigdigits(123.456, 3) == "123"
-        @test ArviZStats._printf_with_sigdigits(-123.456, 3) == "-123"
-        @test ArviZStats._printf_with_sigdigits(123.456, 4) == "123.5"
-        @test ArviZStats._printf_with_sigdigits(-123.456, 4) == "-123.5"
-        @test ArviZStats._printf_with_sigdigits(123.456, 5) == "123.46"
-        @test ArviZStats._printf_with_sigdigits(-123.456, 5) == "-123.46"
-        @test ArviZStats._printf_with_sigdigits(123.456, 6) == "123.456"
-        @test ArviZStats._printf_with_sigdigits(-123.456, 6) == "-123.456"
-        @test ArviZStats._printf_with_sigdigits(123.456, 7) == "123.4560"
-        @test ArviZStats._printf_with_sigdigits(-123.456, 7) == "-123.4560"
-        @test ArviZStats._printf_with_sigdigits(123.456, 8) == "123.45600"
-        @test ArviZStats._printf_with_sigdigits(0.00000123456, 1) == "1.e-06"
-        @test ArviZStats._printf_with_sigdigits(0.00000123456, 2) == "1.2e-06"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 1) == "1.e+02"
+        @test PosteriorStats._printf_with_sigdigits(-123.456, 1) == "-1.e+02"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 2) == "1.2e+02"
+        @test PosteriorStats._printf_with_sigdigits(-123.456, 2) == "-1.2e+02"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 3) == "123"
+        @test PosteriorStats._printf_with_sigdigits(-123.456, 3) == "-123"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 4) == "123.5"
+        @test PosteriorStats._printf_with_sigdigits(-123.456, 4) == "-123.5"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 5) == "123.46"
+        @test PosteriorStats._printf_with_sigdigits(-123.456, 5) == "-123.46"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 6) == "123.456"
+        @test PosteriorStats._printf_with_sigdigits(-123.456, 6) == "-123.456"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 7) == "123.4560"
+        @test PosteriorStats._printf_with_sigdigits(-123.456, 7) == "-123.4560"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 8) == "123.45600"
+        @test PosteriorStats._printf_with_sigdigits(0.00000123456, 1) == "1.e-06"
+        @test PosteriorStats._printf_with_sigdigits(0.00000123456, 2) == "1.2e-06"
     end
 
     @testset "ft_printf_sigdigits" begin
         @testset "all columns" begin
             @testset for sigdigits in 1:5
-                ft1 = ArviZStats.ft_printf_sigdigits(sigdigits)
+                ft1 = PosteriorStats.ft_printf_sigdigits(sigdigits)
                 for i in 1:10, j in 1:5
                     v = randn()
-                    @test ft1(v, i, j) == ArviZStats._printf_with_sigdigits(v, sigdigits)
+                    @test ft1(v, i, j) == PosteriorStats._printf_with_sigdigits(v, sigdigits)
                     @test ft1("foo", i, j) == "foo"
                 end
             end
         end
         @testset "subset of columns" begin
             @testset for sigdigits in 1:5
-                ft = ArviZStats.ft_printf_sigdigits(sigdigits, [2, 3])
+                ft = PosteriorStats.ft_printf_sigdigits(sigdigits, [2, 3])
                 for i in 1:10, j in 1:5
                     v = randn()
                     if j ∈ [2, 3]
-                        @test ft(v, i, j) == ArviZStats._printf_with_sigdigits(v, sigdigits)
+                        @test ft(v, i, j) == PosteriorStats._printf_with_sigdigits(v, sigdigits)
                     else
                         @test ft(v, i, j) === v
                     end
@@ -382,11 +382,11 @@ using StatsBase
         @testset "all columns" begin
             @testset for scale in 1:3
                 se = rand(5)
-                ft = ArviZStats.ft_printf_sigdigits_matching_se(se; scale)
+                ft = PosteriorStats.ft_printf_sigdigits_matching_se(se; scale)
                 for i in eachindex(se), j in 1:5
                     v = randn()
-                    sigdigits = ArviZStats.sigdigits_matching_se(v, se[i]; scale)
-                    @test ft(v, i, j) == ArviZStats._printf_with_sigdigits(v, sigdigits)
+                    sigdigits = PosteriorStats.sigdigits_matching_se(v, se[i]; scale)
+                    @test ft(v, i, j) == PosteriorStats._printf_with_sigdigits(v, sigdigits)
                     @test ft("foo", i, j) == "foo"
                 end
             end
@@ -395,12 +395,12 @@ using StatsBase
         @testset "subset of columns" begin
             @testset for scale in 1:3
                 se = rand(5)
-                ft = ArviZStats.ft_printf_sigdigits_matching_se(se, [2, 3]; scale)
+                ft = PosteriorStats.ft_printf_sigdigits_matching_se(se, [2, 3]; scale)
                 for i in eachindex(se), j in 1:5
                     v = randn()
                     if j ∈ [2, 3]
-                        sigdigits = ArviZStats.sigdigits_matching_se(v, se[i]; scale)
-                        @test ft(v, i, j) == ArviZStats._printf_with_sigdigits(v, sigdigits)
+                        sigdigits = PosteriorStats.sigdigits_matching_se(v, se[i]; scale)
+                        @test ft(v, i, j) == PosteriorStats._printf_with_sigdigits(v, sigdigits)
                         @test ft("foo", i, j) == "foo"
                     else
                         @test ft(v, i, j) === v

@@ -1,10 +1,10 @@
-using Test
-using ArviZ
 using DimensionalData
 using FiniteDifferences
 using LinearAlgebra
 using Optim
+using PosteriorStats
 using Random
+using Test
 
 struct DummyOptimizer <: Optim.AbstractOptimizer end
 
@@ -92,7 +92,7 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
     @testset "Stacking" begin
         @testset "InplaceStackingOptimObjective" begin
             E = rand(20, 10)
-            obj = ArviZStats.InplaceStackingOptimObjective(E)
+            obj = PosteriorStats.InplaceStackingOptimObjective(E)
             @test obj.cache isa NTuple{2,Vector{Float64}}
             @test length(obj.cache[1]) == size(E, 1)
             @test length(obj.cache[2]) == size(E, 2)

@@ -1,11 +1,9 @@
-using Test
-using ArviZ
-using ArviZ.ArviZStats
 using ArviZExampleData
 using DimensionalData
+using InferenceObjects
 using Logging: SimpleLogger, with_logger
-
-include("helpers.jl")
+using PosteriorStats
+using Test
 
 @testset "waic" begin
     @testset "core functionality" begin
@@ -23,7 +21,7 @@ include("helpers.jl")
             end
             waic_result =
                 TA === DimArray ? waic(log_likelihood) : @inferred(waic(log_likelihood))
-            @test waic_result isa ArviZStats.WAICResult
+            @test waic_result isa PosteriorStats.WAICResult
             estimates = elpd_estimates(waic_result)
             pointwise = elpd_estimates(waic_result; pointwise=true)
             @testset "return types and values as expected" begin

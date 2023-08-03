@@ -1,6 +1,6 @@
-using ArviZ
 using ArviZExampleData
 using GLM
+using PosteriorStats
 using Statistics
 using Test
 
@@ -20,7 +20,7 @@ using Test
 
             r2_val = @inferred r2_score(y, y_pred)
             @test r2_val isa NamedTuple{(:r2, :r2_std),NTuple{2,T}}
-            r2_draws = @inferred ArviZStats.r2_samples(y, y_pred)
+            r2_draws = @inferred PosteriorStats.r2_samples(y, y_pred)
             @test r2_val.r2 ≈ mean(r2_draws)
             @test r2_val.r2_std ≈ std(r2_draws; corrected=false)
 

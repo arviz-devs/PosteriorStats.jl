@@ -1,8 +1,6 @@
-using ArviZ, Random, Statistics, Test
-using ArviZ.ArviZStats
-using ArviZExampleData
-using Random
 using PosteriorStats
+using Random
+using Test
 
 Random.seed!(97)
 

@@ -1,9 +1,9 @@
-using Test
-using ArviZ
-using ArviZ.ArviZStats
 using DimensionalData
 using Distributions
+using InferenceObjects
+using PosteriorStats
 using StatsBase
+using Test
 
 @testset "loo_pit" begin
     @testset "scalar data" begin
@@ -49,8 +49,8 @@ using StatsBase
         loglike = mapslices(yi -> logpdf.(dists, yi), y_pred; dims=3)
         log_weights = psis(loglike).log_weights
         pit_vals = loo_pit(
-            ArviZStats.smooth_data(y; dims=1),
-            ArviZStats.smooth_data(y_pred; dims=3),
+            PosteriorStats.smooth_data(y; dims=1),
+            PosteriorStats.smooth_data(y_pred; dims=3),
             log_weights,
         )
         ϵ = sqrt(eps())

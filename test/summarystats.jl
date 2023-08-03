@@ -1,7 +1,8 @@
-using ArviZ
 using ArviZExampleData
 using DimensionalData
+using InferenceObjects
 using IteratorInterfaceExtensions
+using PosteriorStats
 using Statistics
 using Tables
 using TableTraits
@@ -102,7 +103,7 @@ _maybevec(x) = x
                 coords=(a=["q", "r", "s"], b=[0, 1], c=[:m, :n, :o]),
                 default_dims=(),
             )
-            var_inds = collect(ArviZStats._indices_iterator(ds, :s))
+            var_inds = collect(PosteriorStats._indices_iterator(ds, :s))
             @test length(var_inds) == 1 + size(ds.y, :a) + size(ds.z, :b) * size(ds.z, :c)
             @test var_inds[1] == (data.x, ())
             @test first.(var_inds[2:4]) == fill(data.y, size(ds.y, :a))
@@ -121,25 +122,25 @@ _maybevec(x) = x
                 default_dims=(),
             )
 
-            @test ArviZStats._indices_to_name(ds.x, (), true) == "x"
-            @test ArviZStats._indices_to_name(ds.x, (), false) == "x"
+            @test PosteriorStats._indices_to_name(ds.x, (), true) == "x"
+            @test PosteriorStats._indices_to_name(ds.x, (), false) == "x"
             y_names = map(DimensionalData.DimKeys(dims(ds.y, :a))) do d
-                return ArviZStats._indices_to_name(ds.y, d, true)
+                return PosteriorStats._indices_to_name(ds.y, d, true)
             end
             @test y_names == ["y[q]", "y[r]", "y[s]"]
             y_names_verbose = map(DimensionalData.DimKeys(dims(ds.y, :a))) do d
-                return ArviZStats._indices_to_name(ds.y, d, false)
+                return PosteriorStats._indices_to_name(ds.y, d, false)
             end
             @test y_names_verbose == ["y[a=At(\"q\")]", "y[a=At(\"r\")]", "y[a=At(\"s\")]"]
             z_names = vec(
                 map(DimensionalData.DimKeys(dims(ds.z, (:b, :c)))) do d
-                    return ArviZStats._indices_to_name(ds.z, d, true)
+                    return PosteriorStats._indices_to_name(ds.z, d, true)
                 end,
             )
             @test z_names == ["z[0,m]", "z[1,m]", "z[0,n]", "z[1,n]", "z[0,o]", "z[1,o]"]
             z_names_verbose = vec(
                 map(DimensionalData.DimKeys(dims(ds.z, (:b, :c)))) do d
-                    return ArviZStats._indices_to_name(ds.z, d, false)
+                    return PosteriorStats._indices_to_name(ds.z, d, false)
                 end,
             )
             @test z_names_verbose == [

@@ -1,11 +1,9 @@
-using Test
-using ArviZ
-using ArviZ.ArviZStats
 using ArviZExampleData
 using DimensionalData
+using InferenceObjects
 using Logging: SimpleLogger, with_logger
-
-include("helpers.jl")
+using PosteriorStats
+using Test
 
 @testset "loo" begin
     @testset "core functionality" begin
@@ -23,7 +21,7 @@ include("helpers.jl")
             end
             loo_result =
                 TA === DimArray ? loo(log_likelihood) : @inferred(loo(log_likelihood))
-            @test loo_result isa ArviZStats.PSISLOOResult
+            @test loo_result isa PosteriorStats.PSISLOOResult
             estimates = elpd_estimates(loo_result)
             pointwise = elpd_estimates(loo_result; pointwise=true)
             @testset "return types and values as expected" begin

@@ -1,6 +1,7 @@
-using ArviZ
 using DimensionalData
+using InferenceObjects
 using OffsetArrays
+using PosteriorStats
 using Statistics
 using Test
 

@@ -1,10 +1,10 @@
-using Test
-using ArviZ
 using ArviZExampleData
 using DimensionalData
 using IteratorInterfaceExtensions
+using PosteriorStats
 using Tables
 using TableTraits
+using Test
 
 function _isequal(x::ModelComparisonResult, y::ModelComparisonResult)
     return Tables.columntable(x) == Tables.columntable(y)
