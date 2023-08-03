@@ -11,7 +11,7 @@ The weights are returned in the same type of
 collection.
 
 The argument may be any object with a `pairs` method where each value is either an
-[`InferenceData`](@ref) or an [`AbstractELPDResult`](@ref).
+`InferenceData` or an [`AbstractELPDResult`](@ref).
 
 The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
 cross-validation (LOO) or using the widely applicable information criterion (WAIC).

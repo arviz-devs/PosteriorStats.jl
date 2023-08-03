@@ -81,7 +81,7 @@ Compute summary statistics and diagnostics on the `data`.
 
   - `prob_interval::Real`: The value of the `prob` argument to [`hdi`](@ref) used to compute
     the highest density interval. Defaults to $(DEFAULT_INTERVAL_PROB).
-  - `return_type::Type`: The type of object to return. Valid options are [`Dataset`](@ref)
+  - `return_type::Type`: The type of object to return. Valid options are `Dataset`
     and [`SummaryStats`](@ref). Defaults to `SummaryStats`.
   - `metric_dim`: The dimension name or type to use for the computed metrics. Only used
     if `return_type` is `Dataset`. Defaults to `$(sprint(show, "text/plain", DEFAULT_METRIC_DIM))`.
@@ -130,6 +130,8 @@ Compute the statistics and diagnostics from the posterior group of an `Inference
 store in a `Dataset`:
 
 ```jldoctest summarystats
+julia> using InferenceObjects
+
 julia> summarystats(idata; return_type=Dataset)
 Dataset with dimensions:
   Dim{:_metric} Categorical{String} String[mean, std, …, ess_bulk, rhat] Unordered,
