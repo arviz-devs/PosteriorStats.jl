@@ -43,7 +43,7 @@ Compare the centered and non centered models of the eight school problem using t
 [`loo`](@ref) and [`Stacking`](@ref) weights:
 
 ```jldoctest compare; filter = [r"└.*"]
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> models = (
            centered=load_example_data("centered_eight"),

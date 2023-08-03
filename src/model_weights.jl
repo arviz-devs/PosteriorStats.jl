@@ -36,7 +36,7 @@ See also: [`AbstractModelWeightsMethod`](@ref), [`compare`](@ref)
 Compute [`Stacking`](@ref) weights for two models:
 
 ```jldoctest model_weights; filter = [r"└.*"]
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> models = (
            centered=load_example_data("centered_eight"),

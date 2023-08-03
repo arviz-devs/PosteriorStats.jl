@@ -96,7 +96,7 @@ Compute the summary statistics and diagnostics on posterior draws of the centere
 model:
 
 ```jldoctest summarystats
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("centered_eight");
 

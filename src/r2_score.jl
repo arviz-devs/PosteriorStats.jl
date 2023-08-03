@@ -16,7 +16,7 @@
 # Examples
 
 ```jldoctest
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("regression1d");
 
@@ -50,7 +50,7 @@ Compute ``R²`` from `idata`, automatically formatting the predictions to the co
 # Examples
 
 ```jldoctest
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("regression10d");
 

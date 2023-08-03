@@ -46,7 +46,7 @@ See also: [`WAICResult`](@ref), [`loo`](@ref)
 Calculate WAIC of a model:
 
 ```jldoctest
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("centered_eight");
 
@@ -73,7 +73,7 @@ If more than one log-likelihood variable is present, then `var_name` must be pro
 Calculate WAIC of a model:
 
 ```jldoctest
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("centered_eight");
 

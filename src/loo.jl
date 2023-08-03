@@ -60,7 +60,7 @@ See also: [`PSISLOOResult`](@ref), [`waic`](@ref)
 Manually compute ``R_\\mathrm{eff}`` and calculate PSIS-LOO of a model:
 
 ```jldoctest
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("centered_eight");
 
@@ -95,7 +95,7 @@ If more than one log-likelihood variable is present, then `var_name` must be pro
 Calculate PSIS-LOO of a model:
 
 ```jldoctest
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("centered_eight");
 

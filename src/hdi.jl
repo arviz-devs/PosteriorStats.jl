@@ -37,7 +37,7 @@ This implementation uses the algorithm of [^ChenShao1999].
 Here we calculate the 83% HDI for a normal random variable:
 
 ```jldoctest hdi; setup = :(using Random; Random.seed!(78))
-julia> using ArviZ
+julia> using PosteriorStats
 
 julia> x = randn(2_000);
 
@@ -113,7 +113,7 @@ Calculate the highest density interval (HDI) for each parameter in the data.
 Calculate HDI for all parameters in the `posterior` group of an `InferenceData`:
 
 ```jldoctest hdi_infdata
-julia> using ArviZ, ArviZExampleData
+julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("centered_eight");
 
