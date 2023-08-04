@@ -200,7 +200,7 @@ See also: [`BootstrappedPseudoBMA`](@ref)
 """
 struct Stacking{O<:Optim.AbstractOptimizer} <: AbstractModelWeightsMethod
     """The optimizer to use for the optimization of the weights. The optimizer must support
-    projected gradient optimization viae a `manifold` field."""
+    projected gradient optimization via a `manifold` field."""
     optimizer::O
     """The Optim options to use for the optimization of the weights."""
     options::Optim.Options
