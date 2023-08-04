@@ -13,9 +13,7 @@ using Test
 
             log_likelihood = randn(T, sz)
             if TA === OffsetArray
-                log_likelihood = OffsetArray(
-                    log_likelihood, (0, -1, 10, 30)[1:length(sz)]
-                )
+                log_likelihood = OffsetArray(log_likelihood, (0, -1, 10, 30)[1:length(sz)])
             end
             loo_result =
                 TA === OffsetArray ? loo(log_likelihood) : @inferred(loo(log_likelihood))
