@@ -1,7 +1,5 @@
-using ArviZExampleData
-using DimensionalData
-using InferenceObjects
 using Logging: SimpleLogger, with_logger
+using OffsetArrays
 using PosteriorStats
 using Test
 
@@ -9,18 +7,18 @@ using Test
     @testset "core functionality" begin
         @testset for sz in ((1000, 4), (1000, 4, 2), (100, 4, 2, 3)),
             T in (Float32, Float64),
-            TA in (Array, DimArray)
+            TA in (Array, OffsetArray)
 
             atol_perm = cbrt(eps(T))
 
             log_likelihood = randn(T, sz)
-            if TA === DimArray
-                log_likelihood = DimArray(
-                    log_likelihood, (:draw, :chain, :param1, :param2)[1:length(sz)]
+            if TA === OffsetArray
+                log_likelihood = OffsetArray(
+                    log_likelihood, (0, -1, 10, 30)[1:length(sz)]
                 )
             end
             loo_result =
-                TA === DimArray ? loo(log_likelihood) : @inferred(loo(log_likelihood))
+                TA === OffsetArray ? loo(log_likelihood) : @inferred(loo(log_likelihood))
             @test loo_result isa PosteriorStats.PSISLOOResult
             estimates = elpd_estimates(loo_result)
             pointwise = elpd_estimates(loo_result; pointwise=true)
@@ -48,72 +46,20 @@ using Test
                 @test information_criterion(loo_result, :deviance; pointwise=true) ==
                     -2 * pointwise.elpd
             end
-
-            TA === DimArray && @testset "consistency with InferenceData argument" begin
-                idata1 = InferenceData(; log_likelihood=Dataset((; x=log_likelihood)))
-                loo_result1 = loo(idata1)
-                @test isequal(loo_result1.estimates, loo_result.estimates)
-                @test loo_result1.pointwise isa Dataset
-                if length(sz) == 2
-                    @test issetequal(
-                        keys(loo_result1.pointwise),
-                        (:elpd, :elpd_mcse, :p, :reff, :pareto_shape),
-                    )
-                else
-                    @test loo_result1.pointwise.elpd == loo_result.pointwise.elpd
-                    @test loo_result1.pointwise.elpd_mcse == loo_result.pointwise.elpd_mcse
-                    @test loo_result1.pointwise.p == loo_result.pointwise.p
-                    @test loo_result1.pointwise.reff == loo_result.pointwise.reff
-                    @test loo_result1.pointwise.pareto_shape ==
-                        loo_result.pointwise.pareto_shape
-                end
-
-                ll_perm = permutedims(
-                    log_likelihood, (ntuple(x -> x + 2, length(sz) - 2)..., 2, 1)
-                )
-                idata2 = InferenceData(; log_likelihood=Dataset((; y=ll_perm)))
-                loo_result2 = loo(idata2)
-                @test loo_result2.estimates.elpd ≈ loo_result1.estimates.elpd atol =
-                    atol_perm
-                @test isapprox(
-                    loo_result2.estimates.elpd_mcse,
-                    loo_result1.estimates.elpd_mcse;
-                    nans=true,
-                    atol=atol_perm,
-                )
-                @test loo_result2.estimates.p ≈ loo_result1.estimates.p atol = atol_perm
-                @test isapprox(
-                    loo_result2.estimates.p_mcse,
-                    loo_result1.estimates.p_mcse;
-                    nans=true,
-                    atol=atol_perm,
-                )
-                @test isapprox(
-                    loo_result2.pointwise.elpd_mcse,
-                    loo_result1.pointwise.elpd_mcse;
-                    nans=true,
-                    atol=atol_perm,
-                )
-                @test loo_result2.pointwise.p ≈ loo_result1.pointwise.p atol = atol_perm
-                @test loo_result2.pointwise.reff ≈ loo_result1.pointwise.reff atol =
-                    atol_perm
-                @test loo_result2.pointwise.pareto_shape ≈
-                    loo_result1.pointwise.pareto_shape atol = atol_perm
-            end
         end
     end
-    @testset "keywords forwarded" begin
-        log_likelihood = convert_to_dataset((x=randn(1000, 4, 2, 3), y=randn(1000, 4, 3)))
-        @test loo(log_likelihood; var_name=:x).estimates == loo(log_likelihood.x).estimates
-        @test loo(log_likelihood; var_name=:y).estimates == loo(log_likelihood.y).estimates
-        @test loo(log_likelihood; var_name=:x, reff=0.5).pointwise.reff == fill(0.5, 2, 3)
-    end
-    @testset "errors" begin
-        log_likelihood = convert_to_dataset((x=randn(1000, 4, 2, 3), y=randn(1000, 4, 3)))
-        @test_throws ArgumentError loo(log_likelihood)
-        @test_throws ArgumentError loo(log_likelihood; var_name=:z)
-        @test_throws DimensionMismatch loo(log_likelihood; var_name=:x, reff=rand(2))
-    end
+    # @testset "keywords forwarded" begin
+    #     log_likelihood = convert_to_dataset((x=randn(1000, 4, 2, 3), y=randn(1000, 4, 3)))
+    #     @test loo(log_likelihood; var_name=:x).estimates == loo(log_likelihood.x).estimates
+    #     @test loo(log_likelihood; var_name=:y).estimates == loo(log_likelihood.y).estimates
+    #     @test loo(log_likelihood; var_name=:x, reff=0.5).pointwise.reff == fill(0.5, 2, 3)
+    # end
+    # @testset "errors" begin
+    #     log_likelihood = convert_to_dataset((x=randn(1000, 4, 2, 3), y=randn(1000, 4, 3)))
+    #     @test_throws ArgumentError loo(log_likelihood)
+    #     @test_throws ArgumentError loo(log_likelihood; var_name=:z)
+    #     @test_throws DimensionMismatch loo(log_likelihood; var_name=:x, reff=rand(2))
+    # end
     @testset "warnings" begin
         io = IOBuffer()
         log_likelihood = randn(100, 4)
@@ -145,9 +91,9 @@ using Test
         @test occursin("Warning:", msg)
     end
     @testset "show" begin
-        idata = load_example_data("centered_eight")
+        loglike = log_likelihood_eight_schools(eight_schools_data().centered)
         # regression test
-        @test sprint(show, "text/plain", loo(idata)) == """
+        @test sprint(show, "text/plain", loo(loglike)) == """
             PSISLOOResult with estimates
              elpd  elpd_mcse    p  p_mcse
               -31        1.4  0.9    0.34
@@ -160,12 +106,10 @@ using Test
     end
     @testset "agrees with R loo" begin
         if r_loo_installed()
-            @testset for ds_name in ["centered_eight", "non_centered_eight"]
-                idata = load_example_data(ds_name)
-                log_likelihood = idata.log_likelihood.obs
-                data_dims = otherdims(log_likelihood, (:draw, :chain))
-                log_likelihood = permutedims(log_likelihood, (:draw, :chain, data_dims...))
-                reff_rand = rand(data_dims)
+            models = eight_schools_data()
+            @testset for name in keys(models)
+                log_likelihood = log_likelihood_eight_schools(models[name])
+                reff_rand = rand(size(log_likelihood, 3))
                 @testset for reff in (nothing, reff_rand)
                     result_r = loo_r(log_likelihood; reff)
                     result = loo(log_likelihood; reff)
