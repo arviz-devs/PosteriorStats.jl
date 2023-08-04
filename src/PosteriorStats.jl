@@ -1,10 +1,8 @@
 module PosteriorStats
 
 using DataInterpolations: DataInterpolations
-using DimensionalData: DimensionalData, Dimensions
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
-using InferenceObjects: InferenceObjects
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
 using LinearAlgebra: mul!, norm
 using LogExpFunctions: LogExpFunctions
