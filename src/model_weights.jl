@@ -43,7 +43,10 @@ julia> models = (
            non_centered=load_example_data("non_centered_eight"),
        );
 
-julia> elpd_results = map(loo, models);
+julia> elpd_results = map(models) do idata
+           log_like = PermutedDimsArray(idata.log_likelihood.obs, (2, 3, 1))
+           return loo(log_like)
+       end;
 ┌ Warning: 1 parameters had Pareto shape values 0.7 < k ≤ 1. Resulting importance sampling estimates are likely to be unstable.
 └ @ PSIS ~/.julia/packages/PSIS/...
 
