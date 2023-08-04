@@ -1,17 +1,7 @@
 """
-    compare(models; kwargs...)
+    compare(models; kwargs...) -> ModelComparisonResult
 
 Compare models based on their expected log pointwise predictive density (ELPD).
-
-`models` is a `Tuple`, `NamedTuple`, or `AbstractVector` whose values are either
-[`AbstractELPDResult`](@ref) entries or any argument to `elpd_method`, which must produce an
-`AbstractELPDResult`.
-
-The weights are returned in the same type of
-collection.
-
-The argument may be any object with a `pairs` method where each value is either an
-`InferenceData` or an [`AbstractELPDResult`](@ref).
 
 The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
 cross-validation (LOO) or using the widely applicable information criterion (WAIC).
@@ -27,20 +17,20 @@ leading authorities on model comparison dx.doi.org/10.1111/1467-9868.00353
 
   - `weights_method::AbstractModelWeightsMethod=Stacking()`: the method to be used to weight
     the models. See [`model_weights`](@ref) for details
-
-      + `elpd_method=loo`: a method that computes an `AbstractELPDResult` from an argument in
-        `models`.
-
+  - `elpd_method=loo`: a method that computes an `AbstractELPDResult` from an argument in
+    `models`.
   - `sort::Bool=true`: Whether to sort models by decreasing ELPD.
 
 # Returns
 
-  - [`ModelComparisonResult`](@ref): A container for the model comparison results.
+  - [`ModelComparisonResult`](@ref): A container for the model comparison results. The
+    fields contain a similar collection to `models`.
 
 # Examples
 
 Compare the centered and non centered models of the eight school problem using the defaults:
-[`loo`](@ref) and [`Stacking`](@ref) weights:
+[`loo`](@ref) and [`Stacking`](@ref) weights. A custom `myloo` method formates the inputs
+as expected by [`loo`](@ref).
 
 ```jldoctest compare; filter = [r"└.*"]
 julia> using ArviZExampleData, PosteriorStats
@@ -50,7 +40,12 @@ julia> models = (
            non_centered=load_example_data("non_centered_eight"),
        );
 
-julia> mc = compare(models)
+julia> function myloo(idata)
+           log_like = PermutedDimsArray(idata.log_likelihood.obs, (2, 3, 1))
+           return loo(log_like)
+       end;
+
+julia> mc = compare(models; elpd_method=myloo)
 ┌ Warning: 1 parameters had Pareto shape values 0.7 < k ≤ 1. Resulting importance sampling estimates are likely to be unstable.
 └ @ PSIS ~/.julia/packages/PSIS/...
 ModelComparisonResult with Stacking weights
@@ -58,6 +53,10 @@ ModelComparisonResult with Stacking weights
  non_centered     1   -31        1.4       0              0.0       1.0  0.9   ⋯
  centered         2   -31        1.4       0.06           0.067     0.0  0.9   ⋯
                                                                 1 column omitted
+julia> mc.weight |> pairs
+pairs(::NamedTuple) with 2 entries:
+  :non_centered => 1.0
+  :centered     => 5.34175e-19
 ```
 
 Compare the same models from pre-computed PSIS-LOO results and computing

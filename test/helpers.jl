@@ -1,3 +1,4 @@
+using ArviZExampleData
 using RCall
 
 r_loo_installed() = !isempty(rcopy(R"system.file(package='loo')"))
@@ -41,6 +42,18 @@ function waic_r(log_likelihood)
     pointwise = rcopy(R"$(result)$pointwise")
     pointwise = (elpd=pointwise[:, 1], p=pointwise[:, 2])
     return (; estimates, pointwise)
+end
+
+function log_likelihood_eight_schools(idata)
+    # convert to Array to keep compile times low
+    return PermutedDimsArray(collect(idata.log_likelihood.obs), (2, 3, 1))
+end
+
+function eight_schools_data()
+    return (
+        centered=load_example_data("centered_eight"),
+        non_centered=load_example_data("non_centered_eight"),
+    )
 end
 
 _isapprox(x::AbstractArray, y::AbstractArray; kwargs...) = isapprox(x, y; kwargs...)

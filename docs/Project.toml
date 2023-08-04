@@ -1,8 +1,6 @@
 [deps]
 ArviZExampleData = "2f96bb34-afd9-46ae-bcd0-9b2d4372fe3c"
-DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-InferenceObjects = "b5cf5a8d-e756-4ee3-b014-01d49d192c00"
 MCMCDiagnosticTools = "be115224-59cd-429b-ad48-344e309966f0"
 PosteriorStats = "7f36be82-ad55-44ba-a5c0-b8b5480d7aa5"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"

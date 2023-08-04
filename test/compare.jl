@@ -1,5 +1,3 @@
-using ArviZExampleData
-using DimensionalData
 using IteratorInterfaceExtensions
 using PosteriorStats
 using Tables
@@ -11,11 +9,8 @@ function _isequal(x::ModelComparisonResult, y::ModelComparisonResult)
 end
 
 @testset "compare" begin
-    eight_schools_data = (
-        centered=load_example_data("centered_eight"),
-        non_centered=load_example_data("non_centered_eight"),
-    )
-    eight_schools_loo_results = map(loo, eight_schools_data)
+    data = eight_schools_data()
+    eight_schools_loo_results = map(loo ∘ log_likelihood_eight_schools, data)
     mc1 = @inferred ModelComparisonResult compare(eight_schools_loo_results)
 
     @testset "basic checks" begin
@@ -39,12 +34,13 @@ end
         @test mc1.elpd_result ==
             NamedTuple{(:non_centered, :centered)}(eight_schools_loo_results)
 
+        mc2 = compare(data; elpd_method=loo ∘ log_likelihood_eight_schools)
+        @test _isequal(mc2, mc1)
+
         @test_throws ArgumentError compare(eight_schools_loo_results; model_names=[:foo])
-        @test_throws ErrorException compare(eight_schools_data; elpd_method=x -> nothing)
     end
 
     @testset "keywords are forwarded" begin
-        @test _isequal(compare(eight_schools_data), mc1)
         mc2 = compare(eight_schools_loo_results; weights_method=PseudoBMA())
         @test !_isequal(mc2, compare(eight_schools_loo_results))
         @test mc2.weights_method === PseudoBMA()
@@ -59,7 +55,7 @@ end
         end
         mc3 = compare(eight_schools_loo_results; model_names=[:a, :b])
         @test mc3.name == [:b, :a]
-        mc4 = compare(eight_schools_data; elpd_method=waic)
+        mc4 = compare(eight_schools_loo_results; elpd_method=waic)
         @test !_isequal(mc4, mc2)
     end
 

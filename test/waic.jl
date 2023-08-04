@@ -1,7 +1,5 @@
-using ArviZExampleData
-using DimensionalData
-using InferenceObjects
 using Logging: SimpleLogger, with_logger
+using OffsetArrays
 using PosteriorStats
 using Test
 
@@ -9,18 +7,16 @@ using Test
     @testset "core functionality" begin
         @testset for sz in ((1000, 4), (1000, 4, 2), (100, 4, 2, 3)),
             T in (Float32, Float64),
-            TA in (Array, DimArray)
+            TA in (Array, OffsetArray)
 
             atol_perm = cbrt(eps(T))
 
             log_likelihood = randn(T, sz)
-            if TA === DimArray
-                log_likelihood = DimArray(
-                    log_likelihood, (:draw, :chain, :param1, :param2)[1:length(sz)]
-                )
+            if TA === OffsetArray
+                log_likelihood = OffsetArray(log_likelihood, (0, -1, 10, 30)[1:length(sz)])
             end
             waic_result =
-                TA === DimArray ? waic(log_likelihood) : @inferred(waic(log_likelihood))
+                TA === OffsetArrays ? waic(log_likelihood) : @inferred(waic(log_likelihood))
             @test waic_result isa PosteriorStats.WAICResult
             estimates = elpd_estimates(waic_result)
             pointwise = elpd_estimates(waic_result; pointwise=true)
@@ -44,43 +40,6 @@ using Test
                 @test information_criterion(waic_result, :deviance; pointwise=true) ==
                     -2 * pointwise.elpd
             end
-
-            TA === DimArray && @testset "consistency with InferenceData argument" begin
-                idata1 = InferenceData(; log_likelihood=Dataset((; x=log_likelihood)))
-                waic_result1 = waic(idata1)
-                @test isequal(waic_result1.estimates, waic_result.estimates)
-                @test waic_result1.pointwise isa Dataset
-                if length(sz) == 2
-                    @test issetequal(keys(waic_result1.pointwise), (:elpd, :p))
-                else
-                    @test waic_result1.pointwise.elpd == waic_result.pointwise.elpd
-                    @test waic_result1.pointwise.p == waic_result.pointwise.p
-                end
-
-                ll_perm = permutedims(
-                    log_likelihood, (ntuple(x -> x + 2, length(sz) - 2)..., 2, 1)
-                )
-                idata2 = InferenceData(; log_likelihood=Dataset((; y=ll_perm)))
-                waic_result2 = waic(idata2)
-                @test waic_result2.estimates.elpd ≈ waic_result1.estimates.elpd atol =
-                    atol_perm
-                @test isapprox(
-                    waic_result2.estimates.elpd_mcse,
-                    waic_result1.estimates.elpd_mcse;
-                    nans=true,
-                    atol=atol_perm,
-                )
-                @test waic_result2.estimates.p ≈ waic_result1.estimates.p atol =
-                    atol_perm
-                @test isapprox(
-                    waic_result2.estimates.p_mcse,
-                    waic_result1.estimates.p_mcse;
-                    nans=true,
-                    atol=atol_perm,
-                )
-                @test waic_result2.pointwise.p ≈ waic_result1.pointwise.p atol =
-                    atol_perm
-            end
         end
     end
     @testset "warnings" begin
@@ -96,21 +55,19 @@ using Test
         end
     end
     @testset "show" begin
-        idata = load_example_data("centered_eight")
+        loglike = log_likelihood_eight_schools(eight_schools_data().centered)
         # regression test
-        @test sprint(show, "text/plain", waic(idata)) == """
+        @test sprint(show, "text/plain", waic(loglike)) == """
             WAICResult with estimates
              elpd  elpd_mcse    p  p_mcse
               -31        1.4  0.9    0.33"""
     end
     @testset "agrees with R waic" begin
         if r_loo_installed()
-            @testset for ds_name in ["centered_eight", "non_centered_eight"]
-                idata = load_example_data(ds_name)
-                log_likelihood = idata.log_likelihood.obs
-                data_dims = otherdims(log_likelihood, (:draw, :chain))
-                log_likelihood = permutedims(log_likelihood, (:draw, :chain, data_dims...))
-                reff_rand = rand(data_dims)
+            models = eight_schools_data()
+            @testset for name in keys(models)
+                log_likelihood = log_likelihood_eight_schools(models[name])
+                reff_rand = rand(size(log_likelihood, 3))
                 result_r = waic_r(log_likelihood)
                 result = waic(log_likelihood)
                 @test result.estimates.elpd ≈ result_r.estimates.elpd

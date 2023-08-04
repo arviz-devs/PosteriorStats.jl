@@ -43,7 +43,10 @@ julia> models = (
            non_centered=load_example_data("non_centered_eight"),
        );
 
-julia> elpd_results = map(loo, models);
+julia> elpd_results = map(models) do idata
+           log_like = PermutedDimsArray(idata.log_likelihood.obs, (2, 3, 1))
+           return loo(log_like)
+       end;
 ┌ Warning: 1 parameters had Pareto shape values 0.7 < k ≤ 1. Resulting importance sampling estimates are likely to be unstable.
 └ @ PSIS ~/.julia/packages/PSIS/...
 
@@ -249,8 +252,7 @@ function _elpd_matrix(elpd_results)
     elpd_values = map(elpd_results) do result
         return vec(elpd_estimates(result; pointwise=true).elpd)
     end
-    elpd_mat = reduce(hcat, elpd_values)
-    return elpd_mat
+    return reduce(hcat, collect(elpd_values))
 end
 
 # Optimize on the probability simplex by converting the problem to optimization on the unit

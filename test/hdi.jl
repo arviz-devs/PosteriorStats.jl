@@ -1,5 +1,3 @@
-using DimensionalData
-using InferenceObjects
 using OffsetArrays
 using PosteriorStats
 using Statistics
@@ -90,39 +88,6 @@ using Test
             @test axes(roff.upper) == (axes(xoff, 3), axes(xoff, 4))
             @test collect(roff.lower) == r.lower
             @test collect(roff.upper) == r.upper
-        end
-    end
-
-    @testset "Dataset/InferenceData" begin
-        nt = (x=randn(1000, 3), y=randn(1000, 3, 4), z=randn(1000, 3, 4, 2))
-        posterior = convert_to_dataset(nt)
-        posterior_perm = convert_to_dataset((
-            x=permutedims(posterior.x),
-            y=permutedims(posterior.y, (3, 2, 1)),
-            z=permutedims(posterior.z, (3, 2, 4, 1)),
-        ))
-        idata = InferenceData(; posterior)
-        @testset for prob in (0.76, 0.93)
-            if VERSION ≥ v"1.9"
-                r1 = @inferred hdi(posterior; prob)
-            else
-                r1 = hdi(posterior; prob)
-            end
-            r1_perm = hdi(posterior_perm; prob)
-            for k in (:x, :y, :z)
-                rk = hdi(posterior[k]; prob)
-                @test r1[k][hdi_bound=At(:lower)] == rk.lower
-                @test r1[k][hdi_bound=At(:upper)] == rk.upper
-                # equality check is safe because these are always data values
-                @test r1_perm[k][hdi_bound=At(:lower)] == rk.lower
-                @test r1_perm[k][hdi_bound=At(:upper)] == rk.upper
-            end
-            if VERSION ≥ v"1.9"
-                r2 = @inferred hdi(idata; prob)
-            else
-                r2 = hdi(idata; prob)
-            end
-            @test r1 == r2
         end
     end
 end
