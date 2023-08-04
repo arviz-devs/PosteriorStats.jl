@@ -1,6 +1,6 @@
-using DimensionalData
 using FiniteDifferences
 using LinearAlgebra
+using OffsetArrays
 using Optim
 using PosteriorStats
 using Random
@@ -21,11 +21,11 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
             @test weights_nt isa NamedTuple{(:x, :y),NTuple{2,Float64}}
             @test _isapprox(values(weights_nt), weights_tuple)
 
-            elpd_results_da = DimArray(collect(elpd_results_tuple), Dim{:model}([:x, :y]))
+            elpd_results_da = OffsetVector(collect(elpd_results_tuple), 0:1)
             weights_da = @inferred model_weights(weights_method(), elpd_results_da)
-            @test weights_da isa DimArray
-            @test Dimensions.dimsmatch(weights_da, elpd_results_da)
-            @test _isapprox(weights_da, collect(weights_tuple))
+            @test weights_da isa OffsetVector
+            @test axes(weights_da) == axes(elpd_results_da)
+            @test collect(weights_da) ≈ collect(weights_tuple)
         end
 
         @testset "weights invariant to order" begin
@@ -48,13 +48,11 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
         end
 
         @testset "better model gets higher weight" begin
-            elpd_results = (
-                non_centered=loo(load_example_data("non_centered_eight")),
-                centered=loo(load_example_data("centered_eight")),
-            )
+            data = eight_schools_data()
+            elpd_results = map(loo ∘ log_likelihood_eight_schools, data)
             weights = model_weights(weights_method(), elpd_results)
             @test sum(weights) ≈ 1
-            @test weights[1] > weights[2]
+            @test weights.non_centered > weights.centered
         end
     end
 
