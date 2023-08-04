@@ -4,7 +4,7 @@
 Estimate the unimodal highest density interval (HDI) of `samples` for the probability `prob`.
 
 The HDI is the minimum width Bayesian credible interval (BCI). That is, it is the smallest
-possible interval containing at least `(100*prob)`% of the draws.[^Hyndman1996]
+possible interval containing `(100*prob)`% of the probability mass.[^Hyndman1996]
 
 `samples` is an array of shape `(draws[, chains[, params...]])`. If multiple parameters are
 present, then `lower` and `upper` are arrays with the shape `(params...,)`, computed
