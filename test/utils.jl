@@ -1,202 +1,17 @@
-using DimensionalData
-using InferenceObjects
+using OffsetArrays
 using PosteriorStats
 using Random
 using StatsBase
 using Test
 
 @testset "utils" begin
-    @testset "log_likelihood" begin
-        ndraws = 100
-        nchains = 4
-        nparams = 3
-        x = randn(ndraws, nchains, nparams)
-        log_like = convert_to_dataset((; x))
-        @test PosteriorStats.log_likelihood(log_like) == x
-        @test PosteriorStats.log_likelihood(log_like, :x) == x
-        @test_throws Exception PosteriorStats.log_likelihood(log_like, :y)
-        idata = InferenceData(; log_likelihood=log_like)
-        @test PosteriorStats.log_likelihood(idata) == x
-        @test PosteriorStats.log_likelihood(idata, :x) == x
-        @test_throws Exception PosteriorStats.log_likelihood(idata, :y)
-
-        y = randn(ndraws, nchains)
-        log_like = convert_to_dataset((; x, y))
-        @test_throws Exception PosteriorStats.log_likelihood(log_like)
-        @test PosteriorStats.log_likelihood(log_like, :x) == x
-        @test PosteriorStats.log_likelihood(log_like, :y) == y
-
-        idata = InferenceData(; log_likelihood=log_like)
-        @test_throws Exception PosteriorStats.log_likelihood(idata)
-        @test PosteriorStats.log_likelihood(idata, :x) == x
-        @test PosteriorStats.log_likelihood(idata, :y) == y
-
-        # test old InferenceData versions
-        sample_stats = convert_to_dataset((; lp=randn(ndraws, nchains), log_likelihood=x))
-        idata = InferenceData(; sample_stats)
-        @test PosteriorStats.log_likelihood(idata) == x
-
-        sample_stats = convert_to_dataset((; lp=randn(ndraws, nchains), log_like=x))
-        idata = InferenceData(; sample_stats)
-        @test_throws ArgumentError PosteriorStats.log_likelihood(idata)
-        @test PosteriorStats.log_likelihood(idata, :log_like) == x
-
-        idata = InferenceData()
-        @test_throws ArgumentError PosteriorStats.log_likelihood(idata)
-    end
-
-    @testset "observations_and_predictions" begin
-        @testset "unique names" begin
-            @testset for pred_group in (:posterior, :posterior_predictive),
-                y_name in (:y, :z),
-                y_pred_name in (y_name, Symbol("$(y_name)_pred"))
-
-                observed_data = namedtuple_to_dataset(
-                    (; (y_name => randn(10),)...); default_dims=()
-                )
-                pred = namedtuple_to_dataset((; (y_pred_name => randn(100, 4, 10),)...))
-                y = observed_data[y_name]
-                y_pred = pred[y_pred_name]
-                idata = InferenceData(; observed_data, pred_group => pred)
-
-                obs_pred_exp = (y_name => y, y_pred_name => y_pred)
-                @testset for y_name_hint in (y_name, nothing),
-                    y_pred_name_hint in (y_pred_name, nothing)
-
-                    obs_pred = @inferred PosteriorStats.observations_and_predictions(
-                        idata, y_name_hint, y_pred_name_hint
-                    )
-                    @test obs_pred == obs_pred_exp
-                end
-
-                @test_throws Exception PosteriorStats.observations_and_predictions(
-                    idata, :foo, :bar
-                )
-                @test_throws Exception PosteriorStats.observations_and_predictions(
-                    idata, :foo, nothing
-                )
-                @test_throws Exception PosteriorStats.observations_and_predictions(
-                    idata, nothing, :bar
-                )
-            end
-        end
-
-        @testset "unique pairs" begin
-            @testset for pred_group in (:posterior, :posterior_predictive),
-                y_name in (:y, :z),
-                y_pred_name in (y_name, Symbol("$(y_name)_pred"))
-
-                observed_data = namedtuple_to_dataset(
-                    (; (y_name => randn(10), :w => randn(3))...); default_dims=()
-                )
-                pred = namedtuple_to_dataset((;
-                    (y_pred_name => randn(100, 4, 10), :q => randn(100, 4, 2))...
-                ))
-                y = observed_data[y_name]
-                y_pred = pred[y_pred_name]
-                idata = InferenceData(; observed_data, pred_group => pred)
-
-                obs_pred_exp = (y_name => y, y_pred_name => y_pred)
-                @testset for y_name_hint in (y_name, nothing),
-                    y_pred_name_hint in (y_pred_name, nothing)
-
-                    y_name_hint === nothing && y_pred_name_hint !== nothing && continue
-                    obs_pred = PosteriorStats.observations_and_predictions(
-                        idata, y_name_hint, y_pred_name_hint
-                    )
-                    @test obs_pred == obs_pred_exp
-                end
-
-                @test_throws Exception PosteriorStats.observations_and_predictions(
-                    idata, :foo, :bar
-                )
-                @test_throws Exception PosteriorStats.observations_and_predictions(
-                    idata, :foo, nothing
-                )
-                @test_throws Exception PosteriorStats.observations_and_predictions(
-                    idata, nothing, :bar
-                )
-            end
-        end
-
-        @testset "non-unique names" begin
-            @testset for pred_group in (:posterior, :posterior_predictive),
-                pred_suffix in ("", "_pred")
-
-                y_pred_name = Symbol("y$pred_suffix")
-                z_pred_name = Symbol("z$pred_suffix")
-                observed_data = namedtuple_to_dataset(
-                    (; (:y => randn(10), :z => randn(5))...); default_dims=()
-                )
-                pred = namedtuple_to_dataset((;
-                    (z_pred_name => randn(100, 4, 5), y_pred_name => randn(100, 4, 10))...
-                ))
-                y = observed_data.y
-                z = observed_data.z
-                y_pred = pred[y_pred_name]
-                z_pred = pred[z_pred_name]
-                idata = InferenceData(; observed_data, pred_group => pred)
-
-                @testset for (name, pred_name) in ((:y, y_pred_name), (:z, z_pred_name)),
-                    pred_name_hint in (pred_name, nothing)
-
-                    @test PosteriorStats.observations_and_predictions(
-                        idata, name, pred_name_hint
-                    ) == (name => observed_data[name], pred_name => pred[pred_name])
-                end
-
-                @test_throws ArgumentError PosteriorStats.observations_and_predictions(
-                    idata
-                )
-                @test_throws ArgumentError PosteriorStats.observations_and_predictions(
-                    idata, nothing, nothing
-                )
-                @test_throws ErrorException PosteriorStats.observations_and_predictions(
-                    idata, :foo, :bar
-                )
-                @test_throws ErrorException PosteriorStats.observations_and_predictions(
-                    idata, :foo, nothing
-                )
-            end
-        end
-
-        @testset "missing groups" begin
-            observed_data = namedtuple_to_dataset((; y=randn(10)); default_dims=())
-            idata = InferenceData(; observed_data)
-            @test_throws ArgumentError PosteriorStats.observations_and_predictions(idata)
-            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
-                idata, :y, :y_pred
-            )
-            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
-                idata, :y, nothing
-            )
-            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
-                idata, nothing, :y_pred
-            )
-
-            posterior_predictive = namedtuple_to_dataset((; y_pred=randn(100, 4, 10)))
-            idata = InferenceData(; posterior_predictive)
-            @test_throws ArgumentError PosteriorStats.observations_and_predictions(idata)
-            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
-                idata, :y, :y_pred
-            )
-            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
-                idata, :y, nothing
-            )
-            @test_throws ArgumentError PosteriorStats.observations_and_predictions(
-                idata, nothing, :y_pred
-            )
-        end
-    end
-
     @testset "_assimilar" begin
         @testset for x in ([8, 2, 5], (8, 2, 5), (; a=8, b=2, c=5))
             @test @inferred(PosteriorStats._assimilar((x=1.0, y=2.0, z=3.0), x)) ==
                 (x=8, y=2, z=5)
             @test @inferred(PosteriorStats._assimilar((randn(3)...,), x)) == (8, 2, 5)
-            dim = Dim{:foo}(["a", "b", "c"])
-            y = DimArray(randn(3), dim)
-            @test @inferred(PosteriorStats._assimilar(y, x)) == DimArray([8, 2, 5], dim)
+            y = OffsetVector(randn(3), -1)
+            @test @inferred(PosteriorStats._assimilar(y, x)) == OffsetVector([8, 2, 5], -1)
         end
     end
 
@@ -230,25 +45,10 @@ using Test
             end
         end
 
-        da = DimArray(x, (Dim{:a}(1:2), Dim{:b}(['x', 'y', 'z']), Dim{:c}(0:3)))
-        for dims in (2, (1, 3), (3, 1), (2, 3), (:c, :a))
-            @test PosteriorStats._eachslice(da; dims) === eachslice(da; dims)
+        oa = OffsetArray(x, -4, 3, 0)
+        for dims in (2, (1, 3), (3, 1), (2, 3))
+            @test PosteriorStats._eachslice(oa; dims) === eachslice(oa; dims)
         end
-    end
-
-    @testset "_draw_chains_params_array" begin
-        chaindim = Dim{:chain}(1:4)
-        drawdim = Dim{:draw}(1:2:200)
-        paramdim1 = Dim{:param1}(0:1)
-        paramdim2 = Dim{:param2}([:a, :b, :c])
-        dims = (drawdim, chaindim, paramdim1, paramdim2)
-        x = DimArray(randn(size(dims)), dims)
-        xperm = permutedims(x, (chaindim, drawdim, paramdim1, paramdim2))
-        @test @inferred PosteriorStats._draw_chains_params_array(xperm) ≈ x
-        xperm = permutedims(x, (paramdim1, chaindim, drawdim, paramdim2))
-        @test @inferred PosteriorStats._draw_chains_params_array(xperm) ≈ x
-        xperm = permutedims(x, (paramdim1, drawdim, paramdim2, chaindim))
-        @test @inferred PosteriorStats._draw_chains_params_array(xperm) ≈ x
     end
 
     @testset "_logabssubexp" begin
