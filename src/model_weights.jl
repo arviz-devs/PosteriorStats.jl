@@ -252,8 +252,7 @@ function _elpd_matrix(elpd_results)
     elpd_values = map(elpd_results) do result
         return vec(elpd_estimates(result; pointwise=true).elpd)
     end
-    elpd_mat = reduce(hcat, elpd_values)
-    return elpd_mat
+    return reduce(hcat, collect(elpd_values))
 end
 
 # Optimize on the probability simplex by converting the problem to optimization on the unit
