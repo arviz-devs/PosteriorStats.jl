@@ -1,17 +1,7 @@
 """
-    compare(models; kwargs...)
+    compare(models; kwargs...) -> ModelComparisonResult
 
 Compare models based on their expected log pointwise predictive density (ELPD).
-
-`models` is a `Tuple`, `NamedTuple`, or `AbstractVector` whose values are either
-[`AbstractELPDResult`](@ref) entries or any argument to `elpd_method`, which must produce an
-`AbstractELPDResult`.
-
-The weights are returned in the same type of
-collection.
-
-The argument may be any object with a `pairs` method where each value is either an
-`InferenceData` or an [`AbstractELPDResult`](@ref).
 
 The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
 cross-validation (LOO) or using the widely applicable information criterion (WAIC).
@@ -27,15 +17,14 @@ leading authorities on model comparison dx.doi.org/10.1111/1467-9868.00353
 
   - `weights_method::AbstractModelWeightsMethod=Stacking()`: the method to be used to weight
     the models. See [`model_weights`](@ref) for details
-
-      + `elpd_method=loo`: a method that computes an `AbstractELPDResult` from an argument in
-        `models`.
-
+  - `elpd_method=loo`: a method that computes an `AbstractELPDResult` from an argument in
+    `models`.
   - `sort::Bool=true`: Whether to sort models by decreasing ELPD.
 
 # Returns
 
-  - [`ModelComparisonResult`](@ref): A container for the model comparison results.
+  - [`ModelComparisonResult`](@ref): A container for the model comparison results. The
+    fields contain a similar collection to `models`.
 
 # Examples
 
