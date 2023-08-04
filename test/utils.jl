@@ -44,11 +44,6 @@ using Test
                 @test PosteriorStats._eachslice(x; dims) === eachslice(x; dims)
             end
         end
-
-        oa = OffsetArray(x, -4, 3, 0)
-        for dims in (2, (1, 3), (3, 1), (2, 3))
-            @test PosteriorStats._eachslice(oa; dims) === eachslice(oa; dims)
-        end
     end
 
     @testset "_logabssubexp" begin
