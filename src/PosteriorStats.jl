@@ -30,6 +30,9 @@ export elpd_estimates, information_criterion, loo, waic
 export AbstractModelWeightsMethod, BootstrappedPseudoBMA, PseudoBMA, Stacking, model_weights
 export ModelComparisonResult, compare
 
+# Summary statistics
+# export SummaryStats, summarystats
+
 # Others
 export hdi, hdi!, loo_pit, r2_score
 
