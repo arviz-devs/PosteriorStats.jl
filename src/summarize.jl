@@ -1,5 +1,3 @@
-const DEFAULT_METRIC_DIM = Dimensions.key2dim(:_metric)
-
 """
 $(SIGNATURES)
 
