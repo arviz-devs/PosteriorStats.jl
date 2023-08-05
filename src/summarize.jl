@@ -73,137 +73,167 @@ end
 TableTraits.isiterabletable(::SummaryStats) = true
 
 """
-    summarize(data::InferenceData; group=:posterior, kwargs...)
-    summarize(data::Dataset; kwargs...)
+    summarize(data, stats_funs; [var_names]) -> SummaryStats
+
+Compute the summary statistics in `stats_funs` on each param in `data`.
+
+`stats_funs` is a collection of functions that reduces a matrix with shape `(draws, chains)`
+to a scalar or a collection of scalars. Alternatively, an item in `stats_funs` may be a
+`Pair` of the form `name => fun` specifying the name to be used for the statistic or of the
+form `(name1, ...) => fun` when the function returns a collection. When the function returns
+a collection, the names in this latter format must be provided.
+
+The variable names may be provided by specifying `var_names`. Otherwise, defaults are
+selected from `data`.
+
+To support computing summary statistics from a custom object, overload this method.
+
+See also [`SummaryStats`](@ref).
+"""
+function summarize end
+
+"""
+    summarize(data::AbstractArray, stats_funs; kwargs...) -> SummaryStats
+
+Compute the summary statistics in `stats_funs` on each param in `data`, with size
+`(draws, chains, params)`.
+
+# Examples
+
+Compute `mean`, `std` and the Monte Carlo standard error (MCSE) of the mean estimate:
+
+```jldoctest summarize_array; setup = (using Random; Random.seed!(84))
+julia> using PosteriorStats, Statistics, StatsBase
+
+julia> x = randn(1000, 4, 3) .+ reshape(0:10:20, 1, 1, :);
+
+julia> summarize(x, (mean, std, :mcse_mean => sem))
+SummaryStats
+       mean    std  mcse_mean
+ 1   0.0003  0.990      0.016
+ 2  10.02    0.988      0.016
+ 3  19.98    0.988      0.016
+```
+
+Avoid recomputing the mean by using `mean_and_std`, and provide parameter names:
+```jldoctest summarize_array
+julia> summarize(x, ((:mean, :std) => mean_and_std, mad); var_names=[:a, :b, :c])
+SummaryStats
+         mean    std    mad
+ a   0.000305  0.990  0.978
+ b  10.0       0.988  0.995
+ c  20.0       0.988  0.979
+```
+
+Note that when an estimator and its MCSE are both computed, the MCSE is used to determine
+the number of significant digits that will be displayed.
+"""
+function summarize(
+    data::AbstractArray{<:Union{Real,Missing},3},
+    stats_funs_and_names;
+    var_names=axes(data, 3),
+)
+    names_and_funs = map(_fun_and_name, stats_funs_and_names)
+    fnames = map(first, names_and_funs)
+    funs = map(last, names_and_funs)
+    nt = merge((; variable=var_names), _summarize(data, funs, fnames)...)
+    return SummaryStats(nt)
+end
+
+"""
+    summarize(data; kwargs...)
 
 Compute summary statistics and diagnostics on the `data`.
+
+This method computes default statistics and diagnostics, which may be customized
+(see below).
 
 # Keywords
 
   - `prob_interval::Real`: The value of the `prob` argument to [`hdi`](@ref) used to compute
     the highest density interval. Defaults to $(DEFAULT_INTERVAL_PROB).
-  - `return_type::Type`: The type of object to return. Valid options are `Dataset`
-    and [`SummaryStats`](@ref). Defaults to `SummaryStats`.
-  - `metric_dim`: The dimension name or type to use for the computed metrics. Only used
-    if `return_type` is `Dataset`. Defaults to `$(sprint(show, "text/plain", DEFAULT_METRIC_DIM))`.
-  - `compact_labels::Bool`: Whether to use compact names for the variables. Only used if
-    `return_type` is `SummaryStats`. Defaults to `true`.
-  - `kind::Symbol`: Whether to compute just statistics (`:stats`), just diagnostics
-    (`:diagnostics`), or both (`:both`). Defaults to `:both`.
+  - `defaults::Union{Bool,Symbol}=true`: Whether to compute just statistics (`:stats`), just
+    diagnostics (`:diagnostics`), all (`true`), or none (`false`).
+  - `stats_funs=()`: A collection of `stats_funs` forwarded to [`summarize`](@ref).
+  - `kwargs`: Remaining keywords are forwarded to [`summarize`](@ref).
 
 # Examples
 
-Compute the summary statistics and diagnostics on posterior draws of the centered eight
-model:
+```jldoctest summarize_defaults; setup = (using Random; Random.seed!(33))
+julia> using PosteriorStats, Statistics, StatsBase
 
-```jldoctest summarize
-julia> using ArviZExampleData, PosteriorStats
+julia> x = randn(1000, 4, 3) .+ reshape(0:10:20, 1, 1, :);
 
-julia> idata = load_example_data("centered_eight");
-
-julia> summarize(idata.posterior[(:mu, :tau)])
+julia> summarize(x)
 SummaryStats
-      mean  std  hdi_3%  hdi_97%  mcse_mean  mcse_std  ess_tail  ess_bulk  rha ⋯
- mu    4.5  3.5  -1.62     10.7        0.23      0.11       659       241  1.0 ⋯
- tau   4.1  3.1   0.896     9.67       0.26      0.17        38        67  1.0 ⋯
+      mean   std  hdi_3%  hdi_97%  mcse_mean  mcse_std  ess_tail  ess_bulk  rh ⋯
+ 1   0.003  1.00   -1.83     1.89      0.016     0.011      3800      3952  1. ⋯
+ 2   9.99   0.98    8.19    11.9       0.015     0.011      3996      4045  1. ⋯
+ 3  20.02   1.01   18.1     21.9       0.017     0.011      3741      3736  1. ⋯
                                                                 1 column omitted
 ```
 
-Compute just the statistics on all variables:
+Compute just the statistics on all variables, and provide the variable names:
 
-```jldoctest summarize
-julia> summarize(idata.posterior; kind=:stats)
+```jldoctest summarize_defaults
+julia> summarize(x; var_names=[:a, :b, :c], defaults=:stats)
 SummaryStats
-                          mean   std  hdi_3%  hdi_97%
- mu                       4.49  3.49  -1.62     10.7
- theta[Choate]            6.46  5.87  -4.56     17.1
- theta[Deerfield]         5.03  4.88  -4.31     14.3
- theta[Phillips Andover]  3.94  5.69  -7.77     13.7
- theta[Phillips Exeter]   4.87  5.01  -4.49     14.7
- theta[Hotchkiss]         3.67  4.96  -6.47     11.7
- theta[Lawrenceville]     3.97  5.19  -7.04     12.2
- theta[St. Paul's]        6.58  5.11  -3.09     16.3
- theta[Mt. Hermon]        4.77  5.74  -5.86     16.0
- tau                      4.12  3.10   0.896     9.67
+        mean    std  hdi_3%  hdi_97%
+ a   0.00258  1.00    -1.83     1.89
+ b   9.99     0.984    8.19    11.9
+ c  20.0      1.01    18.1     21.9
 ```
 
-Compute the statistics and diagnostics from the posterior group of an `InferenceData` and
-store in a `Dataset`:
+Compute the default statistics with a 89% HDI, along with the median and median absolute
+deviation:
 
-```jldoctest summarize
-julia> using InferenceObjects
-
-julia> summarize(idata; return_type=Dataset)
-Dataset with dimensions:
-  Dim{:_metric} Categorical{String} String[mean, std, …, ess_bulk, rhat] Unordered,
-  Dim{:school} Categorical{String} String[Choate, Deerfield, …, St. Paul's, Mt. Hermon] Unordered
-and 3 layers:
-  :mu    Float64 dims: Dim{:_metric} (9)
-  :theta Float64 dims: Dim{:school}, Dim{:_metric} (8×9)
-  :tau   Float64 dims: Dim{:_metric} (9)
+```jldoctest summarize_defaults
+julia> summarize(x; defaults=:stats, prob_interval=0.89, stats_funs=(median, mad))
+SummaryStats
+        mean    std  hdi_5.5%  hdi_94.5%   median    mad
+ 1   0.00258  1.00      -1.51       1.68   0.0206  1.02
+ 2   9.99     0.984      8.53      11.6   10.00    0.982
+ 3  20.0      1.01      18.4       21.5   20.0     0.992
 ```
 """
 function summarize(
-    data::InferenceObjects.InferenceData; group::Symbol=:posterior, kwargs...
-)
-    return summarize(data[group]; kwargs...)
-end
-function summarize(
-    data::InferenceObjects.Dataset; return_type::Type=SummaryStats, kwargs...
-)
-    return _summarize(return_type, data; kwargs...)
-end
-
-function _summarize(
-    ::Type{InferenceObjects.Dataset},
-    data::InferenceObjects.Dataset;
-    kind::Symbol=:both,
+    data;
     prob_interval::Real=DEFAULT_INTERVAL_PROB,
-    metric_dim=DEFAULT_METRIC_DIM,
-)
-    dims = Dimensions.dims(data, InferenceObjects.DEFAULT_SAMPLE_DIMS)
-    stats = [
-        "mean" => (data -> dropdims(Statistics.mean(data; dims); dims)),
-        "std" => (data -> dropdims(Statistics.std(data; dims); dims)),
-        _interval_prob_to_strings("hdi", prob_interval) =>
-            (data -> hdi(data; prob=prob_interval)),
-    ]
-    diagnostics = [
-        "mcse_mean" => (data -> MCMCDiagnosticTools.mcse(data; kind=Statistics.mean)),
-        "mcse_std" => (data -> MCMCDiagnosticTools.mcse(data; kind=Statistics.std)),
-        "ess_tail" => (data -> MCMCDiagnosticTools.ess(data; kind=:tail)),
-        ("ess_bulk", "rhat") => (data -> MCMCDiagnosticTools.ess_rhat(data)),
-    ]
-    metrics = if kind === :both
-        vcat(stats, diagnostics)
-    elseif kind === :stats
-        stats
-    elseif kind === :diagnostics
-        diagnostics
-    else
-        error("Invalid value for `kind`: $kind")
-    end
-    metric_vals = map(metrics) do (_, f)
-        f(data)
-    end
-    metric_names = collect(Iterators.flatten(map(_astuple ∘ first, metrics)))
-    cat_dim = Dimensions.rebuild(Dimensions.basedims(metric_dim), metric_names)
-    ds = cat(metric_vals...; dims=cat_dim)::InferenceObjects.Dataset
-    return DimensionalData.rebuild(ds; metadata=DimensionalData.NoMetadata(), refdims=dims)
-end
-function _summarize(
-    ::Type{SummaryStats},
-    data::InferenceObjects.Dataset;
-    compact_labels::Bool=true,
-    metric_dim=DEFAULT_METRIC_DIM,
+    defaults::Union{Bool,Symbol}=true,
+    stats_funs=(),
     kwargs...,
 )
-    ds = _summarize(InferenceObjects.Dataset, data; metric_dim, kwargs...)
-    table = _as_flat_table(ds, metric_dim; compact_labels)
-    return SummaryStats(table)
+    user_stats = summarize(data, stats_funs; kwargs...)
+    default_stats_funs = if defaults === :stats
+        _default_stats_funs(; prob_interval)
+    elseif defaults === :diagnostics
+        _default_diagnostic_funs()
+    elseif defaults === true
+        (_default_stats_funs(; prob_interval)..., _default_diagnostic_funs()...)
+    else
+        return user_stats
+    end
+    default_stats = summarize(data, default_stats_funs; kwargs...)
+    return merge(default_stats, user_stats)
 end
 
-function _interval_prob_to_strings(interval_type, prob; digits=2)
+function _default_stats_funs(; prob_interval::Real=DEFAULT_INTERVAL_PROB)
+    hdi_names = map(Symbol, _prob_interval_to_strings("hdi", prob_interval))
+    return (
+        (:mean, :std) => StatsBase.mean_and_std, hdi_names => Base.Fix2(_hdi, prob_interval)
+    )
+end
+
+function _default_diagnostic_funs()
+    return (
+        :mcse_mean => MCMCDiagnosticTools.mcse,
+        :mcse_std => _mcse_std,
+        :ess_tail => _ess_tail,
+        (:ess_bulk, :rhat) => MCMCDiagnosticTools.ess_rhat,
+    )
+end
+
+function _prob_interval_to_strings(interval_type, prob; digits=2)
     α = (1 - prob) / 2
     perc_lower = string(round(100 * α; digits))
     perc_upper = string(round(100 * (1 - α); digits))
@@ -213,45 +243,32 @@ function _interval_prob_to_strings(interval_type, prob; digits=2)
     end
 end
 
-function _as_flat_table(ds, dim; compact_labels::Bool=true)
-    row_table = Iterators.map(_indices_iterator(ds, dim)) do (var, indices)
-        var_select = isempty(indices) ? var : view(var, indices...)
-        return (
-            variable=_indices_to_name(var, indices, compact_labels),
-            _arr_to_namedtuple(var_select)...,
-        )
-    end
-    return Tables.columntable(row_table)
-end
-
-function _indices_iterator(ds::DimensionalData.AbstractDimStack, dims)
-    return Iterators.flatten(
-        Iterators.map(Base.Fix2(_indices_iterator, dims), DimensionalData.layers(ds))
-    )
-end
-function _indices_iterator(var::DimensionalData.AbstractDimArray, dims)
-    dims_flatten = Dimensions.otherdims(var, dims)
-    isempty(dims_flatten) && return ((var, ()),)
-    indices_iter = DimensionalData.DimKeys(dims_flatten)
-    return zip(Iterators.cycle((var,)), indices_iter)
-end
-
-function _arr_to_namedtuple(arr::DimensionalData.AbstractDimVector)
-    ks = Tuple(map(Symbol, DimensionalData.lookup(arr, 1)))
-    return NamedTuple{ks}(Tuple(arr))
-end
-
-function _indices_to_name(var, dims, compact)
-    name = DimensionalData.name(var)
-    isempty(dims) && return string(name)
-    elements = if compact
-        map(string ∘ Dimensions.val ∘ Dimensions.val, dims)
-    else
-        map(dims) do d
-            val = Dimensions.val(Dimensions.val(d))
-            val_str = sprint(show, "text/plain", val)
-            return "$(Dimensions.name(d))=At($val_str)"
+function _summarize(data::AbstractArray{<:Any,3}, funs, fun_names)
+    return map(fun_names, funs) do fname, f
+        val = map(f, eachslice(data; dims=3))
+        if fname isa NTuple{<:Any,Symbol}
+            return NamedTuple{fname}(getindex.(val, i) for i in 1:length(fname))
+        else
+            return (; fname => val)
         end
     end
-    return "$name[" * join(elements, ',') * "]"
 end
+
+_mcse_std(x) = MCMCDiagnosticTools.mcse(x; kind=Statistics.std)
+_ess_tail(x) = MCMCDiagnosticTools.ess(x; kind=:tail)
+_hdi(x, prob) = hdi(x; prob)
+
+_map_paramslices(f, x) = map(f, eachslice(x; dims=3))
+_map_paramslices(f::typeof(MCMCDiagnosticTools.ess), x) = f(x)
+_map_paramslices(f::typeof(_ess_tail), x) = f(x)
+_map_paramslices(f::typeof(MCMCDiagnosticTools.ess_rhat), x) = f(x)
+_map_paramslices(f::typeof(MCMCDiagnosticTools.rhat), x) = f(x)
+_map_paramslices(f::typeof(MCMCDiagnosticTools.mcse), x) = f(x)
+_map_paramslices(f::typeof(_mcse_std), x) = f(x)
+_map_paramslices(f::Base.Fix2{typeof(_hdi)}, x) = f(x)
+
+_fnames(f::Tuple) = map(Symbol, f)
+_fnames(f) = Symbol(f)
+
+_fun_and_name(p::Pair) = _fnames(p.first) => p.second
+_fun_and_name(f) = _fnames(f) => f
