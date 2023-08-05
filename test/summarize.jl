@@ -16,7 +16,7 @@ _maybevec(x::AbstractArray) = vec(x)
 _maybevec(x) = x
 
 @testset "summary statistics" begin
-    @testset "summarystats" begin
+    @testset "summarize" begin
         @testset "return_type=Dataset" begin
             data = (x=randn(100, 2), y=randn(100, 2, 3), z=randn(100, 2, 2, 3))
             ds = convert_to_dataset(
@@ -27,10 +27,10 @@ _maybevec(x) = x
             idata1 = InferenceData(; posterior=ds)
             idata2 = InferenceData(; prior=ds)
 
-            stats = @inferred Dataset summarystats(ds; return_type=Dataset)
-            @test parent(stats) == parent(summarystats(idata1; return_type=Dataset))
+            stats = @inferred Dataset summarize(ds; return_type=Dataset)
+            @test parent(stats) == parent(summarize(idata1; return_type=Dataset))
             @test parent(stats) ==
-                parent(summarystats(idata2; group=:prior, return_type=Dataset))
+                parent(summarize(idata2; group=:prior, return_type=Dataset))
 
             @test issetequal(keys(stats), keys(ds))
             @test isempty(DimensionalData.metadata(stats))
@@ -59,7 +59,7 @@ _maybevec(x) = x
             @test view(stats; _metric=At("ess_bulk")) == ess(ds; kind=:bulk)
             @test view(stats; _metric=At("rhat")) == rhat(ds)
 
-            stats2 = summarystats(ds; return_type=Dataset, prob_interval=0.8)
+            stats2 = summarize(ds; return_type=Dataset, prob_interval=0.8)
             @test lookup(stats2, :_metric) == [
                 "mean",
                 "std",
@@ -75,18 +75,18 @@ _maybevec(x) = x
             @test stats2[_metric=At("hdi_10%")] == hdi_ds2[hdi_bound=1]
             @test stats2[_metric=At("hdi_90%")] == hdi_ds2[hdi_bound=2]
 
-            stats3 = summarystats(ds; return_type=Dataset, kind=:stats)
+            stats3 = summarize(ds; return_type=Dataset, kind=:stats)
             @test lookup(stats3, :_metric) == ["mean", "std", "hdi_3%", "hdi_97%"]
             @test stats3 == stats[_metric=At(["mean", "std", "hdi_3%", "hdi_97%"])]
 
-            stats4 = summarystats(ds; return_type=Dataset, kind=:diagnostics)
+            stats4 = summarize(ds; return_type=Dataset, kind=:diagnostics)
             @test lookup(stats4, :_metric) ==
                 ["mcse_mean", "mcse_std", "ess_tail", "ess_bulk", "rhat"]
             @test stats4 == stats[_metric=At([
                 "mcse_mean", "mcse_std", "ess_tail", "ess_bulk", "rhat"
             ])]
 
-            stats5 = summarystats(
+            stats5 = summarize(
                 ds;
                 return_type=Dataset,
                 metric_dim=:__metric,
@@ -162,7 +162,7 @@ _maybevec(x) = x
                 coords=(a=["q", "r", "s"], b=[0, 1], c=[:m, :n, :o]),
             )
 
-            stats = @inferred SummaryStats summarystats(ds)
+            stats = @inferred SummaryStats summarize(ds)
             stats_data = parent(stats)
             @test stats_data.variable == [
                 "x",
@@ -213,7 +213,7 @@ _maybevec(x) = x
             @test stats_data.rhat ==
                 reduce(vcat, map(_maybevec, DimensionalData.layers(rhat(ds))))
 
-            stats2 = summarystats(ds; prob_interval=0.8, kind=:stats)
+            stats2 = summarize(ds; prob_interval=0.8, kind=:stats)
             @test issetequal(
                 keys(parent(stats2)),
                 [:variable, :mean, :std, Symbol("hdi_10%"), Symbol("hdi_90%")],

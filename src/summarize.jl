@@ -3,7 +3,7 @@ const DEFAULT_METRIC_DIM = Dimensions.key2dim(:_metric)
 """
 $(SIGNATURES)
 
-A container for a column table of values computed by [`summarystats`](@ref).
+A container for a column table of values computed by [`summarize`](@ref).
 
 This object implements the Tables and TableTraits interfaces and has a custom `show` method.
 
@@ -72,8 +72,8 @@ end
 TableTraits.isiterabletable(::SummaryStats) = true
 
 """
-    summarystats(data::InferenceData; group=:posterior, kwargs...)
-    summarystats(data::Dataset; kwargs...)
+    summarize(data::InferenceData; group=:posterior, kwargs...)
+    summarize(data::Dataset; kwargs...)
 
 Compute summary statistics and diagnostics on the `data`.
 
@@ -95,12 +95,12 @@ Compute summary statistics and diagnostics on the `data`.
 Compute the summary statistics and diagnostics on posterior draws of the centered eight
 model:
 
-```jldoctest summarystats
+```jldoctest summarize
 julia> using ArviZExampleData, PosteriorStats
 
 julia> idata = load_example_data("centered_eight");
 
-julia> summarystats(idata.posterior[(:mu, :tau)])
+julia> summarize(idata.posterior[(:mu, :tau)])
 SummaryStats
       mean  std  hdi_3%  hdi_97%  mcse_mean  mcse_std  ess_tail  ess_bulk  rha ⋯
  mu    4.5  3.5  -1.62     10.7        0.23      0.11       659       241  1.0 ⋯
@@ -110,8 +110,8 @@ SummaryStats
 
 Compute just the statistics on all variables:
 
-```jldoctest summarystats
-julia> summarystats(idata.posterior; kind=:stats)
+```jldoctest summarize
+julia> summarize(idata.posterior; kind=:stats)
 SummaryStats
                           mean   std  hdi_3%  hdi_97%
  mu                       4.49  3.49  -1.62     10.7
@@ -129,10 +129,10 @@ SummaryStats
 Compute the statistics and diagnostics from the posterior group of an `InferenceData` and
 store in a `Dataset`:
 
-```jldoctest summarystats
+```jldoctest summarize
 julia> using InferenceObjects
 
-julia> summarystats(idata; return_type=Dataset)
+julia> summarize(idata; return_type=Dataset)
 Dataset with dimensions:
   Dim{:_metric} Categorical{String} String[mean, std, …, ess_bulk, rhat] Unordered,
   Dim{:school} Categorical{String} String[Choate, Deerfield, …, St. Paul's, Mt. Hermon] Unordered
@@ -142,12 +142,12 @@ and 3 layers:
   :tau   Float64 dims: Dim{:_metric} (9)
 ```
 """
-function StatsBase.summarystats(
+function summarize(
     data::InferenceObjects.InferenceData; group::Symbol=:posterior, kwargs...
 )
-    return summarystats(data[group]; kwargs...)
+    return summarize(data[group]; kwargs...)
 end
-function StatsBase.summarystats(
+function summarize(
     data::InferenceObjects.Dataset; return_type::Type=SummaryStats, kwargs...
 )
     return _summarize(return_type, data; kwargs...)

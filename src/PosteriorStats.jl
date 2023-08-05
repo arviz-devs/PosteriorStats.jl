@@ -31,7 +31,7 @@ export AbstractModelWeightsMethod, BootstrappedPseudoBMA, PseudoBMA, Stacking, m
 export ModelComparisonResult, compare
 
 # Summary statistics
-# export SummaryStats, summarystats
+export SummaryStats, summarize
 
 # Others
 export hdi, hdi!, loo_pit, r2_score
