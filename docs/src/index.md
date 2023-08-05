@@ -9,6 +9,7 @@ These functions generally estimate properties of posterior and/or posterior pred
 The default implementations defined here operate on Monte Carlo samples.
 
 See the [API](@ref) for details.
+
 ## Extending this package
 
 The methods defined here are intended to be extended by two types of packages.
