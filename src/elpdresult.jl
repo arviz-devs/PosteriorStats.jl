@@ -34,7 +34,7 @@ function elpd_estimates end
 
 Compute the information criterion for the given `scale` from the `elpd` estimate.
 
-`scale` must be one of $(keys(INFORMATION_CRITERION_SCALES)).
+`scale` must be one of `$(keys(INFORMATION_CRITERION_SCALES))`.
 
 See also: [`loo`](@ref), [`waic`](@ref)
 """
@@ -48,7 +48,7 @@ end
 
 Compute information criterion for the given `scale` from the existing ELPD `result`.
 
-`scale` must be one of $(keys(INFORMATION_CRITERION_SCALES)).
+`scale` must be one of `$(keys(INFORMATION_CRITERION_SCALES))`.
 
 If `pointwise=true`, then pointwise estimates are returned.
 """

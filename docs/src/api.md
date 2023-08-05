@@ -1,4 +1,4 @@
-# Stats
+# API
 
 ```@index
 Pages = ["stats.md"]

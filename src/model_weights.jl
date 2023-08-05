@@ -26,10 +26,10 @@ details.
 See also: [`AbstractModelWeightsMethod`](@ref), [`compare`](@ref)
 
 [^YaoVehtari2018]: Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
-    Using Stacking to Average Bayesian Predictive Distributions.
-    2018. Bayesian Analysis. 13, 3, 917–1007.
-    doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
-    arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
+                   Using Stacking to Average Bayesian Predictive Distributions.
+                   2018. Bayesian Analysis. 13, 3, 917–1007.
+                   doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
+                   arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
 
 # Examples
 
@@ -93,10 +93,10 @@ the ELPD estimate.
     or [`Stacking`](@ref). For details, see [^YaoVehtari2018].
 
 [^YaoVehtari2018]: Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
-    Using Stacking to Average Bayesian Predictive Distributions.
-    2018. Bayesian Analysis. 13, 3, 917–1007.
-    doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
-    arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
+                   Using Stacking to Average Bayesian Predictive Distributions.
+                   2018. Bayesian Analysis. 13, 3, 917–1007.
+                   doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
+                   arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
 
 See also: [`Stacking`](@ref)
 """
@@ -132,10 +132,10 @@ $(TYPEDFIELDS)
 See also: [`Stacking`](@ref)
 
 [^YaoVehtari2018]: Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
-    Using Stacking to Average Bayesian Predictive Distributions.
-    2018. Bayesian Analysis. 13, 3, 917–1007.
-    doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
-    arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
+                   Using Stacking to Average Bayesian Predictive Distributions.
+                   2018. Bayesian Analysis. 13, 3, 917–1007.
+                   doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
+                   arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
 """
 struct BootstrappedPseudoBMA{R<:Random.AbstractRNG,T<:Real} <: AbstractModelWeightsMethod
     "The random number generator to use for the Bayesian bootstrap"
@@ -193,14 +193,14 @@ $(TYPEDFIELDS)
 See also: [`BootstrappedPseudoBMA`](@ref)
 
 [^YaoVehtari2018]: Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
-    Using Stacking to Average Bayesian Predictive Distributions.
-    2018. Bayesian Analysis. 13, 3, 917–1007.
-    doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
-    arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
+                   Using Stacking to Average Bayesian Predictive Distributions.
+                   2018. Bayesian Analysis. 13, 3, 917–1007.
+                   doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
+                   arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
 """
 struct Stacking{O<:Optim.AbstractOptimizer} <: AbstractModelWeightsMethod
     """The optimizer to use for the optimization of the weights. The optimizer must support
-    projected gradient optimization viae a `manifold` field."""
+    projected gradient optimization via a `manifold` field."""
     optimizer::O
     """The Optim options to use for the optimization of the weights."""
     options::Optim.Options
