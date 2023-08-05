@@ -102,6 +102,5 @@ using Test
         end
     end
 
-    @testset "summarize" begin
-    end
+    @testset "summarize" begin end
 end
