@@ -48,6 +48,6 @@ include("model_weights.jl")
 include("compare.jl")
 include("loo_pit.jl")
 include("r2_score.jl")
-# include("summarystats.jl")
+include("summarize.jl")
 
 end  # module
