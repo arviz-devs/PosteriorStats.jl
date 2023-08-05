@@ -7,6 +7,8 @@ Pages = ["stats.md"]
 ## Summary statistics
 
 ```@docs
+SummaryStats
+summarize
 ```
 
 ## General statistics
