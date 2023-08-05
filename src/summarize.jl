@@ -25,6 +25,9 @@ Base.getindex(stats::SummaryStats, nm::Symbol) = getindex(parent(stats), nm)
 function Base.iterate(stats::SummaryStats, i::Int=firstindex(parent(stats)))
     return iterate(parent(stats), i)
 end
+function Base.merge(stats::SummaryStats, other_stats::SummaryStats...)
+    return SummaryStats(merge(parent(stats), map(parent, other_stats)...))
+end
 
 #### custom tabular show methods
 
