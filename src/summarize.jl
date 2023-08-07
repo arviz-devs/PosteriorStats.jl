@@ -8,15 +8,19 @@ This object implements the Tables and TableTraits interfaces and has a custom `s
 $(FIELDS)
 """
 struct SummaryStats{D<:NamedTuple}
-    """The summary statistics for each variable, with the first entry containing the
-    variable names"""
+    "The name of the collection of summary statistics, used as the table title in display."
+    name::String
+    """The summary statistics for each parameter, with an optional first column `parameter`
+    containing the parameter names."""
     data::D
+end
+function SummaryStats(data::NamedTuple; name::String="SummaryStats")
+    n = length(first(data))
+    return SummaryStats(name, merge((parameter=1:n,), data))
 end
 
 # forward key interfaces from its parent
 Base.parent(stats::SummaryStats) = getfield(stats, :data)
-Base.propertynames(stats::SummaryStats) = propertynames(parent(stats))
-Base.getproperty(stats::SummaryStats, nm::Symbol) = getproperty(parent(stats), nm)
 Base.keys(stats::SummaryStats) = keys(parent(stats))
 Base.haskey(stats::SummaryStats, nm::Symbol) = haskey(parent(stats), nm)
 Base.length(stats::SummaryStats) = length(parent(stats))
@@ -26,7 +30,13 @@ function Base.iterate(stats::SummaryStats, i::Int=firstindex(parent(stats)))
     return iterate(parent(stats), i)
 end
 function Base.merge(stats::SummaryStats, other_stats::SummaryStats...)
-    return SummaryStats(merge(parent(stats), map(parent, other_stats)...))
+    return SummaryStats(stats.name, merge(parent(stats), map(parent, other_stats)...))
+end
+function Base.isequal(stats::SummaryStats, other_stats::SummaryStats)
+    return isequal(parent(stats), parent(other_stats))
+end
+function Base.:(==)(stats::SummaryStats, other_stats::SummaryStats)
+    return (parent(stats) == parent(other_stats))
 end
 
 #### custom tabular show methods
