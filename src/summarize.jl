@@ -185,6 +185,11 @@ Compute the summary statistics in `stats_funs` on each param in `data`, with siz
     if isempty(stats_funs_and_names)
         return summarize(data, default_summary_stats()...; name, var_names)
     end
+    length(var_names) == size(data, 3) || throw(
+        DimensionMismatch(
+            "length $(length(var_names)) of `var_names` does not match number of parameters $(size(data, 3)) in `data`.",
+        ),
+    )
     names_and_funs = map(_fun_and_name, stats_funs_and_names)
     fnames = map(first, names_and_funs)
     funs = map(last, names_and_funs)
