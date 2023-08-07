@@ -9,21 +9,20 @@ using Test
 @testset "summary statistics" begin
     @testset "SummaryStats" begin
         data = (
-            variable=["a", "bb", "ccc", "d", "e"],
+            parameter=["a", "bb", "ccc", "d", "e"],
             est=randn(5),
             mcse_est=randn(5),
             rhat=rand(5),
             ess=rand(5),
         )
 
-        stats = @inferred SummaryStats(data)
+        stats = @inferred SummaryStats(data; name="Stats")
 
         @testset "basic interfaces" begin
             @test parent(stats) === data
-            @test propertynames(stats) == propertynames(data)
-            for k in propertynames(stats)
-                @test getproperty(stats, k) == getproperty(data, k)
-            end
+            @test stats.name == "Stats"
+            @test SummaryStats("MoreStats", data).name == "MoreStats"
+            @test SummaryStats(data; name="MoreStats").name == "MoreStats"
             @test keys(stats) == keys(data)
             for k in keys(stats)
                 @test haskey(stats, k) == haskey(data, k)
@@ -36,6 +35,16 @@ using Test
             end
             @test Base.iterate(stats) == Base.iterate(data)
             @test Base.iterate(stats, 2) == Base.iterate(data, 2)
+
+            stats2 = SummaryStats((; est=randn(5), est2=randn(5)); name="MoreStats")
+            @test parent(stats2).parameter == 1:5
+            stats_merged1 = merge(stats, stats2)
+            @test stats_merged1.name == "Stats"
+            @test parent(stats_merged1) == merge(parent(stats), parent(stats2))
+
+            stats_merged2 = merge(stats2, stats)
+            @test stats_merged2.name == "MoreStats"
+            @test parent(stats_merged2) == merge(parent(stats2), parent(stats))
         end
 
         @testset "Tables interface" begin
@@ -81,7 +90,7 @@ using Test
 
         @testset "show" begin
             data = (
-                variable=["a", "bb", "ccc", "d", "e"],
+                parameter=["a", "bb", "ccc", "d", "e"],
                 est=[111.11, 1.2345e-6, 5.4321e8, Inf, NaN],
                 mcse_est=[0.0012345, 5.432e-5, 2.1234e5, Inf, NaN],
                 rhat=vcat(1.009, 1.011, 0.99, Inf, NaN),
