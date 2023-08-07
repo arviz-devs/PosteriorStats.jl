@@ -304,7 +304,7 @@ function _namedtuple_of_vals(f, ::Nothing, val::AbstractVector{<:NamedTuple{K}})
     return NamedTuple{K}(ntuple(i -> getindex.(val, i), length(K)))
 end
 
-_fun_and_name(p::Pair) = p
+_fun_and_name(p::Pair) = Symbol(p.first) => p.second
 _fun_and_name(f) = nothing => f
 
 _fname(f) = Symbol(_fname_string(f))
