@@ -254,7 +254,7 @@ function default_stats(
     return (
         :median => Statistics.median ∘ _skipmissing,
         :mad => StatsBase.mad ∘ _skipmissing,
-        eti_names => Base.Fix2(Statistics.quantile, p) ∘ _skipmissing,
+        eti_names => Base.Fix2(Statistics.quantile, p) ∘ _skipmissing ∘ vec,
     )
 end
 
