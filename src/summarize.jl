@@ -46,8 +46,8 @@ function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
         io,
         mime,
         data;
-        title="SummaryStats",
-        row_labels=stats.variable,
+        title=stats.name,
+        row_labels=parent(stats).parameter,
         extra_formatters,
         kwargs...,
     )
@@ -73,7 +73,7 @@ end
 TableTraits.isiterabletable(::SummaryStats) = true
 
 """
-    summarize(data, stats_funs; [var_names]) -> SummaryStats
+    summarize(data, stats_funs...; name="SummaryStats", [var_names]) -> SummaryStats
 
 Compute the summary statistics in `stats_funs` on each param in `data`.
 
@@ -83,32 +83,29 @@ to a scalar or a collection of scalars. Alternatively, an item in `stats_funs` m
 form `(name1, ...) => fun` when the function returns a collection. When the function returns
 a collection, the names in this latter format must be provided.
 
-The variable names may be provided by specifying `var_names`. Otherwise, defaults are
-selected from `data`.
+If no stats functions are provided, then those specified in [`default_summary_stats`](@ref)
+are computed.
 
-To support computing summary statistics from a custom object, overload this method.
+`var_names` specifies the names of the parameters in `data`. If not provided, the names are
+inferred from `data`.
 
-See also [`SummaryStats`](@ref).
-"""
-function summarize end
+To support computing summary statistics from a custom object, overload this method
+specifying the type of `data`.
 
-"""
-    summarize(data::AbstractArray, stats_funs; kwargs...) -> SummaryStats
-
-Compute the summary statistics in `stats_funs` on each param in `data`, with size
-`(draws, chains, params)`.
+See also [`SummaryStats`](@ref), [`default_summary_stats`](@ref), [`default_stats`](@ref),
+[`default_diagnostics`](@ref).
 
 # Examples
 
 Compute `mean`, `std` and the Monte Carlo standard error (MCSE) of the mean estimate:
 
-```jldoctest summarize_array; setup = (using Random; Random.seed!(84))
+```jldoctest summarize; setup = (using Random; Random.seed!(84))
 julia> using PosteriorStats, Statistics, StatsBase
 
 julia> x = randn(1000, 4, 3) .+ reshape(0:10:20, 1, 1, :);
 
-julia> summarize(x, (mean, std, :mcse_mean => sem))
-SummaryStats
+julia> summarize(x, mean, std, :mcse_mean => sem; name="Mean/Std")
+Mean/Std
        mean    std  mcse_mean
  1   0.0003  0.990      0.016
  2  10.02    0.988      0.016
@@ -116,8 +113,8 @@ SummaryStats
 ```
 
 Avoid recomputing the mean by using `mean_and_std`, and provide parameter names:
-```jldoctest summarize_array
-julia> summarize(x, ((:mean, :std) => mean_and_std, mad); var_names=[:a, :b, :c])
+```jldoctest summarize
+julia> summarize(x, (:mean, :std) => mean_and_std, mad; var_names=[:a, :b, :c])
 SummaryStats
          mean    std    mad
  a   0.000305  0.990  0.978
@@ -127,96 +124,63 @@ SummaryStats
 
 Note that when an estimator and its MCSE are both computed, the MCSE is used to determine
 the number of significant digits that will be displayed.
-"""
-function summarize(
-    data::AbstractArray{<:Union{Real,Missing},3},
-    stats_funs_and_names;
-    var_names=axes(data, 3),
-)
-    names_and_funs = map(_fun_and_name, stats_funs_and_names)
-    fnames = map(first, names_and_funs)
-    funs = map(last, names_and_funs)
-    nt = merge((; variable=var_names), _summarize(data, funs, fnames)...)
-    return SummaryStats(nt)
-end
 
-"""
-    summarize(data; kwargs...)
-
-Compute summary statistics and diagnostics on the `data`.
-
-This method computes default statistics and diagnostics, which may be customized
-(see below).
-
-# Keywords
-
-  - `prob_interval::Real`: The value of the `prob` argument to [`hdi`](@ref) used to compute
-    the highest density interval. Defaults to $(DEFAULT_INTERVAL_PROB).
-  - `defaults::Union{Bool,Symbol}=true`: Whether to compute just statistics (`:stats`), just
-    diagnostics (`:diagnostics`), all (`true`), or none (`false`).
-  - `stats_funs=()`: A collection of `stats_funs` forwarded to [`summarize`](@ref).
-  - `kwargs`: Remaining keywords are forwarded to [`summarize`](@ref).
-
-# Examples
-
-```jldoctest summarize_defaults; setup = (using Random; Random.seed!(33))
-julia> using PosteriorStats, Statistics, StatsBase
-
-julia> x = randn(1000, 4, 3) .+ reshape(0:10:20, 1, 1, :);
-
-julia> summarize(x)
+```jldoctest summarize
+julia> summarize(x; var_names=[:a, :b, :c])
 SummaryStats
-      mean   std  hdi_3%  hdi_97%  mcse_mean  mcse_std  ess_tail  ess_bulk  rh ⋯
- 1   0.003  1.00   -1.83     1.89      0.016     0.011      3800      3952  1. ⋯
- 2   9.99   0.98    8.19    11.9       0.015     0.011      3996      4045  1. ⋯
- 3  20.02   1.01   18.1     21.9       0.017     0.011      3741      3736  1. ⋯
+       mean   std  hdi_3%  hdi_97%  mcse_mean  mcse_std  ess_tail  ess_bulk  r ⋯
+ a   0.0003  0.99   -1.92     1.78      0.016     0.012      3567      3663  1 ⋯
+ b  10.02    0.99    8.17    11.9       0.016     0.011      3841      3906  1 ⋯
+ c  19.98    0.99   18.1     21.9       0.016     0.012      3892      3749  1 ⋯
                                                                 1 column omitted
 ```
 
-Compute just the statistics on all variables, and provide the variable names:
+Compute just the statistics with an 89% HDI on all parameters, and provide the parameter
+names:
 
-```jldoctest summarize_defaults
-julia> summarize(x; var_names=[:a, :b, :c], defaults=:stats)
+```jldoctest summarize
+julia> summarize(x, default_stats(; prob_interval=0.89)...; var_names=[:a, :b, :c])
 SummaryStats
-        mean    std  hdi_3%  hdi_97%
- a   0.00258  1.00    -1.83     1.89
- b   9.99     0.984    8.19    11.9
- c  20.0      1.01    18.1     21.9
+         mean    std  hdi_5.5%  hdi_94.5%
+ a   0.000305  0.990     -1.63       1.52
+ b  10.0       0.988      8.53      11.6
+ c  20.0       0.988     18.5       21.6
 ```
 
-Compute the default statistics with a 89% HDI, along with the median and median absolute
-deviation:
+Compute the summary stats with the `stat_focus` set to `Statistics.median`:
 
-```jldoctest summarize_defaults
-julia> summarize(x; defaults=:stats, prob_interval=0.89, stats_funs=(median, mad))
+```jldoctest summarize
+julia> summarize(x, default_summary_stats(median)...; var_names=[:a, :b, :c])
 SummaryStats
-        mean    std  hdi_5.5%  hdi_94.5%   median    mad
- 1   0.00258  1.00      -1.51       1.68   0.0206  1.02
- 2   9.99     0.984      8.53      11.6   10.00    0.982
- 3  20.0      1.01      18.4       21.5   20.0     0.992
+    median    mad  eti_3%  eti_97%  mcse_median  ess_tail  ess_median  rhat
+ a   0.004  0.978   -1.83     1.89        0.020      3567        3336  1.00
+ b  10.02   0.995    8.17    11.9         0.023      3841        3787  1.00
+ c  19.99   0.979   18.1     21.9         0.020      3892        3829  1.00
 ```
 """
-function summarize(
-    data;
-    prob_interval::Real=DEFAULT_INTERVAL_PROB,
-    defaults::Union{Bool,Symbol}=true,
-    stats_funs=(),
-    kwargs...,
-)
-    user_stats = summarize(data, stats_funs; kwargs...)
-    default_stats_funs = if defaults === :stats
-        _default_stats_funs(; prob_interval)
-    elseif defaults === :diagnostics
-        _default_diagnostic_funs()
-    elseif defaults === true
-        (_default_stats_funs(; prob_interval)..., _default_diagnostic_funs()...)
-    else
-        return user_stats
-    end
-    default_stats = summarize(data, default_stats_funs; kwargs...)
-    return merge(default_stats, user_stats)
-end
+function summarize end
 
+"""
+    summarize(data::AbstractArray, stats_funs...; kwargs...) -> SummaryStats
+
+Compute the summary statistics in `stats_funs` on each param in `data`, with size
+`(draws, chains, params)`.
+"""
+@constprop :aggressive function summarize(
+    data::AbstractArray{<:Union{Real,Missing},3},
+    stats_funs_and_names...;
+    name::String="SummaryStats",
+    var_names=axes(data, 3),
+)
+    if isempty(stats_funs_and_names)
+        return summarize(data, default_summary_stats()...; name, var_names)
+    end
+    names_and_funs = map(_fun_and_name, stats_funs_and_names)
+    fnames = map(first, names_and_funs)
+    funs = map(last, names_and_funs)
+    nt = merge((; parameter=var_names), _summarize(data, funs, fnames)...)
+    return SummaryStats(name, nt)
+end
 
 """
     default_summary_stats(focus=Statistics.mean; kwargs...)
@@ -307,30 +271,52 @@ end
 
 function _summarize(data::AbstractArray{<:Any,3}, funs, fun_names)
     return map(fun_names, funs) do fname, f
-        val = map(f, eachslice(data; dims=3))
-        if fname isa NTuple{<:Any,Symbol}
-            return NamedTuple{fname}(getindex.(val, i) for i in 1:length(fname))
-        else
-            return (; fname => val)
-        end
+        return _map_over_params(fname, f, data)
     end
 end
 
-_mcse_std(x) = MCMCDiagnosticTools.mcse(x; kind=Statistics.std)
-_ess_tail(x) = MCMCDiagnosticTools.ess(x; kind=:tail)
-_hdi(x, prob) = hdi(x; prob)
+# aggressive constprop allows summarize to be type-inferrable when called by
+# another function
+@constprop :aggressive function _map_over_params(fname, f, data)
+    vals = _map_paramslices(f, data)
+    return _namedtuple_of_vals(f, fname, vals)
+end
 
+_namedtuple_of_vals(f, fname::Symbol, val) = (; fname => val)
+_namedtuple_of_vals(f, ::Nothing, val) = (; _fname(f) => val)
+function _namedtuple_of_vals(f, fname::NTuple{N,Symbol}, val::AbstractVector) where {N}
+    return NamedTuple{fname}(ntuple(i -> getindex.(val, i), Val(N)))
+end
+function _namedtuple_of_vals(f, fname::NTuple{N,Symbol}, val::NamedTuple) where {N}
+    return NamedTuple{fname}(values(val))
+end
+function _namedtuple_of_vals(f, ::Nothing, val::AbstractVector{<:NamedTuple{K}}) where {K}
+    return NamedTuple{K}(ntuple(i -> getindex.(val, i), length(K)))
+end
+
+_fun_and_name(p::Pair) = p
+_fun_and_name(f) = nothing => f
+
+_fname(f) = Symbol(_fname_string(f))
+@generated function _fname_string(::F) where {F}
+    s = replace(string(F), r"^typeof\((.*)\)$" => s"\1")
+    # remove module name
+    return replace(s, r"^.*\.(.*)$" => s"\1")
+end
+
+# curried functions
+_mcse_std(x) = MCMCDiagnosticTools.mcse(x; kind=Statistics.std)
+_mcse_median(x) = MCMCDiagnosticTools.mcse(x; kind=Statistics.median)
+_ess_median(x) = MCMCDiagnosticTools.ess(x; kind=Statistics.median)
+_ess_tail(x) = MCMCDiagnosticTools.ess(x; kind=:tail)
+
+# functions that have a 3D array method
 _map_paramslices(f, x) = map(f, eachslice(x; dims=3))
 _map_paramslices(f::typeof(MCMCDiagnosticTools.ess), x) = f(x)
+_map_paramslices(f::typeof(_ess_median), x) = f(x)
 _map_paramslices(f::typeof(_ess_tail), x) = f(x)
 _map_paramslices(f::typeof(MCMCDiagnosticTools.ess_rhat), x) = f(x)
 _map_paramslices(f::typeof(MCMCDiagnosticTools.rhat), x) = f(x)
 _map_paramslices(f::typeof(MCMCDiagnosticTools.mcse), x) = f(x)
 _map_paramslices(f::typeof(_mcse_std), x) = f(x)
-_map_paramslices(f::Base.Fix2{typeof(_hdi)}, x) = f(x)
-
-_fnames(f::Tuple) = map(Symbol, f)
-_fnames(f) = Symbol(f)
-
-_fun_and_name(p::Pair) = _fnames(p.first) => p.second
-_fun_and_name(f) = _fnames(f) => f
+_map_paramslices(f::typeof(_mcse_median), x) = f(x)
