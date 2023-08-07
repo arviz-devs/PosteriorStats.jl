@@ -228,13 +228,13 @@ function ft_printf_sigdigits_matching_se(
 )
     if isempty(columns)
         return (v, i, _) -> begin
-            v isa Real || return v
+            (v isa Real && se_vals[i] isa Real) || return v
             sigdigits = sigdigits_matching_se(v, se_vals[i]; kwargs...)
             return _printf_with_sigdigits(v, sigdigits)
         end
     else
         return (v, i, j) -> begin
-            v isa Real || return v
+            (v isa Real && se_vals[i] isa Real) || return v
             for col in columns
                 if col == j
                     sigdigits = sigdigits_matching_se(v, se_vals[i]; kwargs...)
