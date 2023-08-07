@@ -157,7 +157,7 @@ SummaryStats
  c  20.0       0.988     18.5       21.6
 ```
 
-Compute the summary stats with the `stat_focus` set to `Statistics.median`:
+Compute the summary stats focusing on `Statistics.median`:
 
 ```jldoctest summarize
 julia> summarize(x, default_summary_stats(median)...; var_names=[:a, :b, :c])
