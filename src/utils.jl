@@ -66,6 +66,16 @@ function _assimilar(x::NamedTuple, y)
     return z
 end
 
+function _skipmissing(x::AbstractArray)
+    Missing <: eltype(x) && return skipmissing(x)
+    return x
+end
+
+function _cskipmissing(x::AbstractArray)
+    Missing <: eltype(x) && return collect(skipmissing(x))
+    return x
+end
+
 _sortperm(x; kwargs...) = sortperm(collect(x); kwargs...)
 
 _permute(x::AbstractVector, p::AbstractVector) = x[p]

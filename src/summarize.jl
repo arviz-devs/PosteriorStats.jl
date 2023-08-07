@@ -192,9 +192,20 @@ Compute the summary statistics in `stats_funs` on each param in `data`, with siz
     )
     names_and_funs = map(_fun_and_name, stats_funs_and_names)
     fnames = map(first, names_and_funs)
+    _check_function_names(fnames)
     funs = map(last, names_and_funs)
     nt = merge((; parameter=var_names), _summarize(data, funs, fnames)...)
     return SummaryStats(name, nt)
+end
+
+function _check_function_names(fnames)
+    for name in fnames
+        name === nothing && continue
+        if name === nothing || name isa Symbol || name isa Tuple{Symbol,Vararg{Symbol}}
+            continue
+        end
+        throw(ArgumentError("Function name must be a symbol or a tuple of symbols."))
+    end
 end
 
 """
@@ -230,8 +241,8 @@ function default_stats(
 )
     hdi_names = map(Symbol, _prob_interval_to_strings("hdi", prob_interval))
     return (
-        (:mean, :std) => StatsBase.mean_and_std ∘ skipmissing,
-        hdi_names => x -> hdi(collect(skipmissing(x)); prob=prob_interval),
+        (:mean, :std) => StatsBase.mean_and_std ∘ _skipmissing,
+        hdi_names => x -> hdi(_cskipmissing(x); prob=prob_interval),
     )
 end
 function default_stats(
@@ -241,9 +252,9 @@ function default_stats(
     prob_tail = (1 - prob_interval) / 2
     p = (prob_tail, 1 - prob_tail)
     return (
-        :median => Statistics.median ∘ skipmissing,
-        :mad => StatsBase.mad ∘ skipmissing,
-        eti_names => Base.Fix2(Statistics.quantile, p) ∘ skipmissing,
+        :median => Statistics.median ∘ _skipmissing,
+        :mad => StatsBase.mad ∘ _skipmissing,
+        eti_names => Base.Fix2(Statistics.quantile, p) ∘ _skipmissing,
     )
 end
 
@@ -309,7 +320,7 @@ function _namedtuple_of_vals(f, ::Nothing, val::AbstractVector{<:NamedTuple{K}})
     return NamedTuple{K}(ntuple(i -> getindex.(val, i), length(K)))
 end
 
-_fun_and_name(p::Pair) = Symbol(p.first) => p.second
+_fun_and_name(p::Pair) = p
 _fun_and_name(f) = nothing => f
 
 _fname(f) = Symbol(_fname_string(f))
