@@ -19,6 +19,8 @@ function PosteriorStats.summarize(
     return summarize(x, stats_funs...; var_names, kwargs...)
 end
 
+_mean_and_std(x) = (mean=mean(x), std=std(x))
+
 @testset "summary statistics" begin
     @testset "SummaryStats" begin
         data = (
@@ -49,15 +51,35 @@ end
             @test Base.iterate(stats) == Base.iterate(data)
             @test Base.iterate(stats, 2) == Base.iterate(data, 2)
 
-            stats2 = SummaryStats((; est=randn(5), est2=randn(5)); name="MoreStats")
-            @test parent(stats2).parameter == 1:5
-            stats_merged1 = merge(stats, stats2)
-            @test stats_merged1.name == "Stats"
-            @test parent(stats_merged1) == merge(parent(stats), parent(stats2))
+            data_copy1 = deepcopy(data)
+            stats2 = SummaryStats(data_copy1)
+            @test stats2 == stats
+            @test isequal(stats2, stats)
 
-            stats_merged2 = merge(stats2, stats)
+            data_copy2 = deepcopy(data)
+            stats3 = SummaryStats(data_copy2; name="Stats")
+            @test stats3 == stats2
+            @test isequal(stats3, stats2)
+            stats3[:parameter][1] = "foo"
+            @test stats3 != stats2
+            @test !isequal(stats3, stats2)
+            stats3[:parameter][1] = "a"
+            stats3[:est][2] = NaN
+            @test stats3 != stats2
+            @test !isequal(stats3, stats2)
+            stats2[:est][2] = NaN
+            @test stats3 != stats2
+            @test isequal(stats3, stats2)
+
+            stats4 = SummaryStats((; est=randn(5), est2=randn(5)); name="MoreStats")
+            @test parent(stats4).parameter == 1:5
+            stats_merged1 = merge(stats, stats4)
+            @test stats_merged1.name == "Stats"
+            @test parent(stats_merged1) == merge(parent(stats), parent(stats4))
+
+            stats_merged2 = merge(stats4, stats)
             @test stats_merged2.name == "MoreStats"
-            @test parent(stats_merged2) == merge(parent(stats2), parent(stats))
+            @test parent(stats_merged2) == merge(parent(stats4), parent(stats))
         end
 
         @testset "Tables interface" begin
@@ -166,6 +188,11 @@ end
             )
             @test stats4 == stats5
 
+            stats6 = summarize(x, _mean_and_std, mad)
+            @test haskey(stats6, :mean)
+            @test haskey(stats6, :std)
+            @test haskey(stats6, :mad)
+
             @test_throws DimensionMismatch summarize(x, mean; var_names=["a", "b"])
             @test_throws ArgumentError summarize(x, "std" => std)
             @test_throws ArgumentError summarize(x, ("mean", "std") => mean_and_std)
@@ -228,6 +255,16 @@ end
                             :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_bulk => (x -> ess(x; kind=:bulk)),
                             rhat,
+                        ),
+                    ),
+                )
+
+                @test all(
+                    map(
+                        _isapprox,
+                        summarize(x, default_stats()...),
+                        summarize(
+                            x, mean, std, (Symbol("hdi_3%"), Symbol("hdi_97%")) => hdi
                         ),
                     ),
                 )
