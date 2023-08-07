@@ -338,7 +338,6 @@ _ess_tail(x) = MCMCDiagnosticTools.ess(x; kind=:tail)
 
 # functions that have a 3D array method
 _map_paramslices(f, x) = map(f, eachslice(x; dims=3))
-_map_paramslices(f::typeof(MCMCDiagnosticTools.ess), x) = f(x)
 _map_paramslices(f::typeof(_ess_median), x) = f(x)
 _map_paramslices(f::typeof(_ess_tail), x) = f(x)
 _map_paramslices(f::typeof(MCMCDiagnosticTools.ess_rhat), x) = f(x)
