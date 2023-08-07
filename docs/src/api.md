@@ -8,6 +8,9 @@ Pages = ["stats.md"]
 
 ```@docs
 SummaryStats
+default_diagnostics
+default_stats
+default_summary_stats
 summarize
 ```
 

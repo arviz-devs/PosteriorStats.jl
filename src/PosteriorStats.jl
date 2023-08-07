@@ -33,6 +33,7 @@ export ModelComparisonResult, compare
 
 # Summary statistics
 export SummaryStats, summarize
+export default_diagnostics, default_stats, default_summary_stats
 
 # Others
 export hdi, hdi!, loo_pit, r2_score

@@ -217,19 +217,81 @@ function summarize(
     return merge(default_stats, user_stats)
 end
 
-function _default_stats_funs(; prob_interval::Real=DEFAULT_INTERVAL_PROB)
+
+"""
+    default_summary_stats(focus=Statistics.mean; kwargs...)
+
+Combinatiton of [`default_stats`](@ref) and [`default_diagnostics`](@ref) to be used with
+[`summarize`](@ref).
+"""
+function default_summary_stats(focus=Statistics.mean; kwargs...)
+    return (default_stats(focus; kwargs...)..., default_diagnostics(focus; kwargs...)...)
+end
+
+"""
+    default_stats(focus=Statistics.mean; prob_interval=$(DEFAULT_INTERVAL_PROB), kwargs...)
+
+Default statistics to be computed with [`summarize`](@ref).
+
+The value of `focus` determines the statistics to be returned:
+- `Statistics.mean`: `mean`, `std`, `hdi_3%`, `hdi_97%`
+- `Statistics.median`: `median`, `mad`, `eti_3%`, `eti_97%`
+
+If `prob_interval` is set to a different value than the default, then different HDI and ETI
+statistics are computed accordingly. [`hdi`](@ref) refers to the highest-density interval,
+while `eti` refers to the equal-tailed interval (i.e. the credible interval computed from
+symmetric quantiles).
+
+See also: [`hdi`](@ref)
+"""
+function default_stats end
+default_stats(; kwargs...) = default_stats(Statistics.mean; kwargs...)
+function default_stats(
+    ::typeof(Statistics.mean); prob_interval::Real=DEFAULT_INTERVAL_PROB, kwargs...
+)
     hdi_names = map(Symbol, _prob_interval_to_strings("hdi", prob_interval))
     return (
-        (:mean, :std) => StatsBase.mean_and_std, hdi_names => Base.Fix2(_hdi, prob_interval)
+        (:mean, :std) => StatsBase.mean_and_std ∘ skipmissing,
+        hdi_names => x -> hdi(collect(skipmissing(x)); prob=prob_interval),
+    )
+end
+function default_stats(
+    ::typeof(Statistics.median); prob_interval::Real=DEFAULT_INTERVAL_PROB, kwargs...
+)
+    eti_names = map(Symbol, _prob_interval_to_strings("eti", prob_interval))
+    prob_tail = (1 - prob_interval) / 2
+    p = (prob_tail, 1 - prob_tail)
+    return (
+        :median => Statistics.median ∘ skipmissing,
+        :mad => StatsBase.mad ∘ skipmissing,
+        eti_names => Base.Fix2(Statistics.quantile, p) ∘ skipmissing,
     )
 end
 
-function _default_diagnostic_funs()
+"""
+    default_diagnostics(focus=Statistics.mean; kwargs...)
+
+Default diagnostics to be computed with [`summarize`](@ref).
+
+The value of `focus` determines the diagnostics to be returned:
+- `Statistics.mean`: `mcse_mean`, `mcse_std`, `ess_tail`, `ess_bulk`, `rhat`
+- `Statistics.median`: `mcse_median`, `ess_tail`, `ess_bulk`, `rhat`
+"""
+default_diagnostics(; kwargs...) = default_diagnostics(Statistics.mean; kwargs...)
+function default_diagnostics(::typeof(Statistics.mean); kwargs...)
     return (
         :mcse_mean => MCMCDiagnosticTools.mcse,
         :mcse_std => _mcse_std,
         :ess_tail => _ess_tail,
         (:ess_bulk, :rhat) => MCMCDiagnosticTools.ess_rhat,
+    )
+end
+function default_diagnostics(::typeof(Statistics.median); kwargs...)
+    return (
+        :mcse_median => _mcse_median,
+        :ess_tail => _ess_tail,
+        :ess_median => _ess_median,
+        MCMCDiagnosticTools.rhat,
     )
 end
 
