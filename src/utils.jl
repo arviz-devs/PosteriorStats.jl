@@ -321,7 +321,7 @@ function _show_prettytable(
     newline_at_end=false,
     kwargs...,
 )
-    alignment_anchor_regex = Dict(
+    alignment_anchor_regex = Dict{Int64,Vector{Regex}}(
         i => [r"\.", r"e", r"^NaN$", r"Inf$"] for (i, (k, v)) in enumerate(pairs(data)) if
         (eltype(v) <: Real && !(eltype(v) <: Integer) && !_is_ess_label(k))
     )
