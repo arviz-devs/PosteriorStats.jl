@@ -127,7 +127,11 @@ end
     @testset "summarize" begin
         @testset "base cases" begin
             x = randn(1_000, 4, 3)
-            stats1 = @inferred summarize(x, mean, std, median)
+            if VERSION ≥ v"1.9.0-"
+                stats1 = @inferred summarize(x, mean, std, median)
+            else
+                stats1 = summarize(x, mean, std, median)
+            end
             @test stats1 isa SummaryStats
             @test getfield(stats1, :name) == "SummaryStats"
             @test stats1 == SummaryStats((
@@ -140,7 +144,11 @@ end
             function _compute_stats(x)
                 return summarize(x, (:mean, :std) => mean_and_std, :median => median)
             end
-            stats2 = @inferred _compute_stats(x)
+            if VERSION ≥ v"1.10.0-"
+                stats2 = @inferred _compute_stats(x)
+            else
+                stats2 = _compute_stats(x)
+            end
             @test stats2 == stats1
 
             stats3 = summarize(x, mean, std; var_names=["a", "b", "c"], name="Stats")
@@ -170,7 +178,7 @@ end
                 stats1 = summarize(x, default_summary_stats()...)
                 @test all(
                     map(
-                        ≈,
+                        _isapprox,
                         stats1,
                         summarize(
                             x,
@@ -188,14 +196,14 @@ end
                 stats2 = summarize(x, default_summary_stats(median; prob_interval=0.9)...)
                 @test all(
                     map(
-                        ≈,
+                        _isapprox,
                         stats2,
                         summarize(
                             x,
                             median,
                             mad,
                             (Symbol("eti_5%"), Symbol("eti_95%")) =>
-                                (x -> quantile(x, (0.05, 0.95))),
+                                (x -> quantile(vec(x), (0.05, 0.95))),
                             :mcse_median => (x -> mcse(x; kind=median)),
                             :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_median => (x -> ess(x; kind=median)),
@@ -204,14 +212,24 @@ end
                     ),
                 )
                 _compute_diagnostics(x) = summarize(x, default_diagnostics()...)
-                stats3 = @inferred _compute_diagnostics(x)
-                @test stats3 == summarize(
-                    x,
-                    :mcse_mean => mcse,
-                    :mcse_std => (x -> mcse(x; kind=std)),
-                    :ess_tail => (x -> ess(x; kind=:tail)),
-                    :ess_bulk => (x -> ess(x; kind=:bulk)),
-                    rhat,
+                if VERSION ≥ v"1.10.0-"
+                    stats3 = @inferred _compute_diagnostics(x)
+                else
+                    stats3 = _compute_diagnostics(x)
+                end
+                @test all(
+                    map(
+                        _isapprox,
+                        stats3,
+                        summarize(
+                            x,
+                            :mcse_mean => mcse,
+                            :mcse_std => (x -> mcse(x; kind=std)),
+                            :ess_tail => (x -> ess(x; kind=:tail)),
+                            :ess_bulk => (x -> ess(x; kind=:bulk)),
+                            rhat,
+                        ),
+                    ),
                 )
 
                 x2 = convert(Array{Union{Float64,Missing}}, x)
@@ -256,7 +274,11 @@ end
                 function _compute_diagnostics(x)
                     return summarize(x, default_diagnostics()...; name="foo")
                 end
-                stats1 = @inferred _compute_diagnostics(sample)
+                if VERSION ≥ v"1.10.0-"
+                    stats1 = @inferred _compute_diagnostics(sample)
+                else
+                    stats1 = _compute_diagnostics(sample)
+                end
                 @test stats1 isa SummaryStats
                 @test stats1.name == "foo"
                 @test stats1 == summarize(
