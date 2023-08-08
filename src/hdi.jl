@@ -65,7 +65,7 @@ end
 A version of [`hdi`](@ref) that sorts `samples` in-place while computing the HDI.
 """
 function hdi!(x::AbstractArray{<:Real}; prob::Real=DEFAULT_INTERVAL_PROB)
-    0 < prob < 1 || throw(DomainError(prob, "HDI `prob` must be in the range `(0, 1)`.]"))
+    0 < prob < 1 || throw(DomainError(prob, "HDI `prob` must be in the range `(0, 1)`."))
     return _hdi!(x, prob)
 end
 

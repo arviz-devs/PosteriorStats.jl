@@ -66,6 +66,16 @@ function _assimilar(x::NamedTuple, y)
     return z
 end
 
+function _skipmissing(x::AbstractArray)
+    Missing <: eltype(x) && return skipmissing(x)
+    return x
+end
+
+function _cskipmissing(x::AbstractArray)
+    Missing <: eltype(x) && return collect(skipmissing(x))
+    return x
+end
+
 _sortperm(x; kwargs...) = sortperm(collect(x); kwargs...)
 
 _permute(x::AbstractVector, p::AbstractVector) = x[p]
@@ -228,13 +238,13 @@ function ft_printf_sigdigits_matching_se(
 )
     if isempty(columns)
         return (v, i, _) -> begin
-            v isa Real || return v
+            (v isa Real && se_vals[i] isa Real) || return v
             sigdigits = sigdigits_matching_se(v, se_vals[i]; kwargs...)
             return _printf_with_sigdigits(v, sigdigits)
         end
     else
         return (v, i, j) -> begin
-            v isa Real || return v
+            (v isa Real && se_vals[i] isa Real) || return v
             for col in columns
                 if col == j
                     sigdigits = sigdigits_matching_se(v, se_vals[i]; kwargs...)
@@ -321,7 +331,7 @@ function _show_prettytable(
     newline_at_end=false,
     kwargs...,
 )
-    alignment_anchor_regex = Dict(
+    alignment_anchor_regex = Dict{Int64,Vector{Regex}}(
         i => [r"\.", r"e", r"^NaN$", r"Inf$"] for (i, (k, v)) in enumerate(pairs(data)) if
         (eltype(v) <: Real && !(eltype(v) <: Integer) && !_is_ess_label(k))
     )

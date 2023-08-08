@@ -56,5 +56,7 @@ function eight_schools_data()
     )
 end
 
-_isapprox(x::AbstractArray, y::AbstractArray; kwargs...) = isapprox(x, y; kwargs...)
+function _isapprox(x::AbstractArray, y::AbstractArray; kwargs...)
+    return isapprox(collect(x), collect(y); kwargs...)
+end
 _isapprox(x, y; kwargs...) = all(map((x, y) -> isapprox(x, y; kwargs...), x, y))

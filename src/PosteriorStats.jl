@@ -1,5 +1,6 @@
 module PosteriorStats
 
+using Compat: @constprop
 using DataInterpolations: DataInterpolations
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
@@ -30,6 +31,10 @@ export elpd_estimates, information_criterion, loo, waic
 export AbstractModelWeightsMethod, BootstrappedPseudoBMA, PseudoBMA, Stacking, model_weights
 export ModelComparisonResult, compare
 
+# Summary statistics
+export SummaryStats, summarize
+export default_diagnostics, default_stats, default_summary_stats
+
 # Others
 export hdi, hdi!, loo_pit, r2_score
 
@@ -45,6 +50,6 @@ include("model_weights.jl")
 include("compare.jl")
 include("loo_pit.jl")
 include("r2_score.jl")
-# include("summarystats.jl")
+include("summarize.jl")
 
 end  # module
