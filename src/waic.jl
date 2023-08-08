@@ -46,7 +46,7 @@ See also: [`WAICResult`](@ref), [`loo`](@ref)
 Calculate WAIC of a model:
 
 ```jldoctest
-julia> using ArviZExampleData, PosteriorStats
+julia> using ArviZExampleData
 
 julia> idata = load_example_data("centered_eight");
 

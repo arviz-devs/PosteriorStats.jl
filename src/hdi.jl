@@ -32,8 +32,6 @@ This implementation uses the algorithm of [^ChenShao1999].
 Here we calculate the 83% HDI for a normal random variable:
 
 ```jldoctest hdi; setup = :(using Random; Random.seed!(78))
-julia> using PosteriorStats
-
 julia> x = randn(2_000);
 
 julia> hdi(x; prob=0.83) |> pairs
