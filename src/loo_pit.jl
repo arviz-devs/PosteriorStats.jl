@@ -45,7 +45,7 @@ LOO-PIT values should be approximately uniformly distributed on ``[0, 1]``.[^Gab
 Calculate LOO-PIT values using as test quantity the observed values themselves.
 
 ```jldoctest loo_pit1
-julia> using ArviZExampleData, PosteriorStats
+julia> using ArviZExampleData
 
 julia> idata = load_example_data("centered_eight");
 

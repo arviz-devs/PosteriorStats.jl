@@ -60,7 +60,7 @@ See also: [`PSISLOOResult`](@ref), [`waic`](@ref)
 Manually compute ``R_\\mathrm{eff}`` and calculate PSIS-LOO of a model:
 
 ```jldoctest
-julia> using ArviZExampleData, MCMCDiagnosticTools, PosteriorStats
+julia> using ArviZExampleData, MCMCDiagnosticTools
 
 julia> idata = load_example_data("centered_eight");
 

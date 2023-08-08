@@ -16,7 +16,7 @@
 # Examples
 
 ```jldoctest
-julia> using ArviZExampleData, PosteriorStats
+julia> using ArviZExampleData
 
 julia> idata = load_example_data("regression1d");
 

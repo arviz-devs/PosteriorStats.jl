@@ -110,7 +110,7 @@ See also [`SummaryStats`](@ref), [`default_summary_stats`](@ref), [`default_stat
 Compute `mean`, `std` and the Monte Carlo standard error (MCSE) of the mean estimate:
 
 ```jldoctest summarize; setup = (using Random; Random.seed!(84))
-julia> using PosteriorStats, Statistics, StatsBase
+julia> using Statistics, StatsBase
 
 julia> x = randn(1000, 4, 3) .+ reshape(0:10:20, 1, 1, :);
 
