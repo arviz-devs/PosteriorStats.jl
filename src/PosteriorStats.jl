@@ -5,6 +5,7 @@ using DataInterpolations: DataInterpolations
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
+using KernelDensity: KernelDensity
 using LinearAlgebra: mul!, norm
 using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
@@ -19,6 +20,9 @@ using Statistics: Statistics
 using StatsBase: StatsBase
 using Tables: Tables
 using TableTraits: TableTraits
+
+# Density
+export bandwidth_silverman, ckde, kde
 
 # PSIS
 export PSIS, PSISResult, psis, psis!
@@ -43,6 +47,7 @@ const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)
 
 include("utils.jl")
 include("hdi.jl")
+include("kde.jl")
 include("elpdresult.jl")
 include("loo.jl")
 include("waic.jl")
