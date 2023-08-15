@@ -54,12 +54,9 @@ function kde(
     npoints::Int=512,
     pad_factor::Union{Real,Nothing}=nothing,
 )
-    x_min, x_max = extrema(x)
-
-    grid_length = max(npoints, 100)
-    grid_min = x_min
-    grid_max = x_max
-    bin_width = (grid_max - grid_min) / grid_length
+    grid_size = max(npoints, 100)
+    grid_min, grid_max = extrema(x)
+    bin_width = (grid_max - grid_min) / grid_size
 
     if pad_factor === nothing
         # work out how much padding to add to guarantee that extra density due to wraparound
@@ -72,43 +69,38 @@ function kde(
     else
         _pad_factor = pad_factor
     end
-    npoints_pad = 2 * max(1, Int(cld(_pad_factor * bandwidth, bin_width)))
-    npad_left = npad_right = npoints_pad ÷ 2
-
-    # add extra padding if performing boundary correction
-    nbin_reflect = bound_correction ? npoints_pad ÷ 2 : 0
+    grid_pad_size = 2 * max(1, Int(cld(_pad_factor * bandwidth, bin_width)))
+    npad_left = npad_right = grid_pad_size ÷ 2
 
     # pad to avoid wraparound at the boundary
     grid_min -= bin_width * npad_left
     grid_max += bin_width * npad_right
-    grid_length += npoints_pad
+    grid_size += grid_pad_size
 
     # compute density
-    center_min = grid_min + bin_width / 2
-    center_max = grid_max - bin_width / 2
-    k = KernelDensity.kde(
-        x; npoints=grid_length, boundary=(center_min, center_max), bandwidth, kernel
-    )
-    grid = k.x
-    pdf = k.density
+    boundary = (grid_min + bin_width / 2, grid_max - bin_width / 2)
+    k = KernelDensity.kde(x; npoints=grid_size, boundary, bandwidth, kernel)
+    midpoints = k.x
+    density = k.density
 
     if bound_correction
-        # reflect density at the boundary
-        il = firstindex(pdf) + npad_left
-        ir = lastindex(pdf) - npad_right
-        pdf[range(il; length=nbin_reflect)] .+= @view pdf[range(
+        nbin_reflect = min(npad_left, npad_right)
+        il = firstindex(density) + npad_left
+        ir = lastindex(density) - npad_right
+        # reflect density at the boundary (x_min, x_max)
+        density[range(il; length=nbin_reflect)] .+= @view density[range(
             il - 1; step=-1, length=nbin_reflect
         )]
-        pdf[range(ir; step=-1, length=nbin_reflect)] .+= @view pdf[range(
+        density[range(ir; step=-1, length=nbin_reflect)] .+= @view density[range(
             ir + 1; length=nbin_reflect
         )]
     end
 
     # remove padding
-    grid = grid[(begin + npad_left):(end - npad_right)]
-    pdf = pdf[(begin + npad_left):(end - npad_right)]
+    midpoints = midpoints[(begin + npad_left):(end - npad_right)]
+    density = density[(begin + npad_left):(end - npad_right)]
 
-    return KernelDensity.UnivariateKDE(grid, pdf)
+    return KernelDensity.UnivariateKDE(midpoints, density)
 end
 
 struct UnivariateCKDE{X,P}
