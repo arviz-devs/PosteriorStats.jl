@@ -69,6 +69,8 @@ function kde(
     else
         _pad_factor = pad_factor
     end
+    # always pad by at least 1 bin on each side to ensure that the boundary passed to kde
+    # contains all data points (otherwise, they will be ignored)
     grid_pad_size = 2 * max(1, Int(cld(_pad_factor * bandwidth, bin_width)))
     npad_left = npad_right = grid_pad_size ÷ 2
 
