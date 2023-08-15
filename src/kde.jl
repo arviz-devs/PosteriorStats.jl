@@ -42,7 +42,9 @@ Compute the univariate kernel density estimate of data `x`.
 - `kernel::Type{<:Distributions.ContinuousUnivariateDistribution}`: type of kernel to build.
     Defaults to `Normal`.
 - `bound_correction::Bool`: whether to perform boundary correction. Defaults to `true`.
-- `grid_length::Int`: number of grid points to use. Defaults to `512`.
+    If `false`, the resulting truncated KDE is not normalized to 1.
+- `npoints::Int`: number of points at which the resulting KDE is evaluated. Defaults to
+    `512`.
 """
 function kde(
     x::AbstractVector;
