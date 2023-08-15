@@ -64,8 +64,8 @@ function kde(
         prob_tail = 1e-3
         _kernel = _kernel_with_bandwidth(kernel, bandwidth)
         _pad_factor = _padding_factor(_kernel, prob_tail)
-    elseif pad_factor ≥ 0
-        throw(ArgumentError("Padding factor must be non-negative."))
+    elseif pad_factor < 0
+        throw(DomainError(pad_factor, "Padding factor must be non-negative."))
     else
         _pad_factor = pad_factor
     end
