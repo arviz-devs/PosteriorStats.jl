@@ -104,27 +104,3 @@ function kde(
 
     return KernelDensity.UnivariateKDE(midpoints, density)
 end
-
-struct UnivariateCKDE{X,P}
-    x::X
-    probability::P
-end
-
-"""
-    ckde(x; kwargs...) -> UnivariateCKDE
-
-Compute the CDF of the kernel density estimate of data `x`.
-
-For details about arguments and keywords, see [`kde`](@ref)
-"""
-ckde(x; kwargs...) = ckde(kde(x; kwargs...))
-
-"""
-    ckde(k::KernelDensity.UnivariateKDE) -> UnivariateCKDE
-
-Compute the CDF of the provided kernel density estimate.
-"""
-function ckde(k::KernelDensity.UnivariateKDE)
-    prob = cumsum(k.density) .* step(k.x)
-    return UnivariateCKDE(k.x, prob ./ prob[end])
-end

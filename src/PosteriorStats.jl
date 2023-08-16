@@ -22,7 +22,7 @@ using Tables: Tables
 using TableTraits: TableTraits
 
 # Density
-export bandwidth_silverman, ckde, kde
+export bandwidth_silverman, kde
 
 # PSIS
 export PSIS, PSISResult, psis, psis!

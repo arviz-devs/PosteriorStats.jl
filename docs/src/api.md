@@ -60,7 +60,6 @@ loo_pit
 
 ```@docs
 kde
-ckde
 bandwidth_silverman
 ```
 
