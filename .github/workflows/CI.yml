@@ -31,7 +31,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
       - name: Set R lib path for RCall.jl
         if: matrix.os == 'ubuntu-latest'
-        run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib" >> $GITHUB_ENV
+        run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
       - name: Install R packages
         if: matrix.os == 'ubuntu-latest'
         run: |
