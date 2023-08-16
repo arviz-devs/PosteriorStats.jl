@@ -46,8 +46,6 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - name: Build Conda
         run: |
           using Pkg; Pkg.activate(; temp=true);
