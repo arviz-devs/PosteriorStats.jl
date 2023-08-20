@@ -41,6 +41,11 @@ end
 
 #### custom tabular show methods
 
+function Base.show(io::IO, stats::SummaryStats)
+    nrows = length(first(stats))
+    ncols = length(stats)
+    print(io, stats.name, " ($nrows rows, $ncols cols)")
+end
 function Base.show(io::IO, mime::MIME"text/plain", stats::SummaryStats; kwargs...)
     return _show(io, mime, stats; kwargs...)
 end
