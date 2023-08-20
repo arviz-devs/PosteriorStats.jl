@@ -216,7 +216,7 @@ end
 """
     default_summary_stats(focus=Statistics.mean; kwargs...)
 
-Combinatiton of [`default_stats`](@ref) and [`default_diagnostics`](@ref) to be used with
+Combination of [`default_stats`](@ref) and [`default_diagnostics`](@ref) to be used with
 [`summarize`](@ref).
 """
 function default_summary_stats(focus=Statistics.mean; kwargs...)
