@@ -299,8 +299,7 @@ function default_diagnostics(::typeof(Statistics.median); kwargs...)
     return (
         :mcse_median =>
             FixKeywords(MCMCDiagnosticTools.mcse; kind=Statistics.median, ess_kwargs...),
-        :ess_tail =>
-            FixKeywords(MCMCDiagnosticTools.ess; kind=:tail, ess_tail_kwargs...),
+        :ess_tail => FixKeywords(MCMCDiagnosticTools.ess; kind=:tail, ess_tail_kwargs...),
         :ess_median =>
             FixKeywords(MCMCDiagnosticTools.ess; kind=Statistics.median, ess_kwargs...),
         :rhat => FixKeywords(MCMCDiagnosticTools.rhat; rhat_kwargs...),
