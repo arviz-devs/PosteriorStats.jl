@@ -56,7 +56,14 @@ Stacking
 loo_pit
 ```
 
-### Utilities
+## Density utilities
+
+```@docs
+kde
+bandwidth_silverman
+```
+
+## Utilities
 
 ```@docs
 PosteriorStats.smooth_data
