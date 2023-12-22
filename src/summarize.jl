@@ -110,13 +110,36 @@ end
 Tables.istable(::Type{<:SummaryStats}) = true
 Tables.columnaccess(::Type{<:SummaryStats}) = true
 Tables.columns(s::SummaryStats) = s
-Tables.columnnames(s::SummaryStats) = Tables.columnnames(parent(s))
-Tables.getcolumn(s::SummaryStats, i::Int) = Tables.getcolumn(parent(s), i)
-Tables.getcolumn(s::SummaryStats, nm::Symbol) = Tables.getcolumn(parent(s), nm)
+function Tables.columnnames(s::SummaryStats)
+    data_cols = Tables.columnnames(Tables.columns(parent(s)))
+    data_cols isa Tuple && return (:parameter, data_cols...)
+    return [:parameter; data_cols]
+end
+function Tables.getcolumn(stats::SummaryStats, i::Int)
+    i == 1 && return stats.parameter_names
+    return Tables.getcolumn(parent(stats), i - 1)
+end
+function Tables.getcolumn(stats::SummaryStats, nm::Symbol)
+    nm === :parameter && return stats.parameter_names
+    return Tables.getcolumn(parent(stats), nm)
+end
 Tables.rowaccess(::Type{<:SummaryStats}) = true
-Tables.rows(s::SummaryStats) = Tables.rows(parent(s))
-Tables.schema(s::SummaryStats) = Tables.schema(parent(s))
-
+function Tables.rows(s::SummaryStats)
+    param_table = (parameter=s.parameter_names,)
+    data_table = parent(s)
+    return Iterators.map(Tables.rowmerge, Tables.rows(param_table), Tables.rows(data_table))
+end
+function Tables.schema(s::SummaryStats)
+    data_schema = Tables.schema(parent(s))
+    data_schema === nothing && return nothing
+    if data_schema isa Tables.Schema{Nothing,Nothing}
+        return Tables.Schema([:parameter; data_schema.names], [Symbol; data_schema.types])
+    else
+        return Tables.Schema(
+            (:parameter, data_schema.names...), (Symbol, data_schema.types...)
+        )
+    end
+end
 IteratorInterfaceExtensions.isiterable(::SummaryStats) = true
 function IteratorInterfaceExtensions.getiterator(s::SummaryStats)
     return Tables.datavaluerows(Tables.columntable(s))
@@ -236,8 +259,7 @@ Compute the summary statistics in `stats_funs` on each param in `data`, with siz
     fnames = map(first, names_and_funs)
     _check_function_names(fnames)
     funs = map(last, names_and_funs)
-    nt = merge((; parameter=var_names), _summarize(data, funs, fnames)...)
-    return SummaryStats(name, nt)
+    return SummaryStats(name, _summarize(data, funs, fnames), var_names)
 end
 
 function _check_function_names(fnames)
