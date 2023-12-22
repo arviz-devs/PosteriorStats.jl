@@ -19,7 +19,6 @@ summarize
 ```@docs
 hdi
 hdi!
-r2_score
 ```
 
 ## LOO and WAIC
@@ -54,6 +53,7 @@ Stacking
 
 ```@docs
 loo_pit
+r2_score
 ```
 
 ### Utilities
