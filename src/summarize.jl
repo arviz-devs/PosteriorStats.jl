@@ -48,22 +48,37 @@ end
 
 # forward key interfaces from its parent
 Base.parent(stats::SummaryStats) = getfield(stats, :data)
-Base.keys(stats::SummaryStats) = keys(parent(stats))
-Base.haskey(stats::SummaryStats, nm::Symbol) = haskey(parent(stats), nm)
-Base.length(stats::SummaryStats) = length(parent(stats))
-Base.getindex(stats::SummaryStats, i::Int) = getindex(parent(stats), i)
-Base.getindex(stats::SummaryStats, nm::Symbol) = getindex(parent(stats), nm)
-function Base.iterate(stats::SummaryStats, i::Int=firstindex(parent(stats)))
-    return iterate(parent(stats), i)
+Base.keys(stats::SummaryStats) = map(Symbol, Tables.columnnames(stats))
+Base.haskey(stats::SummaryStats, nm::Symbol) = nm ∈ keys(stats)
+Base.length(stats::SummaryStats) = length(parent(stats)) + 1
+Base.getindex(stats::SummaryStats, i::Union{Int,Symbol}) = Tables.getcolumn(stats, i)
+function Base.iterate(stats::SummaryStats)
+    ncols = length(stats)
+    return stats.parameter_names, (2, ncols)
+end
+function Base.iterate(stats::SummaryStats, (i, ncols)::NTuple{2,Int})
+    i > ncols && return nothing
+    return Tables.getcolumn(stats, i), (i + 1, ncols)
+end
+function Base.merge(
+    stats::SummaryStats{<:NamedTuple}, other_stats::SummaryStats{<:NamedTuple}...
+)
+    return SummaryStats(
+        stats.name, merge(parent(stats), map(parent, other_stats)...), stats.parameter_names
+    )
 end
 function Base.merge(stats::SummaryStats, other_stats::SummaryStats...)
-    return SummaryStats(stats.name, merge(parent(stats), map(parent, other_stats)...))
+    row_tables = map(Tables.rows ∘ parent, (stats, other_stats...))
+    data = Tables.columns(map(Tables.rowmerge, row_tables...))
+    return SummaryStats(stats.name, data, stats.parameter_names)
 end
 function Base.isequal(stats::SummaryStats, other_stats::SummaryStats)
-    return isequal(parent(stats), parent(other_stats))
+    return isequal(stats.parameter_names, other_stats.parameter_names) &&
+           isequal(parent(stats), parent(other_stats))
 end
 function Base.:(==)(stats::SummaryStats, other_stats::SummaryStats)
-    return (parent(stats) == parent(other_stats))
+    return (stats.parameter_names == other_stats.parameter_names) &&
+           (parent(stats) == parent(other_stats))
 end
 
 #### custom tabular show methods
