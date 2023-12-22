@@ -1,11 +1,19 @@
 """
-$(SIGNATURES)
+$(TYPEDEF)
 
 A container for a column table of values computed by [`summarize`](@ref).
 
-This object implements the Tables and TableTraits interfaces and has a custom `show` method.
+This object implements the Tables and TableTraits interfaces. It has a custom `show` method.
 
-$(FIELDS)
+$(TYPEDFIELDS)
+
+    SummaryStats([name::String,] data[, parameter_names])
+    SummaryStats(data[, parameter_names]; name::String="SummaryStats")
+
+Construct a `SummaryStats` from tabular `data` with optional stats `name` and `param_names`.
+
+`data` must not contain a column `:parameter`, as this is reserved for the parameter names,
+which are always in the first column.
 """
 struct SummaryStats{D,V<:AbstractVector}
     "The name of the collection of summary statistics, used as the table title in display."
