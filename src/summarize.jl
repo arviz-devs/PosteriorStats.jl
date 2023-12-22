@@ -7,16 +7,35 @@ This object implements the Tables and TableTraits interfaces and has a custom `s
 
 $(FIELDS)
 """
-struct SummaryStats{D<:NamedTuple}
+struct SummaryStats{D,V<:AbstractVector}
     "The name of the collection of summary statistics, used as the table title in display."
     name::String
-    """The summary statistics for each parameter, with an optional first column `parameter`
-    containing the parameter names."""
+    """The summary statistics for each parameter. It must implement the Tables interface."""
     data::D
+    "Names of the parameters"
+    parameter_names::V
+    function SummaryStats(name::String, data, parameter_names::V) where {V}
+        coltable = Tables.columns(data)
+        Tables.columnnames(coltable)
+        :parameter ∈ Tables.columnnames(coltable) &&
+            throw(ArgumentError("Column `:parameter` is reserved for parameter names."))
+        length(parameter_names) == Tables.rowcount(data) || throw(
+            DimensionMismatch(
+                "length $(length(parameter_names)) of `parameter_names` does not match number of rows $(Tables.rowcount(data)) in `data`.",
+            ),
+        )
+        return new{typeof(coltable),V}(name, coltable, parameter_names)
+    end
 end
-function SummaryStats(data::NamedTuple; name::String="SummaryStats")
-    n = length(first(data))
-    return SummaryStats(name, merge((parameter=1:n,), data))
+function SummaryStats(
+    data,
+    parameter_names::AbstractVector=Base.OneTo(Tables.rowcount(data));
+    name::String="SummaryStats",
+)
+    return SummaryStats(name, data, parameter_names)
+end
+function SummaryStats(name::String, data)
+    return SummaryStats(name, data, Base.OneTo(Tables.rowcount(data)))
 end
 
 # forward key interfaces from its parent
