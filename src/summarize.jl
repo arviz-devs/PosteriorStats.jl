@@ -359,14 +359,15 @@ function _prob_interval_to_strings(interval_type, prob; digits=2)
     end
 end
 
-function _summarize(data::AbstractArray{<:Any,3}, funs, fun_names)
-    return map(fun_names, funs) do fname, f
-        return _map_over_params(fname, f, data)
-    end
-end
-
 # aggressive constprop allows summarize to be type-inferrable when called by
 # another function
+
+@constprop :aggressive function _summarize(data::AbstractArray{<:Any,3}, funs, fun_names)
+    return merge(map(fun_names, funs) do fname, f
+        return _map_over_params(fname, f, data)
+    end...)
+end
+
 @constprop :aggressive function _map_over_params(fname, f, data)
     vals = _map_paramslices(f, data)
     return _namedtuple_of_vals(f, fname, vals)
