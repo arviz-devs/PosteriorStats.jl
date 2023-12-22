@@ -91,7 +91,7 @@ function Base.show(io::IO, mime::MIME"text/html", stats::SummaryStats; kwargs...
 end
 
 function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
-    data = NamedTuple{eachindex(stats)[2:end]}(parent(stats))
+    data = parent(stats)
     rhat_formatter = _prettytables_rhat_formatter(data)
     extra_formatters = rhat_formatter === nothing ? () : (rhat_formatter,)
     return _show_prettytable(
@@ -99,7 +99,7 @@ function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
         mime,
         data;
         title=stats.name,
-        row_labels=parent(stats).parameter,
+        row_labels=Tables.getcolumn(stats, :parameter),
         extra_formatters,
         kwargs...,
     )
