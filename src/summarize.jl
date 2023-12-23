@@ -137,12 +137,6 @@ function Tables.getcolumn(stats::SummaryStats, nm::Symbol)
     nm === :parameter && return stats.parameter_names
     return Tables.getcolumn(parent(stats), nm)
 end
-Tables.rowaccess(::Type{<:SummaryStats}) = true
-function Tables.rows(s::SummaryStats)
-    param_table = (parameter=s.parameter_names,)
-    data_table = parent(s)
-    return Iterators.map(Tables.rowmerge, Tables.rows(param_table), Tables.rows(data_table))
-end
 function Tables.schema(s::SummaryStats)
     data_schema = Tables.schema(parent(s))
     data_schema === nothing && return nothing
