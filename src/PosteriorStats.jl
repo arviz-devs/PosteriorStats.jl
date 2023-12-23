@@ -10,6 +10,7 @@ using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
 using MCMCDiagnosticTools: MCMCDiagnosticTools
 using Optim: Optim
+using OrderedCollections: OrderedCollections
 using PrettyTables: PrettyTables
 using Printf: Printf
 using PSIS: PSIS, PSISResult, psis, psis!

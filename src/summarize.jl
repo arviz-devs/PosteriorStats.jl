@@ -24,7 +24,6 @@ struct SummaryStats{D,V<:AbstractVector}
     parameter_names::V
     function SummaryStats(name::String, data, parameter_names::V) where {V}
         coltable = Tables.columns(data)
-        Tables.columnnames(coltable)
         :parameter ∈ Tables.columnnames(coltable) &&
             throw(ArgumentError("Column `:parameter` is reserved for parameter names."))
         length(parameter_names) == Tables.rowcount(data) || throw(
@@ -68,9 +67,26 @@ function Base.merge(
     )
 end
 function Base.merge(stats::SummaryStats, other_stats::SummaryStats...)
-    row_tables = map(Tables.rows ∘ parent, (stats, other_stats...))
-    data = Tables.columns(map(Tables.rowmerge, row_tables...))
-    return SummaryStats(stats.name, data, stats.parameter_names)
+    isempty(other_stats) && return stats
+    stats_all = (stats, other_stats...)
+    colnames = map(Tables.columnnames ∘ parent, stats_all)
+    num_cols = map(length, colnames)
+    colnames_all = reduce(vcat, map(collect, colnames))
+    colnames_unique = unique(colnames_all)
+
+    # get map from column name to the last table that contains that column
+    table_ids_all = collect(
+        Iterators.flatten(
+            Iterators.map(Base.splat(Iterators.repeated), enumerate(num_cols))
+        ),
+    )
+    index_map_rev = StatsBase.indexmap(reverse(colnames_all))
+    col_to_table_id = Dict(k => table_ids_all[end - v + 1] for (k, v) in index_map_rev)
+
+    data_merged = OrderedCollections.OrderedDict(
+        k => Tables.getcolumn(stats_all[col_to_table_id[k]], k) for k in colnames_unique
+    )
+    return SummaryStats(data_merged, stats.parameter_names; name=stats.name)
 end
 for f in (:(==), :isequal)
     @eval begin
