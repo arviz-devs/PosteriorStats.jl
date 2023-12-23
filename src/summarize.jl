@@ -140,14 +140,14 @@ end
 function Tables.schema(s::SummaryStats)
     data_schema = Tables.schema(parent(s))
     data_schema === nothing && return nothing
+    T = eltype(s.parameter_names)
     if data_schema isa Tables.Schema{Nothing,Nothing}
-        return Tables.Schema([:parameter; data_schema.names], [Symbol; data_schema.types])
+        return Tables.Schema([:parameter; data_schema.names], [T; data_schema.types])
     else
-        return Tables.Schema(
-            (:parameter, data_schema.names...), (Symbol, data_schema.types...)
-        )
+        return Tables.Schema((:parameter, data_schema.names...), (T, data_schema.types...))
     end
 end
+
 IteratorInterfaceExtensions.isiterable(::SummaryStats) = true
 function IteratorInterfaceExtensions.getiterator(s::SummaryStats)
     return Tables.datavaluerows(Tables.columntable(s))
