@@ -257,13 +257,15 @@ function ft_printf_sigdigits_matching_se(
 end
 
 function _prettytables_rhat_formatter(data)
-    cols = findall(x -> x === :rhat, keys(data))
+    cols = findall(x -> x === :rhat, Tables.columnnames(data))
     isempty(cols) && return nothing
     return PrettyTables.ft_printf("%.2f", cols)
 end
 
 function _prettytables_integer_formatter(data)
-    cols = findall(v -> eltype(v) <: Integer, values(data))
+    sch = Tables.schema(data)
+    sch === nothing && return nothing
+    cols = findall(t -> t <: Integer, sch.types)
     isempty(cols) && return nothing
     return PrettyTables.ft_printf("%d", cols)
 end
@@ -272,20 +274,24 @@ end
 # see https://ronisbr.github.io/PrettyTables.jl/stable/man/formatters/
 function _default_prettytables_formatters(data; sigdigits_se=2, sigdigits_default=3)
     formatters = []
-    for (i, k) in enumerate(keys(data))
+    col_names = Tables.columnnames(data)
+    for (i, k) in enumerate(col_names)
         for mcse_key in (Symbol("mcse_$k"), Symbol("$(k)_mcse"))
             if haskey(data, mcse_key)
-                push!(formatters, ft_printf_sigdigits_matching_se(data[mcse_key], [i]))
+                push!(
+                    formatters,
+                    ft_printf_sigdigits_matching_se(Tables.getcolumn(data, mcse_key), [i]),
+                )
                 continue
             end
         end
     end
-    mcse_cols = findall(keys(data)) do k
+    mcse_cols = findall(col_names) do k
         s = string(k)
         return startswith(s, "mcse_") || endswith(s, "_mcse")
     end
     isempty(mcse_cols) || push!(formatters, ft_printf_sigdigits(sigdigits_se, mcse_cols))
-    ess_cols = findall(_is_ess_label, keys(data))
+    ess_cols = findall(_is_ess_label, col_names)
     isempty(ess_cols) || push!(formatters, PrettyTables.ft_printf("%d", ess_cols))
     ft_integer = _prettytables_integer_formatter(data)
     ft_integer === nothing || push!(formatters, ft_integer)
@@ -300,12 +306,10 @@ function _show_prettytable(
         extra_formatters...,
         _default_prettytables_formatters(data; sigdigits_se, sigdigits_default)...,
     )
-    alignment = fill(:r, length(data))
-    for (i, v) in enumerate(values(data))
-        if !(eltype(v) <: Real)
-            alignment[i] = :l
-        end
-    end
+    col_names = Tables.columnnames(data)
+    alignment = [
+        eltype(Tables.getcolumn(data, col_name)) <: Real ? :r : :l for col_name in col_names
+    ]
     kwargs_new = merge(
         (
             show_subheader=false,
@@ -331,13 +335,16 @@ function _show_prettytable(
     newline_at_end=false,
     kwargs...,
 )
-    alignment_anchor_regex = Dict{Int,Vector{Regex}}(
-        i => [r"\.", r"e", r"^NaN$", r"Inf$"] for (i, (k, v)) in enumerate(pairs(data)) if
-        (eltype(v) <: Real && !(eltype(v) <: Integer) && !_is_ess_label(k))
-    )
+    alignment_anchor_regex = Dict{Int,Vector{Regex}}()
+    for (i, k) in enumerate(Tables.columnnames(data))
+        v = Tables.getcolumn(data, k)
+        if eltype(v) <: Real && !(eltype(v) <: Integer) && !_is_ess_label(k)
+            alignment_anchor_regex[i] = [r"\.", r"e", r"^NaN$", r"Inf$"]
+        end
+    end
     alignment_anchor_fallback = :r
     alignment_anchor_fallback_override = Dict(
-        i => :r for (i, k) in enumerate(keys(data)) if _is_ess_label(k)
+        i => :r for (i, k) in enumerate(Tables.columnnames(data)) if _is_ess_label(k)
     )
     return _show_prettytable(
         io,

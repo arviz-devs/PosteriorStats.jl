@@ -1,5 +1,6 @@
 using IteratorInterfaceExtensions
 using MCMCDiagnosticTools
+using OrderedCollections
 using PosteriorStats
 using Statistics
 using StatsBase
@@ -23,63 +24,77 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
 
 @testset "summary statistics" begin
     @testset "SummaryStats" begin
-        data = (
-            parameter=["a", "bb", "ccc", "d", "e"],
-            est=randn(5),
-            mcse_est=randn(5),
-            rhat=rand(5),
-            ess=rand(5),
-        )
+        parameter_names = ["a", "bb", "ccc", "d", "e"]
+        data = (est=randn(5), mcse_est=rand(5), rhat=rand(5), ess=rand(5))
 
-        stats = @inferred SummaryStats(data; name="Stats")
+        @inferred SummaryStats(data; name="Stats")
+        stats = @inferred SummaryStats(data, parameter_names; name="Stats")
 
         @testset "basic interfaces" begin
             @test parent(stats) === data
             @test stats.name == "Stats"
             @test SummaryStats("MoreStats", data).name == "MoreStats"
             @test SummaryStats(data; name="MoreStats").name == "MoreStats"
-            @test keys(stats) == keys(data)
+            @test keys(stats) == (:parameter, keys(data)...)
             for k in keys(stats)
-                @test haskey(stats, k) == haskey(data, k)
-                @test getindex(stats, k) == getindex(data, k)
+                @test haskey(stats, k)
+                if k === :parameter
+                    @test getindex(stats, k) == parameter_names
+                else
+                    @test getindex(stats, k) == getindex(data, k)
+                end
             end
             @test !haskey(stats, :foo)
-            @test length(stats) == length(data)
+            @test length(stats) == length(data) + 1
+            @test getindex(stats, 1) == parameter_names
             for i in 1:length(data)
-                @test getindex(stats, i) == getindex(data, i)
+                @test stats[i + 1] == data[i]
             end
-            @test Base.iterate(stats) == Base.iterate(data)
-            @test Base.iterate(stats, 2) == Base.iterate(data, 2)
+            @test Base.iterate(stats) == (parameter_names, (2, length(stats)))
+            @test Base.iterate(stats, (2, length(stats))) == (stats[2], (3, length(stats)))
 
             data_copy1 = deepcopy(data)
-            stats2 = SummaryStats(data_copy1)
+            stats2 = SummaryStats(data_copy1, parameter_names)
             @test stats2 == stats
             @test isequal(stats2, stats)
 
             data_copy2 = deepcopy(data)
-            stats3 = SummaryStats(data_copy2; name="Stats")
-            @test stats3 == stats2
-            @test isequal(stats3, stats2)
-            stats3[:parameter][1] = "foo"
+            parameter_names2 = copy(parameter_names)
+            parameter_names2[1] = "foo"
+            stats3 = SummaryStats(data_copy2, parameter_names2; name="Stats")
             @test stats3 != stats2
             @test !isequal(stats3, stats2)
-            stats3[:parameter][1] = "a"
+            stats3 = SummaryStats(data_copy2, parameter_names; name="Stats")
             stats3[:est][2] = NaN
             @test stats3 != stats2
             @test !isequal(stats3, stats2)
             stats2[:est][2] = NaN
             @test stats3 != stats2
             @test isequal(stats3, stats2)
+        end
 
-            stats4 = SummaryStats((; est=randn(5), est2=randn(5)); name="MoreStats")
-            @test parent(stats4).parameter == 1:5
-            stats_merged1 = merge(stats, stats4)
-            @test stats_merged1.name == "Stats"
-            @test parent(stats_merged1) == merge(parent(stats), parent(stats4))
+        @testset "merge" begin
+            stats_dict = SummaryStats(
+                OrderedDict(pairs(data)), parameter_names; name="Stats"
+            )
+            @test merge(stats) === stats
+            @test merge(stats, stats) == stats
+            @test merge(stats_dict) === stats_dict
+            @test merge(stats_dict, stats_dict) == stats_dict
+            @test merge(stats, stats_dict) == stats
+            @test merge(stats_dict, stats) == stats_dict
 
-            stats_merged2 = merge(stats4, stats)
-            @test stats_merged2.name == "MoreStats"
-            @test parent(stats_merged2) == merge(parent(stats4), parent(stats))
+            data2 = (ess=randn(5), rhat=rand(5), mcse_est=rand(5), est2=rand(5))
+            stats2 = SummaryStats(data2, 1:5; name="Stats2")
+            stats2_dict = SummaryStats(OrderedDict(pairs(data2)), 1:5; name="Stats2")
+            for stats_a in (stats, stats_dict), stats_b in (stats2, stats2_dict)
+                @test merge(stats_a, stats_b) ==
+                    SummaryStats(merge(data, data2), stats_b.parameter_names)
+                @test merge(stats_a, stats_b).name == stats_b.name
+                @test merge(stats_b, stats_a) ==
+                    SummaryStats(merge(data2, data), stats_a.parameter_names)
+                @test merge(stats_b, stats_a).name == stats_a.name
+            end
         end
 
         @testset "Tables interface" begin
@@ -88,14 +103,13 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
             @test Tables.columns(stats) === stats
             @test Tables.columnnames(stats) == keys(stats)
             table = Tables.columntable(stats)
-            @test table == data
+            @test table == (; parameter=parameter_names, data...)
             for (i, k) in enumerate(Tables.columnnames(stats))
                 @test Tables.getcolumn(stats, i) == Tables.getcolumn(stats, k)
             end
             @test_throws ErrorException Tables.getcolumn(stats, :foo)
-            @test Tables.rowaccess(typeof(stats))
-            @test Tables.rows(stats) == Tables.rows(parent(stats))
-            @test Tables.schema(stats) == Tables.schema(parent(stats))
+            @test !Tables.rowaccess(typeof(stats))
+            @test Tables.schema(stats) == Tables.schema(Tables.columntable(stats))
         end
 
         @testset "TableTraits interface" begin
@@ -124,15 +138,15 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
         end
 
         @testset "show" begin
+            parameter_names = ["a", "bb", "ccc", "d", "e"]
             data = (
-                parameter=["a", "bb", "ccc", "d", "e"],
                 est=[111.11, 1.2345e-6, 5.4321e8, Inf, NaN],
                 mcse_est=[0.0012345, 5.432e-5, 2.1234e5, Inf, NaN],
                 rhat=vcat(1.009, 1.011, 0.99, Inf, NaN),
                 ess=vcat(312.45, 23.32, 1011.98, Inf, NaN),
                 ess_bulk=vcat(9.2345, 876.321, 999.99, Inf, NaN),
             )
-            stats = SummaryStats(data)
+            stats = SummaryStats(data, parameter_names)
             @test sprint(show, "text/plain", stats) == """
                 SummaryStats
                               est  mcse_est  rhat   ess  ess_bulk
@@ -156,12 +170,14 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
             end
             @test stats1 isa SummaryStats
             @test getfield(stats1, :name) == "SummaryStats"
-            @test stats1 == SummaryStats((
-                parameter=axes(x, 3),
-                mean=map(mean, eachslice(x; dims=3)),
-                std=map(std, eachslice(x; dims=3)),
-                median=map(median, eachslice(x; dims=3)),
-            ))
+            @test stats1 == SummaryStats(
+                (
+                    mean=map(mean, eachslice(x; dims=3)),
+                    std=map(std, eachslice(x; dims=3)),
+                    median=map(median, eachslice(x; dims=3)),
+                ),
+                axes(x, 3),
+            )
 
             function _compute_stats(x)
                 return summarize(x, (:mean, :std) => mean_and_std, :median => median)
@@ -175,11 +191,10 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
 
             stats3 = summarize(x, mean, std; var_names=["a", "b", "c"], name="Stats")
             @test getfield(stats3, :name) == "Stats"
-            @test stats3 == SummaryStats((
-                parameter=["a", "b", "c"],
-                mean=map(mean, eachslice(x; dims=3)),
-                std=map(std, eachslice(x; dims=3)),
-            ))
+            @test stats3 == SummaryStats(
+                (mean=map(mean, eachslice(x; dims=3)), std=map(std, eachslice(x; dims=3))),
+                ["a", "b", "c"],
+            )
 
             stats4 = summarize(x; var_names=["a", "b", "c"], name="Stats")
             @test getfield(stats4, :name) == "Stats"
