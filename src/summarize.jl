@@ -3,7 +3,11 @@ $(TYPEDEF)
 
 A container for a column table of values computed by [`summarize`](@ref).
 
-This object implements the Tables and TableTraits interfaces. It has a custom `show` method.
+This object implements the Tables and TableTraits column table interfaces. It has a custom
+`show` method.
+
+`SummaryStats` behaves like an `OrderedDict` of columns, where the columns can be accessed
+using either `Symbol`s or a 1-based integer index.
 
 $(TYPEDFIELDS)
 
