@@ -89,10 +89,11 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
             stats2_dict = SummaryStats(OrderedDict(pairs(data2)), 1:5; name="Stats2")
             for stats_a in (stats, stats_dict), stats_b in (stats2, stats2_dict)
                 @test merge(stats_a, stats_b) ==
-                    SummaryStats(merge(data, data2), parameter_names)
-                @test merge(stats_a, stats_b).name == stats_a.name
-                @test merge(stats_b, stats_a) == SummaryStats(merge(data2, data), 1:5)
-                @test merge(stats_b, stats_a).name == stats_b.name
+                    SummaryStats(merge(data, data2), stats_b.parameter_names)
+                @test merge(stats_a, stats_b).name == stats_b.name
+                @test merge(stats_b, stats_a) ==
+                    SummaryStats(merge(data2, data), stats_a.parameter_names)
+                @test merge(stats_b, stats_a).name == stats_a.name
             end
         end
 
@@ -107,9 +108,8 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                 @test Tables.getcolumn(stats, i) == Tables.getcolumn(stats, k)
             end
             @test_throws ErrorException Tables.getcolumn(stats, :foo)
-            @test Tables.rowaccess(typeof(stats))
-            # @test Tables.rows(stats) == Tables.rows(parent(stats))
-            # @test Tables.schema(stats) == Tables.schema(parent(stats))
+            @test !Tables.rowaccess(typeof(stats))
+            @test Tables.schema(stats) == Tables.schema(Tables.columntable(stats))
         end
 
         @testset "TableTraits interface" begin
