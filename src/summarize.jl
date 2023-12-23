@@ -45,6 +45,12 @@ function SummaryStats(name::String, data)
     return SummaryStats(name, data, Base.OneTo(Tables.rowcount(data)))
 end
 
+function _ordereddict(stats::SummaryStats)
+    return OrderedCollections.OrderedDict(
+        k => Tables.getcolumn(stats, k) for k in Tables.columnnames(stats)
+    )
+end
+
 # forward key interfaces from its parent
 Base.parent(stats::SummaryStats) = getfield(stats, :data)
 Base.keys(stats::SummaryStats) = map(Symbol, Tables.columnnames(stats))
@@ -62,31 +68,19 @@ end
 function Base.merge(
     stats::SummaryStats{<:NamedTuple}, other_stats::SummaryStats{<:NamedTuple}...
 )
+    isempty(other_stats) && return stats
+    stats_all = (stats, other_stats...)
+    stats_last = last(stats_all)
     return SummaryStats(
-        stats.name, merge(parent(stats), map(parent, other_stats)...), stats.parameter_names
+        stats_last.name, merge(map(parent, stats_all)...), stats_last.parameter_names
     )
 end
 function Base.merge(stats::SummaryStats, other_stats::SummaryStats...)
     isempty(other_stats) && return stats
     stats_all = (stats, other_stats...)
-    colnames = map(Tables.columnnames ∘ parent, stats_all)
-    num_cols = map(length, colnames)
-    colnames_all = reduce(vcat, map(collect, colnames))
-    colnames_unique = unique(colnames_all)
-
-    # get map from column name to the last table that contains that column
-    table_ids_all = collect(
-        Iterators.flatten(
-            Iterators.map(Base.splat(Iterators.repeated), enumerate(num_cols))
-        ),
-    )
-    index_map_rev = StatsBase.indexmap(reverse(colnames_all))
-    col_to_table_id = Dict(k => table_ids_all[end - v + 1] for (k, v) in index_map_rev)
-
-    data_merged = OrderedCollections.OrderedDict(
-        k => Tables.getcolumn(stats_all[col_to_table_id[k]], k) for k in colnames_unique
-    )
-    return SummaryStats(data_merged, stats.parameter_names; name=stats.name)
+    data_merged = merge(map(_ordereddict, stats_all)...)
+    parameter_names = pop!(data_merged, :parameter)
+    return SummaryStats(last(stats_all).name, data_merged, parameter_names)
 end
 for f in (:(==), :isequal)
     @eval begin
