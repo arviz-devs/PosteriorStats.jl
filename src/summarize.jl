@@ -131,9 +131,9 @@ Tables.istable(::Type{<:SummaryStats}) = true
 Tables.columnaccess(::Type{<:SummaryStats}) = true
 Tables.columns(s::SummaryStats) = s
 function Tables.columnnames(s::SummaryStats)
-    data_cols = Tables.columnnames(Tables.columns(parent(s)))
+    data_cols = Tables.columnnames(parent(s))
     data_cols isa Tuple && return (:parameter, data_cols...)
-    return [:parameter; data_cols]
+    return collect(Iterators.flatten(((:parameter,), data_cols)))
 end
 function Tables.getcolumn(stats::SummaryStats, i::Int)
     i == 1 && return stats.parameter_names
