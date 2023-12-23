@@ -1,3 +1,16 @@
+"""
+    FixKeywords(f; kwargs...)
+    FixKeywords(f, kwargs)
+
+A type representing the function `(xs...) -> f(xs...; kwargs...)`.
+"""
+struct FixKeywords{F}
+    f::F
+    kwargs
+end
+FixKeywords(f; kwargs...) = FixKeywords(f, kwargs)
+(f::FixKeywords)(args...) = f.f(args...; f.kwargs...)
+
 function _check_log_likelihood(x)
     if any(!isfinite, x)
         @warn "All log likelihood values must be finite, but some are not."
