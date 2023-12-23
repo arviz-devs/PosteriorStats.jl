@@ -72,13 +72,17 @@ function Base.merge(stats::SummaryStats, other_stats::SummaryStats...)
     data = Tables.columns(map(Tables.rowmerge, row_tables...))
     return SummaryStats(stats.name, data, stats.parameter_names)
 end
-function Base.isequal(stats::SummaryStats, other_stats::SummaryStats)
-    return isequal(stats.parameter_names, other_stats.parameter_names) &&
-           isequal(parent(stats), parent(other_stats))
-end
-function Base.:(==)(stats::SummaryStats, other_stats::SummaryStats)
-    return (stats.parameter_names == other_stats.parameter_names) &&
-           (parent(stats) == parent(other_stats))
+for f in (:(==), :isequal)
+    @eval begin
+        function Base.$(f)(stats::SummaryStats, other_stats::SummaryStats)
+            colnames1 = Tables.columnnames(stats)
+            colnames2 = Tables.columnnames(other_stats)
+            vals1 = (Tables.getcolumn(stats, k) for k in colnames1)
+            vals2 = (Tables.getcolumn(other_stats, k) for k in colnames2)
+            return all(Base.splat($f), zip(colnames1, colnames2)) &&
+                   all(Base.splat($f), zip(vals1, vals2))
+        end
+    end
 end
 
 #### custom tabular show methods
