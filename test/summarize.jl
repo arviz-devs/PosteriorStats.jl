@@ -1,5 +1,6 @@
 using IteratorInterfaceExtensions
 using MCMCDiagnosticTools
+using OrderedCollections
 using PosteriorStats
 using Statistics
 using StatsBase
@@ -24,7 +25,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
 @testset "summary statistics" begin
     @testset "SummaryStats" begin
         parameter_names = ["a", "bb", "ccc", "d", "e"]
-        data = (est=randn(5), mcse_est=randn(5), rhat=rand(5), ess=rand(5))
+        data = (est=randn(5), mcse_est=rand(5), rhat=rand(5), ess=rand(5))
 
         @inferred SummaryStats(data; name="Stats")
         stats = @inferred SummaryStats(data, parameter_names; name="Stats")
@@ -70,16 +71,29 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
             stats2[:est][2] = NaN
             @test stats3 != stats2
             @test isequal(stats3, stats2)
+        end
 
-            stats4 = SummaryStats((; est=randn(5), est2=randn(5)); name="MoreStats")
-            @test stats4.parameter_names == 1:5
-            stats_merged1 = merge(stats, stats4)
-            @test stats_merged1.name == "Stats"
-            @test parent(stats_merged1) == merge(parent(stats), parent(stats4))
+        @testset "merge" begin
+            stats_dict = SummaryStats(
+                OrderedDict(pairs(data)), parameter_names; name="Stats"
+            )
+            @test merge(stats) === stats
+            @test merge(stats, stats) == stats
+            @test merge(stats_dict) === stats_dict
+            @test merge(stats_dict, stats_dict) == stats_dict
+            @test merge(stats, stats_dict) == stats
+            @test merge(stats_dict, stats) == stats_dict
 
-            stats_merged2 = merge(stats4, stats)
-            @test stats_merged2.name == "MoreStats"
-            @test parent(stats_merged2) == merge(parent(stats4), parent(stats))
+            data2 = (ess=randn(5), rhat=rand(5), mcse_est=rand(5), est2=rand(5))
+            stats2 = SummaryStats(data2, 1:5; name="Stats2")
+            stats2_dict = SummaryStats(OrderedDict(pairs(data2)), 1:5; name="Stats2")
+            for stats_a in (stats, stats_dict), stats_b in (stats2, stats2_dict)
+                @test merge(stats_a, stats_b) ==
+                    SummaryStats(merge(data, data2), parameter_names)
+                @test merge(stats_a, stats_b).name == stats_a.name
+                @test merge(stats_b, stats_a) == SummaryStats(merge(data2, data), 1:5)
+                @test merge(stats_b, stats_a).name == stats_b.name
+            end
         end
 
         @testset "Tables interface" begin
