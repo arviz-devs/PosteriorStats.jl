@@ -274,7 +274,8 @@ end
 # see https://ronisbr.github.io/PrettyTables.jl/stable/man/formatters/
 function _default_prettytables_formatters(data; sigdigits_se=2, sigdigits_default=3)
     formatters = []
-    for (i, k) in enumerate(Tables.columnnames(data))
+    col_names = Tables.columnnames(data)
+    for (i, k) in enumerate(col_names)
         for mcse_key in (Symbol("mcse_$k"), Symbol("$(k)_mcse"))
             if haskey(data, mcse_key)
                 push!(
@@ -285,12 +286,12 @@ function _default_prettytables_formatters(data; sigdigits_se=2, sigdigits_defaul
             end
         end
     end
-    mcse_cols = findall(Tables.columnnames(data)) do k
+    mcse_cols = findall(col_names) do k
         s = string(k)
         return startswith(s, "mcse_") || endswith(s, "_mcse")
     end
     isempty(mcse_cols) || push!(formatters, ft_printf_sigdigits(sigdigits_se, mcse_cols))
-    ess_cols = findall(_is_ess_label, Tables.columnnames(data))
+    ess_cols = findall(_is_ess_label, col_names)
     isempty(ess_cols) || push!(formatters, PrettyTables.ft_printf("%d", ess_cols))
     ft_integer = _prettytables_integer_formatter(data)
     ft_integer === nothing || push!(formatters, ft_integer)
@@ -305,13 +306,10 @@ function _show_prettytable(
         extra_formatters...,
         _default_prettytables_formatters(data; sigdigits_se, sigdigits_default)...,
     )
-    numcols = length(Tables.columnnames(data))
-    alignment = fill(:r, numcols)
-    for i in 1:numcols
-        if !(eltype(Tables.getcolumn(data, i)) <: Real)
-            alignment[i] = :l
-        end
-    end
+    col_names = Tables.columnnames(data)
+    alignment = [
+        eltype(Tables.getcolumn(data, col_name)) <: Real ? :r : :l for col_name in col_names
+    ]
     kwargs_new = merge(
         (
             show_subheader=false,
