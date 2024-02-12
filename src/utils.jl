@@ -140,7 +140,7 @@ end
 function _sum_and_se(x; dims=:)
     s = sum(x; dims)
     n = dims isa Colon ? length(x) : prod(Base.Fix1(size, x), dims)
-    se = StatsBase.std(x; dims) * sqrt(oftype(one(eltype(s)), n))
+    se = Statistics.std(x; dims) * sqrt(oftype(one(eltype(s)), n))
     return s, se
 end
 _sum_and_se(x::Number; kwargs...) = (x, oftype(float(x), NaN))
