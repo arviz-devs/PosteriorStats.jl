@@ -400,12 +400,7 @@ end
 _fun_and_name(p::Pair) = p
 _fun_and_name(f) = nothing => f
 
-_fname(f) = Symbol(_fname_string(f))
-@generated function _fname_string(::F) where {F}
-    s = replace(string(F), r"^typeof\((.*)\)$" => s"\1")
-    # remove module name
-    return replace(s, r"^.*\.(.*)$" => s"\1")
-end
+_fname(f) = nameof(f)
 
 # curried functions
 _mcse_std(x) = MCMCDiagnosticTools.mcse(x; kind=Statistics.std)
