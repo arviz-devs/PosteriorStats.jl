@@ -1,5 +1,5 @@
 """
-    r2_score(y_true::AbstractVector, y_pred::AbstractVecOrMat) -> (; r2, r2_std)
+    r2_score(y_true::AbstractVector, y_pred::AbstractArray) -> (; r2, r2_std)
 
 ``R²`` for linear Bayesian regression models.[^GelmanGoodrich2019]
 
@@ -36,7 +36,7 @@ function r2_score(y_true, y_pred)
 end
 
 """
-    r2_samples(y_true::AbstractVector, y_pred::AbstractMatrix) -> AbstractVector
+    r2_samples(y_true::AbstractVector, y_pred::AbstractArray) -> AbstractVector
 
 ``R²`` samples for Bayesian regression models. Only valid for linear models.
 

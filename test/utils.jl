@@ -2,6 +2,7 @@ using OffsetArrays
 using PosteriorStats
 using Random
 using StatsBase
+using Statistics
 using Test
 
 @testset "utils" begin

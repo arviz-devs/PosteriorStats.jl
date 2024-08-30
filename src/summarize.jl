@@ -1,42 +1,102 @@
 """
-$(SIGNATURES)
+$(TYPEDEF)
 
 A container for a column table of values computed by [`summarize`](@ref).
 
-This object implements the Tables and TableTraits interfaces and has a custom `show` method.
+This object implements the Tables and TableTraits column table interfaces. It has a custom
+`show` method.
 
-$(FIELDS)
+`SummaryStats` behaves like an `OrderedDict` of columns, where the columns can be accessed
+using either `Symbol`s or a 1-based integer index.
+
+$(TYPEDFIELDS)
+
+    SummaryStats([name::String,] data[, parameter_names])
+    SummaryStats(data[, parameter_names]; name::String="SummaryStats")
+
+Construct a `SummaryStats` from tabular `data` with optional stats `name` and `param_names`.
+
+`data` must not contain a column `:parameter`, as this is reserved for the parameter names,
+which are always in the first column.
 """
-struct SummaryStats{D<:NamedTuple}
+struct SummaryStats{D,V<:AbstractVector}
     "The name of the collection of summary statistics, used as the table title in display."
     name::String
-    """The summary statistics for each parameter, with an optional first column `parameter`
-    containing the parameter names."""
+    """The summary statistics for each parameter. It must implement the Tables interface."""
     data::D
+    "Names of the parameters"
+    parameter_names::V
+    function SummaryStats(name::String, data, parameter_names::V) where {V}
+        coltable = Tables.columns(data)
+        :parameter ∈ Tables.columnnames(coltable) &&
+            throw(ArgumentError("Column `:parameter` is reserved for parameter names."))
+        length(parameter_names) == Tables.rowcount(data) || throw(
+            DimensionMismatch(
+                "length $(length(parameter_names)) of `parameter_names` does not match number of rows $(Tables.rowcount(data)) in `data`.",
+            ),
+        )
+        return new{typeof(coltable),V}(name, coltable, parameter_names)
+    end
 end
-function SummaryStats(data::NamedTuple; name::String="SummaryStats")
-    n = length(first(data))
-    return SummaryStats(name, merge((parameter=1:n,), data))
+function SummaryStats(
+    data,
+    parameter_names::AbstractVector=Base.OneTo(Tables.rowcount(data));
+    name::String="SummaryStats",
+)
+    return SummaryStats(name, data, parameter_names)
+end
+function SummaryStats(name::String, data)
+    return SummaryStats(name, data, Base.OneTo(Tables.rowcount(data)))
+end
+
+function _ordereddict(stats::SummaryStats)
+    return OrderedCollections.OrderedDict(
+        k => Tables.getcolumn(stats, k) for k in Tables.columnnames(stats)
+    )
 end
 
 # forward key interfaces from its parent
 Base.parent(stats::SummaryStats) = getfield(stats, :data)
-Base.keys(stats::SummaryStats) = keys(parent(stats))
-Base.haskey(stats::SummaryStats, nm::Symbol) = haskey(parent(stats), nm)
-Base.length(stats::SummaryStats) = length(parent(stats))
-Base.getindex(stats::SummaryStats, i::Int) = getindex(parent(stats), i)
-Base.getindex(stats::SummaryStats, nm::Symbol) = getindex(parent(stats), nm)
-function Base.iterate(stats::SummaryStats, i::Int=firstindex(parent(stats)))
-    return iterate(parent(stats), i)
+Base.keys(stats::SummaryStats) = map(Symbol, Tables.columnnames(stats))
+Base.haskey(stats::SummaryStats, nm::Symbol) = nm ∈ keys(stats)
+Base.length(stats::SummaryStats) = length(parent(stats)) + 1
+Base.getindex(stats::SummaryStats, i::Union{Int,Symbol}) = Tables.getcolumn(stats, i)
+function Base.iterate(stats::SummaryStats)
+    ncols = length(stats)
+    return stats.parameter_names, (2, ncols)
+end
+function Base.iterate(stats::SummaryStats, (i, ncols)::NTuple{2,Int})
+    i > ncols && return nothing
+    return Tables.getcolumn(stats, i), (i + 1, ncols)
+end
+function Base.merge(
+    stats::SummaryStats{<:NamedTuple}, other_stats::SummaryStats{<:NamedTuple}...
+)
+    isempty(other_stats) && return stats
+    stats_all = (stats, other_stats...)
+    stats_last = last(stats_all)
+    return SummaryStats(
+        stats_last.name, merge(map(parent, stats_all)...), stats_last.parameter_names
+    )
 end
 function Base.merge(stats::SummaryStats, other_stats::SummaryStats...)
-    return SummaryStats(stats.name, merge(parent(stats), map(parent, other_stats)...))
+    isempty(other_stats) && return stats
+    stats_all = (stats, other_stats...)
+    data_merged = merge(map(_ordereddict, stats_all)...)
+    parameter_names = pop!(data_merged, :parameter)
+    return SummaryStats(last(stats_all).name, data_merged, parameter_names)
 end
-function Base.isequal(stats::SummaryStats, other_stats::SummaryStats)
-    return isequal(parent(stats), parent(other_stats))
-end
-function Base.:(==)(stats::SummaryStats, other_stats::SummaryStats)
-    return (parent(stats) == parent(other_stats))
+for f in (:(==), :isequal)
+    @eval begin
+        function Base.$(f)(stats::SummaryStats, other_stats::SummaryStats)
+            colnames1 = Tables.columnnames(stats)
+            colnames2 = Tables.columnnames(other_stats)
+            vals1 = (Tables.getcolumn(stats, k) for k in colnames1)
+            vals2 = (Tables.getcolumn(other_stats, k) for k in colnames2)
+            return all(Base.splat($f), zip(colnames1, colnames2)) &&
+                   all(Base.splat($f), zip(vals1, vals2))
+        end
+    end
 end
 
 #### custom tabular show methods
@@ -55,7 +115,7 @@ function Base.show(io::IO, mime::MIME"text/html", stats::SummaryStats; kwargs...
 end
 
 function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
-    data = NamedTuple{eachindex(stats)[2:end]}(parent(stats))
+    data = parent(stats)
     rhat_formatter = _prettytables_rhat_formatter(data)
     extra_formatters = rhat_formatter === nothing ? () : (rhat_formatter,)
     return _show_prettytable(
@@ -63,7 +123,7 @@ function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
         mime,
         data;
         title=stats.name,
-        row_labels=parent(stats).parameter,
+        row_labels=Tables.getcolumn(stats, :parameter),
         extra_formatters,
         kwargs...,
     )
@@ -74,12 +134,29 @@ end
 Tables.istable(::Type{<:SummaryStats}) = true
 Tables.columnaccess(::Type{<:SummaryStats}) = true
 Tables.columns(s::SummaryStats) = s
-Tables.columnnames(s::SummaryStats) = Tables.columnnames(parent(s))
-Tables.getcolumn(s::SummaryStats, i::Int) = Tables.getcolumn(parent(s), i)
-Tables.getcolumn(s::SummaryStats, nm::Symbol) = Tables.getcolumn(parent(s), nm)
-Tables.rowaccess(::Type{<:SummaryStats}) = true
-Tables.rows(s::SummaryStats) = Tables.rows(parent(s))
-Tables.schema(s::SummaryStats) = Tables.schema(parent(s))
+function Tables.columnnames(s::SummaryStats)
+    data_cols = Tables.columnnames(parent(s))
+    data_cols isa Tuple && return (:parameter, data_cols...)
+    return collect(Iterators.flatten(((:parameter,), data_cols)))
+end
+function Tables.getcolumn(stats::SummaryStats, i::Int)
+    i == 1 && return stats.parameter_names
+    return Tables.getcolumn(parent(stats), i - 1)
+end
+function Tables.getcolumn(stats::SummaryStats, nm::Symbol)
+    nm === :parameter && return stats.parameter_names
+    return Tables.getcolumn(parent(stats), nm)
+end
+function Tables.schema(s::SummaryStats)
+    data_schema = Tables.schema(parent(s))
+    data_schema === nothing && return nothing
+    T = eltype(s.parameter_names)
+    if data_schema isa Tables.Schema{Nothing,Nothing}
+        return Tables.Schema([:parameter; data_schema.names], [T; data_schema.types])
+    else
+        return Tables.Schema((:parameter, data_schema.names...), (T, data_schema.types...))
+    end
+end
 
 IteratorInterfaceExtensions.isiterable(::SummaryStats) = true
 function IteratorInterfaceExtensions.getiterator(s::SummaryStats)
@@ -200,8 +277,7 @@ Compute the summary statistics in `stats_funs` on each param in `data`, with siz
     fnames = map(first, names_and_funs)
     _check_function_names(fnames)
     funs = map(last, names_and_funs)
-    nt = merge((; parameter=var_names), _summarize(data, funs, fnames)...)
-    return SummaryStats(name, nt)
+    return SummaryStats(name, _summarize(data, funs, fnames), var_names)
 end
 
 function _check_function_names(fnames)
@@ -316,14 +392,15 @@ function _prob_interval_to_strings(interval_type, prob; digits=2)
     end
 end
 
-function _summarize(data::AbstractArray{<:Any,3}, funs, fun_names)
-    return map(fun_names, funs) do fname, f
-        return _map_over_params(fname, f, data)
-    end
-end
-
 # aggressive constprop allows summarize to be type-inferrable when called by
 # another function
+
+@constprop :aggressive function _summarize(data::AbstractArray{<:Any,3}, funs, fun_names)
+    return merge(map(fun_names, funs) do fname, f
+        return _map_over_params(fname, f, data)
+    end...)
+end
+
 @constprop :aggressive function _map_over_params(fname, f, data)
     vals = _map_paramslices(f, data)
     return _namedtuple_of_vals(f, fname, vals)
@@ -344,12 +421,7 @@ end
 _fun_and_name(p::Pair) = p
 _fun_and_name(f) = nothing => f
 
-_fname(f) = Symbol(_fname_string(f))
-@generated function _fname_string(::F) where {F}
-    s = replace(string(F), r"^typeof\((.*)\)$" => s"\1")
-    # remove module name
-    return replace(s, r"^.*\.(.*)$" => s"\1")
-end
+_fname(f) = nameof(f)
 
 # functions that have a 3D array method
 _map_paramslices(f, x) = map(f, eachslice(x; dims=3))
