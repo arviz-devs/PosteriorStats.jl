@@ -1,3 +1,4 @@
+using IntervalSets
 using OffsetArrays
 using PosteriorStats
 using Statistics
@@ -11,8 +12,8 @@ using Test
 
             x = T <: Integer ? rand(T(1):T(30), n) : randn(T, n)
             r = @inferred hdi(x; prob)
-            @test r isa NamedTuple{(:lower, :upper),NTuple{2,T}}
-            l, u = r
+            @test r isa ClosedInterval{T}
+            l, u = IntervalSets.endpoints(r)
             interval_length = floor(Int, prob * n) + 1
             if T <: Integer
                 @test sum(x -> l ≤ x ≤ u, x) ≥ interval_length
@@ -33,7 +34,7 @@ using Test
         @testset "NaNs returned if contains NaNs" begin
             x = randn(1000)
             x[3] = NaN
-            @test isequal(hdi(x), (lower=NaN, upper=NaN))
+            @test isequal(hdi(x), NaN .. NaN)
         end
 
         @testset "errors for empty array" begin
@@ -62,15 +63,14 @@ using Test
             x = T <: Integer ? rand(T(1):T(30), sz) : randn(T, sz)
             r = @inferred hdi(x; prob)
             if ndims(x) == 2
-                @test r isa NamedTuple{(:lower, :upper),NTuple{2,T}}
+                @test r isa ClosedInterval{T}
                 @test r == hdi(vec(x); prob)
             else
-                @test r isa NamedTuple{(:lower, :upper),NTuple{2,Array{T,length(sz) - 2}}}
+                @test r isa Array{ClosedInterval{T},ndims(x) - 2}
                 r_slices = dropdims(
                     mapslices(x -> hdi(x; prob), x; dims=(1, 2)); dims=(1, 2)
                 )
-                @test r.lower == first.(r_slices)
-                @test r.upper == last.(r_slices)
+                @test r == r_slices
             end
 
             @test hdi!(copy(x); prob) == r
@@ -83,11 +83,9 @@ using Test
             xoff = OffsetArray(x, (-1, 2, -3, 4))
             r = hdi(x; prob)
             roff = @inferred hdi(xoff; prob)
-            @test roff isa NamedTuple{(:lower, :upper),<:NTuple{2,OffsetMatrix{T}}}
-            @test axes(roff.lower) == (axes(xoff, 3), axes(xoff, 4))
-            @test axes(roff.upper) == (axes(xoff, 3), axes(xoff, 4))
-            @test collect(roff.lower) == r.lower
-            @test collect(roff.upper) == r.upper
+            @test roff isa OffsetMatrix{ClosedInterval{T}}
+            @test axes(roff) == (axes(xoff, 3), axes(xoff, 4))
+            @test collect(roff) == r
         end
     end
 end

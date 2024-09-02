@@ -21,6 +21,8 @@ using StatsBase: StatsBase
 using Tables: Tables
 using TableTraits: TableTraits
 
+using IntervalSets
+
 # PSIS
 export PSIS, PSISResult, psis, psis!
 
