@@ -315,22 +315,22 @@ default_stats(; kwargs...) = default_stats(Statistics.mean; kwargs...)
 function default_stats(
     ::typeof(Statistics.mean); prob_interval::Real=DEFAULT_INTERVAL_PROB, kwargs...
 )
-    hdi_names = map(Symbol, _prob_interval_to_strings("hdi", prob_interval))
+    hdi_name = Symbol("hdi_$(_prob_to_string(prob_interval))%")
     return (
         (:mean, :std) => StatsBase.mean_and_std ∘ _skipmissing,
-        hdi_names => x -> hdi(_cskipmissing(x); prob=prob_interval),
+        hdi_name => (x -> hdi(_cskipmissing(x); prob=prob_interval)),
     )
 end
 function default_stats(
     ::typeof(Statistics.median); prob_interval::Real=DEFAULT_INTERVAL_PROB, kwargs...
 )
-    eti_names = map(Symbol, _prob_interval_to_strings("eti", prob_interval))
+    eti_name = Symbol("eti_$(_prob_to_string(prob_interval))%")
     prob_tail = (1 - prob_interval) / 2
     p = (prob_tail, 1 - prob_tail)
     return (
         :median => Statistics.median ∘ _skipmissing,
         :mad => StatsBase.mad ∘ _skipmissing,
-        eti_names => Base.Fix2(Statistics.quantile, p) ∘ _skipmissing ∘ vec,
+        eti_name => (x -> eti(_cskipmissing(x); prob=prob_interval)),
     )
 end
 
@@ -361,15 +361,7 @@ function default_diagnostics(::typeof(Statistics.median); kwargs...)
     )
 end
 
-function _prob_interval_to_strings(interval_type, prob; digits=2)
-    α = (1 - prob) / 2
-    perc_lower = string(round(100 * α; digits))
-    perc_upper = string(round(100 * (1 - α); digits))
-    return map((perc_lower, perc_upper)) do s
-        s = replace(s, r"\.0+$" => "")
-        return "$(interval_type)_$s%"
-    end
-end
+_prob_to_string(prob; digits=2) = replace(string(round(100 * prob; digits)), r"\.0+$" => "")
 
 # aggressive constprop allows summarize to be type-inferrable when called by
 # another function
