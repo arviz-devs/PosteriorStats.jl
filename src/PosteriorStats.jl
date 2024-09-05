@@ -45,6 +45,7 @@ const DEFAULT_INTERVAL_PROB = 0.94
 const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)
 
 include("utils.jl")
+include("eti.jl")
 include("hdi.jl")
 include("elpdresult.jl")
 include("loo.jl")
