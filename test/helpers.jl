@@ -1,4 +1,5 @@
 using ArviZExampleData
+using IntervalSets
 using RCall
 
 r_loo_installed() = !isempty(rcopy(R"system.file(package='loo')"))
@@ -56,7 +57,12 @@ function eight_schools_data()
     )
 end
 
-function _isapprox(x::AbstractArray, y::AbstractArray; kwargs...)
+function _isapprox(x::AbstractArray{<:Number}, y::AbstractArray{<:Number}; kwargs...)
     return isapprox(collect(x), collect(y); kwargs...)
+end
+function _isapprox(x::AbstractInterval, y::AbstractInterval; kwargs...)
+    return isleftclosed(x) == isleftclosed(y) &&
+           isrightclosed(x) == isrightclosed(y) &&
+           _isapprox(endpoints(x), endpoints(y); kwargs...)
 end
 _isapprox(x, y; kwargs...) = all(map((x, y) -> isapprox(x, y; kwargs...), x, y))
