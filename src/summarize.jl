@@ -215,10 +215,10 @@ the number of significant digits that will be displayed.
 ```jldoctest summarize
 julia> summarize(x; var_names=[:a, :b, :c])
 SummaryStats
-       mean   std  hdi_3%  hdi_97%  mcse_mean  mcse_std  ess_tail  ess_bulk  r ⋯
- a   0.0003  0.99   -1.92     1.78      0.016     0.012      3567      3663  1 ⋯
- b  10.02    0.99    8.17    11.9       0.016     0.011      3841      3906  1 ⋯
- c  19.98    0.99   18.1     21.9       0.016     0.012      3892      3749  1 ⋯
+       mean   std  hdi_94%        mcse_mean  mcse_std  ess_tail  ess_bulk  rha ⋯
+ a   0.0003  0.99  -1.92 .. 1.78      0.016     0.012      3567      3663  1.0 ⋯
+ b  10.02    0.99   8.17 .. 11.9      0.016     0.011      3841      3906  1.0 ⋯
+ c  19.98    0.99   18.1 .. 21.9      0.016     0.012      3892      3749  1.0 ⋯
                                                                 1 column omitted
 ```
 
@@ -228,10 +228,10 @@ names:
 ```jldoctest summarize
 julia> summarize(x, default_stats(; prob_interval=0.89)...; var_names=[:a, :b, :c])
 SummaryStats
-         mean    std  hdi_5.5%  hdi_94.5%
- a   0.000305  0.990     -1.63       1.52
- b  10.0       0.988      8.53      11.6
- c  20.0       0.988     18.5       21.6
+         mean    std  hdi_89%
+ a   0.000305  0.990  -1.63 .. 1.52
+ b  10.0       0.988   8.53 .. 11.6
+ c  20.0       0.988   18.5 .. 21.6
 ```
 
 Compute the summary stats focusing on `Statistics.median`:
@@ -239,10 +239,23 @@ Compute the summary stats focusing on `Statistics.median`:
 ```jldoctest summarize
 julia> summarize(x, default_summary_stats(median)...; var_names=[:a, :b, :c])
 SummaryStats
-    median    mad  eti_3%  eti_97%  mcse_median  ess_tail  ess_median  rhat
- a   0.004  0.978   -1.83     1.89        0.020      3567        3336  1.00
- b  10.02   0.995    8.17    11.9         0.023      3841        3787  1.00
- c  19.99   0.979   18.1     21.9         0.020      3892        3829  1.00
+    median    mad  eti_94%            mcse_median  ess_tail  ess_median  rhat
+ a   0.004  0.978  -0.0738 .. 0.0731        0.020      3567        3336  1.00
+ b  10.02   0.995     9.93 .. 10.1          0.023      3841        3787  1.00
+ c  19.99   0.979     19.9 .. 20.0          0.020      3892        3829  1.00
+```
+
+Compute multiple quantiles simultaneously:
+
+```jldoctest summarize
+julia> qs = (0.05, 0.25, 0.5, 0.75, 0.95);
+
+julia> summarize(x, (:q5, :q25, :q50, :q75, :q95) => Base.Fix2(Statistics.quantile, qs))
+SummaryStats
+       q5     q25       q50     q75    q95
+ 1  -1.61  -0.668   0.00447   0.653   1.64
+ 2   8.41   9.34   10.0      10.7    11.6
+ 3  18.4   19.3    20.0      20.6    21.6
 ```
 """
 function summarize end
