@@ -1,16 +1,25 @@
 """
-    hdi(samples::AbstractArray{<:Real}; prob=$(DEFAULT_INTERVAL_PROB)) -> (; lower, upper)
+    hdi(samples::AbstractVecOrMat{<:Real}; [prob]) -> IntervalSets.ClosedInterval
+    hdi(samples::AbstractArray{<:Real}; [prob]) -> Array{<:IntervalSets.ClosedInterval}
 
 Estimate the unimodal highest density interval (HDI) of `samples` for the probability `prob`.
 
 The HDI is the minimum width Bayesian credible interval (BCI). That is, it is the smallest
 possible interval containing `(100*prob)`% of the probability mass.[^Hyndman1996]
-
-`samples` is an array of shape `(draws[, chains[, params...]])`. If multiple parameters are
-present, then `lower` and `upper` are arrays with the shape `(params...,)`, computed
-separately for each marginal.
-
 This implementation uses the algorithm of [^ChenShao1999].
+
+# Arguments
+- `samples`: an array of shape `(draws[, chains[, params...]])`. If multiple parameters are
+    present
+
+# Keywords
+- `prob`: the probability mass to be contained in the HDI. Default is
+    `$(DEFAULT_INTERVAL_PROB)`.
+
+# Returns
+- `intervals`: If `samples` is a vector or matrix, then a single
+    `IntervalSets.ClosedInterval` is returned. Otherwise, an array with the shape
+    `(params...,)`, is returned, containing a marginal HDI for each parameter.
 
 !!! note
     Any default value of `prob` is arbitrary. The default value of
@@ -57,9 +66,7 @@ function hdi(x::AbstractArray{<:Real}; kwargs...)
 end
 
 """
-    hdi!(
-        samples::AbstractArray{<:Real}; prob=$(DEFAULT_INTERVAL_PROB)
-    ) -> IntervalSets.ClosedInterval
+    hdi!(samples::AbstractArray{<:Real}; [prob])
 
 A version of [`hdi`](@ref) that sorts `samples` in-place while computing the HDI.
 """
