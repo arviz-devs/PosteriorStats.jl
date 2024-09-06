@@ -1,16 +1,25 @@
 """
-    hdi(samples::AbstractArray{<:Real}; prob=$(DEFAULT_INTERVAL_PROB)) -> (; lower, upper)
+    hdi(samples::AbstractVecOrMat{<:Real}; [prob]) -> IntervalSets.ClosedInterval
+    hdi(samples::AbstractArray{<:Real}; [prob]) -> Array{<:IntervalSets.ClosedInterval}
 
 Estimate the unimodal highest density interval (HDI) of `samples` for the probability `prob`.
 
 The HDI is the minimum width Bayesian credible interval (BCI). That is, it is the smallest
 possible interval containing `(100*prob)`% of the probability mass.[^Hyndman1996]
-
-`samples` is an array of shape `(draws[, chains[, params...]])`. If multiple parameters are
-present, then `lower` and `upper` are arrays with the shape `(params...,)`, computed
-separately for each marginal.
-
 This implementation uses the algorithm of [^ChenShao1999].
+
+# Arguments
+- `samples`: an array of shape `(draws[, chains[, params...]])`. If multiple parameters are
+    present
+
+# Keywords
+- `prob`: the probability mass to be contained in the HDI. Default is
+    `$(DEFAULT_INTERVAL_PROB)`.
+
+# Returns
+- `intervals`: If `samples` is a vector or matrix, then a single
+    `IntervalSets.ClosedInterval` is returned. Otherwise, an array with the shape
+    `(params...,)`, is returned, containing a marginal HDI for each parameter.
 
 !!! note
     Any default value of `prob` is arbitrary. The default value of
@@ -34,10 +43,8 @@ Here we calculate the 83% HDI for a normal random variable:
 ```jldoctest hdi; setup = :(using Random; Random.seed!(78))
 julia> x = randn(2_000);
 
-julia> hdi(x; prob=0.83) |> pairs
-pairs(::NamedTuple) with 2 entries:
-  :lower => -1.38266
-  :upper => 1.25982
+julia> hdi(x; prob=0.83)
+-1.3826605224220527 .. 1.259817149822839
 ```
 
 We can also calculate the HDI for a 3-dimensional array of samples:
@@ -45,10 +52,11 @@ We can also calculate the HDI for a 3-dimensional array of samples:
 ```jldoctest hdi; setup = :(using Random; Random.seed!(67))
 julia> x = randn(1_000, 1, 1) .+ reshape(0:5:10, 1, 1, :);
 
-julia> hdi(x) |> pairs
-pairs(::NamedTuple) with 2 entries:
-  :lower => [-1.9674, 3.0326, 8.0326]
-  :upper => [1.90028, 6.90028, 11.9003]
+julia> hdi(x)
+3-element Vector{IntervalSets.ClosedInterval{Float64}}:
+ -1.9673956532343464 .. 1.9002831854921525
+ 3.0326043467656536 .. 6.900283185492152
+ 8.032604346765654 .. 11.900283185492153
 ```
 """
 function hdi(x::AbstractArray{<:Real}; kwargs...)
@@ -58,7 +66,7 @@ function hdi(x::AbstractArray{<:Real}; kwargs...)
 end
 
 """
-    hdi!(samples::AbstractArray{<:Real}; prob=$(DEFAULT_INTERVAL_PROB)) -> (; lower, upper)
+    hdi!(samples::AbstractArray{<:Real}; [prob])
 
 A version of [`hdi`](@ref) that sorts `samples` in-place while computing the HDI.
 """
@@ -80,17 +88,17 @@ function _hdi!(x::AbstractVector{<:Real}, prob::Real)
         upper_range = @views x[(begin - 1 + interval_length):end]
         lower, upper = argmax(Base.splat(-), zip(lower_range, upper_range))
     end
-    return (; lower, upper)
+    return IntervalSets.ClosedInterval(lower, upper)
 end
 _hdi!(x::AbstractMatrix{<:Real}, prob::Real) = _hdi!(vec(x), prob)
 function _hdi!(x::AbstractArray{<:Real}, prob::Real)
     ndims(x) > 0 ||
         throw(ArgumentError("HDI cannot be computed for a 0-dimensional array."))
     axes_out = _param_axes(x)
-    lower = similar(x, axes_out)
-    upper = similar(x, axes_out)
-    for (i, x_slice) in zip(eachindex(lower), _eachparam(x))
-        lower[i], upper[i] = _hdi!(x_slice, prob)
+    T = eltype(x)
+    interval = similar(x, IntervalSets.ClosedInterval{T}, axes_out)
+    for (i, x_slice) in zip(eachindex(interval), _eachparam(x))
+        interval[i] = _hdi!(x_slice, prob)
     end
-    return (; lower, upper)
+    return interval
 end

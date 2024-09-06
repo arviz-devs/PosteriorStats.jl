@@ -233,6 +233,31 @@ function ft_printf_sigdigits(sigdigits::Int, columns::AbstractVector{Int}=Int[])
     end
 end
 
+function ft_printf_sigdigits_interval(sigdigits::Int, columns::AbstractVector{Int}=Int[])
+    if isempty(columns)
+        return (v, _, _) -> begin
+            v isa IntervalSets.AbstractInterval || return v
+            tuple_string = map(Base.Fix2(_printf_with_sigdigits, sigdigits), extrema(v))
+            return join(tuple_string, _interval_delimiter(v))
+        end
+    else
+        return (v, _, j) -> begin
+            v isa Tuple{<:Real,Vararg{Real}} || return v
+            for col in columns
+                col == j || continue
+                tuple_string = map(Base.Fix2(_printf_with_sigdigits, sigdigits), extrema(v))
+                return join(tuple_string, _interval_delimiter(v))
+            end
+            return v
+        end
+    end
+end
+
+function _interval_delimiter(x::IntervalSets.AbstractInterval)
+    str = sprint(show, "text/plain", x)
+    return occursin(" .. ", str) ? " .. " : ".."
+end
+
 """
     ft_printf_sigdigits_matching_se(se_vals[, columns]; kwargs...)
 
@@ -309,6 +334,7 @@ function _default_prettytables_formatters(data; sigdigits_se=2, sigdigits_defaul
     ft_integer = _prettytables_integer_formatter(data)
     ft_integer === nothing || push!(formatters, ft_integer)
     push!(formatters, ft_printf_sigdigits(sigdigits_default))
+    push!(formatters, ft_printf_sigdigits_interval(sigdigits_default))
     return formatters
 end
 
@@ -353,6 +379,8 @@ function _show_prettytable(
         v = Tables.getcolumn(data, k)
         if eltype(v) <: Real && !(eltype(v) <: Integer) && !_is_ess_label(k)
             alignment_anchor_regex[i] = [r"\.", r"e", r"^NaN$", r"Inf$"]
+        elseif eltype(v) <: IntervalSets.AbstractInterval
+            alignment_anchor_regex[i] = [r"\.\."]
         end
     end
     alignment_anchor_fallback = :r

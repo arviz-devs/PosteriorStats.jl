@@ -1,13 +1,14 @@
 name = "PosteriorStats"
 uuid = "7f36be82-ad55-44ba-a5c0-b8b5480d7aa5"
 authors = ["Seth Axen <seth@sethaxen.com> and contributors"]
-version = "0.2.5"
+version = "0.3.0-DEV"
 
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
 IteratorInterfaceExtensions = "82899510-4779-5014-852e-03e436cf321d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LogExpFunctions = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
@@ -34,6 +35,7 @@ Distributions = "0.25.57"
 DocStringExtensions = "0.8, 0.9"
 FiniteDifferences = "0.12.17"
 GLM = "1.8.0"
+IntervalSets = "0.5, 0.6, 0.7"
 IteratorInterfaceExtensions = "1"
 LinearAlgebra = "1.6"
 LogExpFunctions = "0.3.3"
