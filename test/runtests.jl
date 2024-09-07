@@ -7,6 +7,7 @@ Random.seed!(97)
 @testset "PosteriorStats" begin
     include("helpers.jl")
     include("utils.jl")
+    include("eti.jl")
     include("hdi.jl")
     include("loo.jl")
     include("loo_pit.jl")
