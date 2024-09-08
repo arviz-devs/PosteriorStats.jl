@@ -60,9 +60,7 @@ julia> hdi(x)
 ```
 """
 function hdi(x::AbstractArray{<:Real}; kwargs...)
-    xcopy = similar(x)
-    copyto!(xcopy, x)
-    return hdi!(xcopy; kwargs...)
+    return hdi!(_copymutable(x); kwargs...)
 end
 
 """
@@ -70,30 +68,34 @@ end
 
 A version of [`hdi`](@ref) that sorts `samples` in-place while computing the HDI.
 """
-function hdi!(x::AbstractArray{<:Real}; prob::Real=DEFAULT_INTERVAL_PROB)
+function hdi!(
+    x::AbstractArray{<:Real}; prob::Real=DEFAULT_INTERVAL_PROB
+)
     0 < prob < 1 || throw(DomainError(prob, "HDI `prob` must be in the range `(0, 1)`."))
+    ndims(x) > 0 ||
+        throw(ArgumentError("HDI cannot be computed for a 0-dimensional array."))
+    isempty(x) && throw(ArgumentError("HDI cannot be computed for an empty array."))
     return _hdi!(x, prob)
 end
 
 function _hdi!(x::AbstractVector{<:Real}, prob::Real)
-    isempty(x) && throw(ArgumentError("HDI cannot be computed for an empty array."))
     n = length(x)
     interval_length = floor(Int, prob * n) + 1
-    if any(isnan, x) || interval_length == n
+    if any(isnan, x)
+        lower = upper = eltype(x)(NaN)
+    elseif interval_length == n
         lower, upper = extrema(x)
     else
         npoints_to_check = n - interval_length + 1
-        sort!(x)
-        lower_range = @views x[begin:(begin - 1 + npoints_to_check)]
-        upper_range = @views x[(begin - 1 + interval_length):end]
+        _hdi_sort!(x, interval_length, npoints_to_check)
+        lower_range = @view x[begin:(begin - 1 + npoints_to_check)]
+        upper_range = @view x[(begin - 1 + interval_length):end]
         lower, upper = argmax(Base.splat(-), zip(lower_range, upper_range))
     end
     return IntervalSets.ClosedInterval(lower, upper)
 end
 _hdi!(x::AbstractMatrix{<:Real}, prob::Real) = _hdi!(vec(x), prob)
 function _hdi!(x::AbstractArray{<:Real}, prob::Real)
-    ndims(x) > 0 ||
-        throw(ArgumentError("HDI cannot be computed for a 0-dimensional array."))
     axes_out = _param_axes(x)
     T = eltype(x)
     interval = similar(x, IntervalSets.ClosedInterval{T}, axes_out)
@@ -101,4 +103,16 @@ function _hdi!(x::AbstractArray{<:Real}, prob::Real)
         interval[i] = _hdi!(x_slice, prob)
     end
     return interval
+end
+
+function _hdi_sort!(x, interval_length, npoints_to_check)
+    if npoints_to_check < interval_length - 1
+        ifirst = firstindex(x)
+        iend = lastindex(x)
+        partialsort!(x, ifirst:(ifirst - 1 + npoints_to_check))
+        partialsort!(x, (ifirst - 1 + interval_length):iend)
+    else
+        sort!(x)
+    end
+    return x
 end
