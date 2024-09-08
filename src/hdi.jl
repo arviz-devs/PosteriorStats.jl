@@ -110,8 +110,16 @@ function _hdi_sort!(x, interval_length, npoints_to_check)
     if npoints_to_check < interval_length - 1
         ifirst = firstindex(x)
         iend = lastindex(x)
-        partialsort!(x, ifirst:(ifirst - 1 + npoints_to_check))
-        partialsort!(x, (ifirst - 1 + interval_length):iend)
+        # first sort the lower tail in-place
+        sort!(x; alg=Base.Sort.PartialQuickSort(ifirst:(ifirst - 1 + npoints_to_check)))
+        # now sort the upper tail, avoiding modifying the lower tail
+        x_upper = @view x[(ifirst + npoints_to_check):iend]
+        sort!(
+            x_upper;
+            alg=Base.Sort.PartialQuickSort((
+                (interval_length - npoints_to_check):(iend - ifirst + 1 - npoints_to_check)
+            )),
+        )
     else
         sort!(x)
     end
