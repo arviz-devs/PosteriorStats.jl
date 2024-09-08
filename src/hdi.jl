@@ -1,6 +1,6 @@
 """
-    hdi(samples::AbstractVecOrMat{<:Real}; [prob]) -> IntervalSets.ClosedInterval
-    hdi(samples::AbstractArray{<:Real}; [prob]) -> Array{<:IntervalSets.ClosedInterval}
+    hdi(samples::AbstractVecOrMat{<:Real}; [prob, sorted]) -> IntervalSets.ClosedInterval
+    hdi(samples::AbstractArray{<:Real}; [prob, sorted]) -> Array{<:IntervalSets.ClosedInterval}
 
 Estimate the unimodal highest density interval (HDI) of `samples` for the probability `prob`.
 
@@ -15,6 +15,7 @@ This implementation uses the algorithm of [^ChenShao1999].
 # Keywords
 - `prob`: the probability mass to be contained in the HDI. Default is
     `$(DEFAULT_INTERVAL_PROB)`.
+- `sorted=false`: if `true`, the input samples are assumed to be sorted.
 
 # Returns
 - `intervals`: If `samples` is a vector or matrix, then a single
@@ -59,48 +60,48 @@ julia> hdi(x)
  8.032604346765654 .. 11.900283185492153
 ```
 """
-function hdi(x::AbstractArray{<:Real}; kwargs...)
-    return hdi!(_copymutable(x); kwargs...)
+function hdi(x::AbstractArray{<:Real}; sorted::Bool=false, kwargs...)
+    return hdi!(sorted ? x : _copymutable(x); sorted, kwargs...)
 end
 
 """
-    hdi!(samples::AbstractArray{<:Real}; [prob])
+    hdi!(samples::AbstractArray{<:Real}; [prob, sorted])
 
 A version of [`hdi`](@ref) that sorts `samples` in-place while computing the HDI.
 """
 function hdi!(
-    x::AbstractArray{<:Real}; prob::Real=DEFAULT_INTERVAL_PROB
+    x::AbstractArray{<:Real}; prob::Real=DEFAULT_INTERVAL_PROB, sorted::Bool=false
 )
     0 < prob < 1 || throw(DomainError(prob, "HDI `prob` must be in the range `(0, 1)`."))
     ndims(x) > 0 ||
         throw(ArgumentError("HDI cannot be computed for a 0-dimensional array."))
     isempty(x) && throw(ArgumentError("HDI cannot be computed for an empty array."))
-    return _hdi!(x, prob)
+    return _hdi!(x, prob, sorted)
 end
 
-function _hdi!(x::AbstractVector{<:Real}, prob::Real)
+function _hdi!(x::AbstractVector{<:Real}, prob::Real, sorted::Bool)
     n = length(x)
     interval_length = floor(Int, prob * n) + 1
     if any(isnan, x)
         lower = upper = eltype(x)(NaN)
-    elseif interval_length == n
+    elseif interval_length == n && !sorted
         lower, upper = extrema(x)
     else
         npoints_to_check = n - interval_length + 1
-        _hdi_sort!(x, interval_length, npoints_to_check)
+        sorted || _hdi_sort!(x, interval_length, npoints_to_check)
         lower_range = @view x[begin:(begin - 1 + npoints_to_check)]
         upper_range = @view x[(begin - 1 + interval_length):end]
         lower, upper = argmax(Base.splat(-), zip(lower_range, upper_range))
     end
     return IntervalSets.ClosedInterval(lower, upper)
 end
-_hdi!(x::AbstractMatrix{<:Real}, prob::Real) = _hdi!(vec(x), prob)
-function _hdi!(x::AbstractArray{<:Real}, prob::Real)
+_hdi!(x::AbstractMatrix{<:Real}, prob::Real, sorted::Bool) = _hdi!(vec(x), prob, sorted)
+function _hdi!(x::AbstractArray{<:Real}, prob::Real, sorted::Bool)
     axes_out = _param_axes(x)
     T = eltype(x)
     interval = similar(x, IntervalSets.ClosedInterval{T}, axes_out)
     for (i, x_slice) in zip(eachindex(interval), _eachparam(x))
-        interval[i] = _hdi!(x_slice, prob)
+        interval[i] = _hdi!(x_slice, prob, sorted)
     end
     return interval
 end
