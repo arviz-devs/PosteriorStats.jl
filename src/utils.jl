@@ -66,6 +66,13 @@ function _assimilar(x::NamedTuple, y)
     return z
 end
 
+# included since Base.copymutable is not public
+function _copymutable(x::AbstractArray)
+    y = similar(x)
+    copyto!(y, x)
+    return y
+end
+
 function _skipmissing(x::AbstractArray)
     Missing <: eltype(x) && return skipmissing(x)
     return x
