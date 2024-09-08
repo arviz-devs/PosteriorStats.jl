@@ -239,10 +239,10 @@ Compute the summary stats focusing on `Statistics.median`:
 ```jldoctest summarize
 julia> summarize(x, default_summary_stats(median)...; var_names=[:a, :b, :c])
 SummaryStats
-    median    mad  eti_94%            mcse_median  ess_tail  ess_median  rhat
- a   0.004  0.978  -0.0738 .. 0.0731        0.020      3567        3336  1.00
- b  10.02   0.995     9.93 .. 10.1          0.023      3841        3787  1.00
- c  19.99   0.979     19.9 .. 20.0          0.020      3892        3829  1.00
+    median    mad  eti_94%        mcse_median  ess_tail  ess_median  rhat
+ a   0.004  0.978  -1.83 .. 1.89        0.020      3567        3336  1.00
+ b  10.02   0.995   8.17 .. 11.9        0.023      3841        3787  1.00
+ c  19.99   0.979   18.1 .. 21.9        0.020      3892        3829  1.00
 ```
 
 Compute multiple quantiles simultaneously:
@@ -313,15 +313,14 @@ end
 Default statistics to be computed with [`summarize`](@ref).
 
 The value of `focus` determines the statistics to be returned:
-- `Statistics.mean`: `mean`, `std`, `hdi_3%`, `hdi_97%`
-- `Statistics.median`: `median`, `mad`, `eti_3%`, `eti_97%`
+- `Statistics.mean`: `mean`, `std`, `hdi_94%`
+- `Statistics.median`: `median`, `mad`, `eti_94%`
 
 If `prob_interval` is set to a different value than the default, then different HDI and ETI
 statistics are computed accordingly. [`hdi`](@ref) refers to the highest-density interval,
-while `eti` refers to the equal-tailed interval (i.e. the credible interval computed from
-symmetric quantiles).
+while [`eti`](@ref) refers to the equal-tailed interval.
 
-See also: [`hdi`](@ref)
+See also: [`hdi`](@ref), [`eti`](@ref)
 """
 function default_stats end
 default_stats(; kwargs...) = default_stats(Statistics.mean; kwargs...)

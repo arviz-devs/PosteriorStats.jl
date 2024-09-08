@@ -14,11 +14,13 @@ default_summary_stats
 summarize
 ```
 
-## General statistics
+## Credible intervals
 
 ```@docs
 hdi
 hdi!
+eti
+eti!
 ```
 
 ## LOO and WAIC

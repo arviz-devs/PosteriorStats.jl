@@ -8,6 +8,8 @@ The HDI is the minimum width Bayesian credible interval (BCI). That is, it is th
 possible interval containing `(100*prob)`% of the probability mass.[^Hyndman1996]
 This implementation uses the algorithm of [^ChenShao1999].
 
+See also: [`hdi!`](@ref), [`eti`](@ref), [`eti!`](@ref).
+
 # Arguments
 - `samples`: an array of shape `(draws[, chains[, params...]])`. If multiple parameters are
     present
@@ -67,7 +69,9 @@ end
 """
     hdi!(samples::AbstractArray{<:Real}; [prob, sorted])
 
-A version of [`hdi`](@ref) that sorts `samples` in-place while computing the HDI.
+A version of [`hdi`](@ref) that partially sorts `samples` in-place while computing the HDI.
+
+See also: [`hdi`](@ref), [`eti`](@ref), [`eti!`](@ref).
 """
 function hdi!(
     x::AbstractArray{<:Real}; prob::Real=DEFAULT_INTERVAL_PROB, sorted::Bool=false
