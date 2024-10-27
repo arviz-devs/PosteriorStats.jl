@@ -1,34 +1,17 @@
 function kde_reflected(
     data::AbstractVector{<:Real};
-    bounds=extrema(data),
+    bounds::Union{Nothing,Tuple{Real,Real}}=nothing,
     npoints::Int=2_048,
     bandwidth::Real=KernelDensity.default_bandwidth(data),
     kwargs...,
 )
-    # set up the grid, aligning the edges with the bounds
-    lo, hi, npad_lower, npad_upper = _kde_padding(
-        bounds, _kde_boundary(data, bandwidth), npoints
-    )
-    npoints_with_padding = npoints + npad_lower + npad_upper
-    midpoints = range(lo, hi; length=npoints_with_padding)
+    _bounds = _get_check_bounds(bounds, extrema(data))
+    midpoints, idx_bulk = _kde_padded_grid(_bounds, _kde_boundary(data, bandwidth), npoints)
+    kde = KernelDensity.kde(data, midpoints; bandwidth, kwargs...)
+    kde_reflect = _kde_reflection(kde, idx_bulk)
+    return kde_reflect
+end
 
-    k = KernelDensity.kde(data, midpoints; bandwidth, kwargs...)
-
-    # reflection method
-    lsplit = npad_lower + 1
-    usplit = npoints_with_padding - npad_upper
-    npad_lower = min(npad_lower, npoints)
-    npad_upper = min(npad_upper, npoints)
-    density = k.density[lsplit:usplit]
-    density[1:npad_lower] .+= @view k.density[range(;
-        start=lsplit - 1, step=-1, length=npad_lower
-    )]
-    density[(end - npad_upper + 1):end] .+= @view k.density[range(;
-        stop=usplit + 1, step=-1, length=npad_upper
-    )]
-    x = k.x[lsplit:usplit]
-
-    return KernelDensity.UnivariateKDE(x, density)
 function _get_check_bounds(bounds, data_bounds)
     lb, ub = bounds
     lb = isfinite(lb) ? lb : oftype(lb, -Inf)
@@ -86,4 +69,23 @@ function _kde_padded_grid(bounds, hist_bounds, npoints)
     return midpoints, idx_bulk
 end
 
+function _kde_reflection(kde, idx_bulk)
+    npoints_with_padding = length(kde.x)
+    npoints = length(idx_bulk)
+    x = kde.x[idx_bulk]
+
+    # avoid double reflections by trimming the padding to the number of points
+    npad_lower = min(npoints, first(idx_bulk) - 1)
+    npad_upper = min(npoints, npoints_with_padding - last(idx_bulk))
+
+    # get idx ranges for the density that will be reflected
+    idx_lower = range(; start=first(idx_bulk) - 1, step=-1, length=npad_lower)
+    idx_upper = range(; stop=last(idx_bulk) + 1, step=-1, length=npad_upper)
+
+    # reflect the density
+    density = kde.density[idx_bulk]
+    density[1:npad_lower] .+= view(kde.density, idx_lower)
+    density[(end - npad_upper + 1):end] .+= view(kde.density, idx_upper)
+
+    return KernelDensity.UnivariateKDE(x, density)
 end
