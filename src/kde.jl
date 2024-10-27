@@ -1,3 +1,18 @@
+"""
+    kde_reflected(data::AbstractVector{<:Real}; bounds=extrema(data), kwargs...)
+
+Compute the boundary-corrected kernel density estimate (KDE) of `data` using reflection.
+
+For ``x \\in (l, u)``, the reflected KDE has the density
+```math
+\\hat{f}_R(x) = \\hat{f}(x) + \\hat{f}(2l - x) + \\hat{f}(2u - x),
+```
+where ``\\hat{f}`` is the usual KDE of `data`. This is equivalent to augmeenting the
+original data with 2 additional copies of the data reflected around each bound, computing
+the usual KDE, trimming the KDE to the bounds, and renormalizing.
+
+Any non-finite `bounds` are ignored. Remaining `kwargs` are passed to `KernelDensity.kde`.
+"""
 function kde_reflected(
     data::AbstractVector{<:Real};
     bounds::Union{Nothing,Tuple{Real,Real}}=nothing,
