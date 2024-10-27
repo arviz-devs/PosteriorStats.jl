@@ -1,4 +1,85 @@
 """
+    isj_bandwidth(data; max_order=7[, npoints])
+
+Estimate the KDE bandwidth using the Improved Sheather-Jones (ISJ) method [^Botev2010].
+
+ISJ is especially good for multimodal distributions with well-separated modes, but it also
+works well for smooth, unimodal distributions. It uses an iterative approach to find the
+bandwidth by estimating the roughness of each derivative of the KDE up to `max_order`.
+This implementation is based on the reference code [^ISJRefCode], with one departure: if it
+fails to find a solution to a fixed point problem, it returns the Silverman's rule of thumb
+bandwidth.
+
+Optionally `npoints` can be specified to control the number of points used in the KDE.
+This can be much less than what will be used for the actual KDE.
+
+[^Botev2010]: Kernel density estimation via diffusion.
+              Z. I. Botev, J. F. Grotowski, and D. P. Kroese (2010)
+              Annals of Statistics, Volume 38, Number 5, pages 2916-2957.
+              doi: [10.1214/10-AOS799](https://doi.org/10.1214/10-AOS799)
+[^ISJRefCode]: http://web1.maths.unsw.edu.au/~zdravkobotev/php/kde_m.php
+"""
+function isj_bandwidth(
+    data::AbstractVector{<:Real};
+    npoints::Int=min(2^8, nextpow(2, length(data))),
+    max_order::Int=7,
+)
+    n = length(data)
+    data_min, data_max = extrema(data)
+    data_range = data_max - data_min
+
+    edges = range(data_min, data_max, npoints + 1)
+    hist = StatsBase.fit(StatsBase.Histogram, data, edges)
+    rel_counts = normalize(hist; mode=:probability).weights
+
+    ft = @views FFTW.dct(rel_counts)[2:end]
+    ft .*= sqrt(2npoints)
+    t = (1:(npoints - 1)) * π
+
+    bw_sq = _find_root(bw_sq -> _fixed_point(bw_sq, n, t, ft, max_order), n, data)
+
+    bandwidth = sqrt(bw_sq) * data_range
+
+    return bandwidth
+end
+
+function _fixed_point(bw_sq, n, t, ft_dens, max_order=7)
+    dist = Ref(KernelDensity.kernel_dist(Distributions.Normal, sqrt(bw_sq)))
+    ftj = @. t^max_order * ft_dens * Distributions.cf(dist, t)
+    roughness = sum(abs2, ftj) / 2  # roughness (L2-norm) of f^{(j)}
+    deriv_orders = 1:max_order
+    dfact = cumprod(2 .* deriv_orders .- 1)
+    for j in reverse(deriv_orders[2:(end - 1)])
+        # Eq. 29
+        c = (1 + 2^(-(j + 1//2))) * dfact[j]
+        bw_star = (c / (3n * (sqrthalfπ * roughness)))^(1//(3 + 2j))
+        dist = Ref(KernelDensity.kernel_dist(Distributions.Normal, bw_star))
+        @. ftj = t^j * ft_dens * Distributions.cf(dist, t)
+        roughness = sum(abs2, ftj) / 2
+    end
+
+    # Eq. 38
+    return bw_sq - (2n * (sqrtπ * roughness))^(-2//5)
+end
+
+function _find_root(f::Function, n::Int, data)
+    n = clamp(n, 50, 1_050)
+    upper_bound = sqrt(1e-11 + 1e-5 * (n - 50))
+
+    # if we find a bracketing interval, then find the root
+    s0 = sign(f(0))
+    while upper_bound < 1
+        sign(f(upper_bound)) != s0 && return Roots.find_zero(f, (0, upper_bound))
+        upper_bound *= sqrt2
+    end
+
+    # if we can't find a bracketing interval, then return Silverman's rule of thumb
+    data_min, data_max = extrema(data)
+    data_range = data_max - data_min
+    return (KernelDensity.default_bandwidth(data) / data_range)^2
+end
+
+"""
     kde_reflected(data::AbstractVector{<:Real}; bounds=extrema(data), kwargs...)
 
 Compute the boundary-corrected kernel density estimate (KDE) of `data` using reflection.

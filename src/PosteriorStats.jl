@@ -5,8 +5,8 @@ using DataInterpolations: DataInterpolations
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
 using FFTW: FFTW
+using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
-using LinearAlgebra: mul!, norm
 using KernelDensity: KernelDensity
 using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
