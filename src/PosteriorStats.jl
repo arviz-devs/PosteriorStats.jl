@@ -8,6 +8,7 @@ using FFTW: FFTW
 using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
 using KernelDensity: KernelDensity
+using LinearAlgebra: mul!, norm, normalize
 using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
 using MCMCDiagnosticTools: MCMCDiagnosticTools
@@ -17,6 +18,7 @@ using PrettyTables: PrettyTables
 using Printf: Printf
 using PSIS: PSIS, PSISResult, psis, psis!
 using Random: Random
+using Roots: Roots
 using Setfield: Setfield
 using Statistics: Statistics
 using StatsBase: StatsBase
