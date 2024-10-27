@@ -37,24 +37,39 @@ function _kde_boundary(data::AbstractVector{<:Real}, bandwidth::Real)
     return (lo - 4 * bandwidth, hi + 4 * bandwidth)
 end
 
-function _kde_padding(data_bounds, hist_bounds, npoints)
+function _kde_padded_grid(bounds, hist_bounds, npoints)
     # set up the grid, aligning the edges with the bounds
-    lower, upper = data_bounds
-    lo, hi = hist_bounds
-    bin_width = (upper - lower) / (npoints + 1)
-    npad_lower = isfinite(lower) ? clamp(Int(cld(lower - lo, bin_width)), 0, npoints) : 0
-    npad_upper = isfinite(upper) ? clamp(Int(cld(hi - upper, bin_width)), 0, npoints) : 0
+    lb, ub = bounds
+    lh, uh = hist_bounds
+    (left, left_is_bound) = isfinite(lb) ? (lb, true) : (lh, false)
+    (right, right_is_bound) = isfinite(ub) ? (ub, true) : (uh, false)
+    bin_width = (right - left) / (npoints - 1 + (left_is_bound + right_is_bound) / 2)
+    npad_left = clamp(
+        Int(cld(left - lh + (1 - left_is_bound//2) * bin_width, bin_width)), 0, npoints
+    )
+    npad_right = clamp(
+        Int(cld(uh - right + (1 - right_is_bound//2) * bin_width, bin_width)), 0, npoints
+    )
     if ispow2(npoints)
         # if the user already requested a power of 2, we shouldn't sacrifice efficiency by
         # requesting a non-power of 2
-        npoints_with_padding = npoints + npad_lower + npad_upper
+        npoints_with_padding = npoints + npad_left + npad_right
         extra_padding = nextpow(2, npoints_with_padding) - npoints_with_padding
-        a, b = divrem(extra_padding, 2)
-        npad_lower += a + b
-        npad_upper += a
+        npad_common, npad_rem = divrem(extra_padding, 2)
+        npad_left += npad_common + npad_rem
+        npad_right += npad_common
     end
-    npoints_with_padding = npoints + npad_lower + npad_upper
-    lo = lower - (npad_lower - 1//2) * bin_width
-    hi = upper + (npad_upper - 1//2) * bin_width
-    return lo, hi, npad_lower, npad_upper
+    npoints_with_padding = npoints + npad_left + npad_right
+    lh = left - (npad_left - left_is_bound//2) * bin_width
+    uh = right + (npad_right - right_is_bound//2) * bin_width
+
+    midpoints = range(lh, uh; length=npoints_with_padding)
+
+    idx_left = npad_left + 1
+    idx_right = npad_left + npoints
+    idx_bulk = idx_left:idx_right
+
+    return midpoints, idx_bulk
+end
+
 end
