@@ -29,7 +29,21 @@ function kde_reflected(
     x = k.x[lsplit:usplit]
 
     return KernelDensity.UnivariateKDE(x, density)
+function _get_check_bounds(bounds, data_bounds)
+    lb, ub = bounds
+    lb = isfinite(lb) ? lb : oftype(lb, -Inf)
+    ub = isfinite(ub) ? ub : oftype(ub, Inf)
+    lb < ub || throw(
+        ArgumentError(
+            "Invalid bounds: $bounds. The lower bound must be less than the upper bound.",
+        ),
+    )
+    xmin, xmax = data_bounds
+    lb ≤ xmin || throw(DomainError(lb, "Some data points are below the lower bound."))
+    xmax ≤ ub || throw(DomainError(ub, "Some data points are above the upper bound."))
+    return (lb, ub)
 end
+_get_check_bounds(::Nothing, data_bounds) = data_bounds
 
 # adapt KernelDensity.kde_boundary, which is internal
 function _kde_boundary(data::AbstractVector{<:Real}, bandwidth::Real)
