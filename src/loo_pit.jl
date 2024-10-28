@@ -58,11 +58,8 @@ julia> log_like = PermutedDimsArray(idata.log_likelihood.obs, (:draw, :chain, :s
 julia> log_weights = loo(log_like).psis_result.log_weights;
 
 julia> loo_pit(y, y_pred, log_weights)
-╭───────────────────────────────╮
-│ 8-element DimArray{Float64,1} │
-├───────────────────────────────┴──────────────────────────────────────── dims ┐
-  ↓ school Categorical{String} [Choate, Deerfield, …, St. Paul's, Mt. Hermon] Unordered
-└──────────────────────────────────────────────────────────────────────────────┘
+8-element DimArray{Float64,1} with dimensions:
+  Dim{:school} Categorical{String} String[Choate, Deerfield, …, St. Paul's, Mt. Hermon] Unordered
  "Choate"            0.943511
  "Deerfield"         0.63797
  "Phillips Andover"  0.316697
@@ -86,11 +83,8 @@ julia> T = y .- median(mu);
 julia> T_pred = y_pred .- mu;
 
 julia> loo_pit(T .^ 2, T_pred .^ 2, log_weights)
-╭───────────────────────────────╮
-│ 8-element DimArray{Float64,1} │
-├───────────────────────────────┴──────────────────────────────────────── dims ┐
-  ↓ school Categorical{String} [Choate, Deerfield, …, St. Paul's, Mt. Hermon] Unordered
-└──────────────────────────────────────────────────────────────────────────────┘
+8-element DimArray{Float64,1} with dimensions:
+  Dim{:school} Categorical{String} String[Choate, Deerfield, …, St. Paul's, Mt. Hermon] Unordered
  "Choate"            0.873577
  "Deerfield"         0.243686
  "Phillips Andover"  0.357563
