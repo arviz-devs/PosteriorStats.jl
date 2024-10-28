@@ -82,7 +82,7 @@ end
 function _silverman_bandwidth(data)
     n = length(data)
     std = Statistics.std(data)
-    std_iqr = Statistics.iqr(data) / 1.34
+    std_iqr = StatsBase.iqr(data) / 1.34
     std_min = min(std, std_iqr)
     return std_min * oftype(std_min, 3n//4)^(-1//5)
 end
