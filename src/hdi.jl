@@ -140,24 +140,23 @@ julia> hdi(x; prob=0.83)
 
 We can also calculate the HDI for a 3-dimensional array of samples:
 
-```jldoctest hdi; setup = :(using Random; Random.seed!(67))
+```jldoctest hdi
 julia> x = randn(1_000, 1, 1) .+ reshape(0:5:10, 1, 1, :);
 
 julia> hdi(x)
 3-element Vector{IntervalSets.ClosedInterval{Float64}}:
- -1.9673956532343464 .. 1.9002831854921525
- 3.0326043467656536 .. 6.900283185492152
- 8.032604346765654 .. 11.900283185492153
+ -1.6402043796029502 .. 2.041852066407182
+ 3.35979562039705 .. 7.041852066407182
+ 8.35979562039705 .. 12.041852066407182
 ```
 
 For multimodal distributions, you can use the `:multimodal` method:
 
-```jldoctest hdi; setup = :(using Random; Random.seed!(98))
+```jldoctest hdi
 )
 julia> x = vcat(randn(1000), randn(1000) .+ 5);
 
-julia> hdi(x; method=:multimodal)
-2-element Vector{IntervalSets.ClosedInterval{Float64}}:
+julia> hdi(x; method=:multimodal2-element Vector{IntervalSets.ClosedInterval{Float64}}:
  -1.9980967848656475 .. 2.296256249039345
  2.685595428026672 .. 6.968326396887267
 ```
