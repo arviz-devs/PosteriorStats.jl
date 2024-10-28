@@ -13,7 +13,7 @@ using Test
             @test PosteriorStats.isj_bandwidth(x) ≈ bw_norm rtol = 1e-2
         end
 
-        VERSION > v"1.6" && @testset "bimodal consistent with unimodal" begin
+        VERSION ≥ v"1.7" && @testset "bimodal consistent with unimodal" begin
             n = 1_000_000
             @testset for dist in (Normal(), TDist(3))
                 dmix = MixtureModel([dist, dist + 300])
