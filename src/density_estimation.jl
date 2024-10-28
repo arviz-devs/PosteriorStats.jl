@@ -75,3 +75,29 @@ function _binindex(edges::AbstractVector, closed::Symbol, x::Real)
         return searchsortedlast(edges, x)
     end
 end
+
+"""
+    KDEstimation{F,K} <: DensityEstimationMethod
+
+Estimate density as uniform mixture of identical data-centered kernels.
+"""
+struct KDEstimation{F,K} <: DensityEstimationMethod
+    """Function to use to compute the KDE, with signature
+    `kde_func(x; kde_kwargs...) -> KernelDensity.UnivariateKDE`."""
+    kde_func::F
+    """Keyword arguments for `kde_func`."""
+    kde_kwargs::K
+end
+KDEstimation(kde_func=kde_reflected; kde_kwargs...) = KDEstimation(kde_func, kde_kwargs)
+
+function density_at(est::KDEstimation, x::AbstractVector{<:Real})
+    kde = est.kde_func(x; est.kde_kwargs...)
+    return KernelDensity.pdf(kde, x)
+end
+
+function bins_and_probs(est::KDEstimation, x::AbstractVector{<:Real})
+    kde = est.kde_func(x; est.kde_kwargs...)
+    bins = kde.x
+    probs = kde.density * step(kde.x)
+    return bins, probs
+end
