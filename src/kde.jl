@@ -44,7 +44,7 @@ function isj_bandwidth(
 end
 
 function _fixed_point(bw_sq, n, t, ft_dens, max_order=7)
-    dist = Ref(KernelDensity.kernel_dist(Distributions.Normal, sqrt(bw_sq)))
+    dist = Ref(Distributions.Normal(0, sqrt(bw_sq)))
     ftj = @. t^max_order * ft_dens * Distributions.cf(dist, t)
     roughness = sum(abs2, ftj) / 2  # roughness (L2-norm) of f^{(j)}
     deriv_orders = 1:max_order
@@ -53,7 +53,7 @@ function _fixed_point(bw_sq, n, t, ft_dens, max_order=7)
         # Eq. 29
         c = (1 + 2^(-(j + 1//2))) * dfact[j]
         bw_star = (c / (3n * (sqrthalfπ * roughness)))^(1//(3 + 2j))
-        dist = Ref(KernelDensity.kernel_dist(Distributions.Normal, bw_star))
+        dist = dist = Ref(Distributions.Normal(0, bw_star))
         @. ftj = t^j * ft_dens * Distributions.cf(dist, t)
         roughness = sum(abs2, ftj) / 2
     end
@@ -76,7 +76,15 @@ function _find_root(f::Function, n::Int, data)
     # if we can't find a bracketing interval, then return Silverman's rule of thumb
     data_min, data_max = extrema(data)
     data_range = data_max - data_min
-    return (KernelDensity.default_bandwidth(data) / data_range)^2
+    return (_silverman_bandwidth(data) / data_range)^2
+end
+
+function _silverman_bandwidth(data)
+    n = length(data)
+    std = Statistics.std(data)
+    std_iqr = Statistics.iqr(data) / 1.34
+    std_min = min(std, std_iqr)
+    return std_min * oftype(std_min, 3n//4)^(-1//5)
 end
 
 """
@@ -98,7 +106,7 @@ function kde_reflected(
     data::AbstractVector{<:Real};
     bounds::Union{Nothing,Tuple{Real,Real}}=nothing,
     npoints::Int=2_048,
-    bandwidth::Real=KernelDensity.default_bandwidth(data),
+    bandwidth::Real=_silverman_bandwidth(data),
     kwargs...,
 )
     _bounds = _get_check_bounds(bounds, extrema(data))
