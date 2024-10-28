@@ -152,14 +152,14 @@ julia> hdi(x)
 
 For multimodal distributions, you can use the `:multimodal` method:
 
-```jldoctest hdi; setup = :(
+```jldoctest hdi; setup = :(using Random; Random.seed!(98))
 )
 julia> x = vcat(randn(1000), randn(1000) .+ 5);
 
 julia> hdi(x; method=:multimodal)
 2-element Vector{IntervalSets.ClosedInterval{Float64}}:
- -2.1549823554326415 .. 2.1330492812200235
- 2.7617456489999253 .. 7.119632437628135
+ -1.9980967848656475 .. 2.296256249039345
+ 2.685595428026672 .. 6.968326396887267
 ```
 """
 function hdi(x::AbstractArray{<:Real}; kwargs...)
