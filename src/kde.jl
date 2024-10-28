@@ -28,7 +28,7 @@ function isj_bandwidth(
     data_min, data_max = extrema(data)
     data_range = data_max - data_min
 
-    edges = range(data_min, data_max, npoints + 1)
+    edges = range(data_min, data_max; length=npoints + 1)
     hist = StatsBase.fit(StatsBase.Histogram, data, edges)
     bin_probs = normalize(hist; mode=:probability).weights
 
@@ -183,8 +183,8 @@ function _kde_reflection(kde, idx_bulk)
     npad_upper = min(npoints, npoints_with_padding - last(idx_bulk))
 
     # get idx ranges for the density that will be reflected
-    idx_lower = range(; start=first(idx_bulk) - 1, step=-1, length=npad_lower)
-    idx_upper = range(; stop=last(idx_bulk) + 1, step=-1, length=npad_upper)
+    idx_lower = range(first(idx_bulk) - 1; step=-1, length=npad_lower)
+    idx_upper = reverse(range(last(idx_bulk) + 1; step=1, length=npad_upper))
 
     # reflect the density
     density = kde.density[idx_bulk]
