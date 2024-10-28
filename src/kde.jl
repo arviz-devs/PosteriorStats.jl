@@ -30,9 +30,9 @@ function isj_bandwidth(
 
     edges = range(data_min, data_max, npoints + 1)
     hist = StatsBase.fit(StatsBase.Histogram, data, edges)
-    rel_counts = normalize(hist; mode=:probability).weights
+    bin_probs = normalize(hist; mode=:probability).weights
 
-    ft = @views FFTW.dct(rel_counts)[2:end]
+    ft = @views FFTW.dct(bin_probs)[2:end]
     ft .*= sqrt(2npoints)
     t = (1:(npoints - 1)) * π
 
