@@ -203,6 +203,7 @@ end
                 end
 
                 sample && @testset "bounds are drawn from entries" begin
+                    prob = 0.8
                     dmix = MixtureModel([cdist, cdist + 10])
                     x = rand(dmix, 100)
                     intervals = hdi(x; method, prob)
