@@ -61,5 +61,6 @@ r2_score
 ### Utilities
 
 ```@docs
+PosteriorStats.kde_reflected
 PosteriorStats.smooth_data
 ```
