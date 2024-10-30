@@ -99,12 +99,15 @@ See also: [`hdi!`](@ref), [`eti`](@ref), [`eti!`](@ref).
 - `sorted=false`: if `true`, the input samples are assumed to be sorted.
 - `method::Symbol`: the method used to estimate the HDI. Available options are:
   - `:unimodal`: Assumes a unimodal distribution (default). Bounds are entries in `samples`.
-  - `:multimodal`: Fits a kernel density estimator (KDE) to `samples` and finds the HDI of
-    the estimated density.
-  - `:multimodal_sample`: Like `:multimodal`, but uses the KDE to find the entries in `samples`
-     with the highest density and computes the HDI from those points.
-- `is_discrete::Union{Bool,Nothing}=nothing`: Specify if the data is discrete. If `nothing`,
-    it's automatically determined.
+  - `:multimodal`: Fits a density estimator to `samples` and finds the HDI of the estimated
+      density. For continuous data, the density estimator is a kernel density estimate (KDE)
+      computed using [`kde_reflected`](@ref). For discrete data, a histogram with bin width
+      1 is used.
+  - `:multimodal_sample`: Like `:multimodal`, but uses the density estimator to find the
+      entries in `samples` with the highest density and computes the HDI from those points.
+      This can correct for inaccuracies in the density estimator.
+- `is_discrete::Union{Bool,Nothing}=nothing`: Specify if the data is discrete
+    (integer-valued). If `nothing`, it's automatically determined.
 - `kwargs`: For continuous data and multimodal `method`s, remaining keywords are forwarded
     to [`kde_reflected`](@ref).
 
