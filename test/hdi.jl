@@ -195,9 +195,9 @@ end
 
                         for k in 1:n_modes
                             @test bounds_mixture[1].left + centers[k] ≈
-                                bounds_mixture[k].left rtol = 0.05
+                                bounds_mixture[k].left rtol = 0.01
                             @test bounds_mixture[1].right + centers[k] ≈
-                                bounds_mixture[k].right rtol = 0.05
+                                bounds_mixture[k].right rtol = 0.01
                         end
                     end
                 end

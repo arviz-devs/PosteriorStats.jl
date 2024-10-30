@@ -96,17 +96,24 @@ For ``x \\in (l, u)``, the reflected KDE has the density
 ```math
 \\hat{f}_R(x) = \\hat{f}(x) + \\hat{f}(2l - x) + \\hat{f}(2u - x),
 ```
-where ``\\hat{f}`` is the usual KDE of `data`. This is equivalent to augmeenting the
+where ``\\hat{f}`` is the usual KDE of `data`. This is equivalent to augmenting the
 original data with 2 additional copies of the data reflected around each bound, computing
 the usual KDE, trimming the KDE to the bounds, and renormalizing.
 
 Any non-finite `bounds` are ignored. Remaining `kwargs` are passed to `KernelDensity.kde`.
+The default bandwidth is estimated using the Improved Sheather-Jones (ISJ) method
+[^Botev2010].
+
+[^Botev2010]: Kernel density estimation via diffusion.
+              Z. I. Botev, J. F. Grotowski, and D. P. Kroese (2010)
+              Annals of Statistics, Volume 38, Number 5, pages 2916-2957.
+              doi: [10.1214/10-AOS799](https://doi.org/10.1214/10-AOS799)
 """
 function kde_reflected(
     data::AbstractVector{<:Real};
     bounds::Union{Nothing,Tuple{Real,Real}}=nothing,
     npoints::Int=2_048,
-    bandwidth::Real=_silverman_bandwidth(data),
+    bandwidth::Real=isj_bandwidth(data),
     kwargs...,
 )
     _bounds = _get_check_bounds(bounds, extrema(data))
