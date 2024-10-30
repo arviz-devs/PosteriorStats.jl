@@ -239,6 +239,10 @@ end
 
 # multimodal HDI estimation
 function _hdi!(method::MultimodalHDI, x::AbstractVector, prob, sorted)
+    if !(eltype(x) <: Integer) && any(isnan, x)
+        T = float(eltype(x))
+        return [IntervalSets.ClosedInterval(T(NaN), T(NaN))]
+    end
     if method.sample_based
         sorted || sort!(x)
         densities = density_at(method.density_method, x)
