@@ -159,8 +159,8 @@ julia> x = vcat(randn(1000), randn(1000) .+ 5);
 
 julia> hdi(x; method=:multimodal)
 2-element Vector{IntervalSets.ClosedInterval{Float64}}:
- -1.9980967848656475 .. 2.296256249039345
- 2.685595428026672 .. 6.968326396887267
+ -1.8882401079608677 .. 2.0017686164555037
+ 2.9839268475847436 .. 6.9235952578447275
 ```
 """
 function hdi(x::AbstractArray{<:Real}; kwargs...)
