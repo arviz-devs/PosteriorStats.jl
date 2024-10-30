@@ -186,11 +186,11 @@ Base.@constprop :aggressive function hdi!(
         throw(ArgumentError("HDI cannot be computed for a 0-dimensional array."))
     isempty(x) && throw(ArgumentError("HDI cannot be computed for an empty array."))
     _method = _hdi_method(method, x, is_discrete; kwargs...)
+    S = _hdi_eltype(_method, x)
     if ndims(x) < 3
-        return _hdi!(_method, vec(x), prob, sorted)
+        return S(_hdi!(_method, vec(x), prob, sorted))
     else
         axes_out = _param_axes(x)
-        S = _hdi_eltype(_method, x)
         interval = similar(x, S, axes_out)
         for (i, x_slice) in zip(eachindex(interval), _eachparam(x))
             interval[i] = _hdi!(_method, vec(x_slice), prob, sorted)
