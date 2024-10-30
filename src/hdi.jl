@@ -181,7 +181,7 @@ Base.@constprop :aggressive function hdi!(
     sorted::Bool=false,
     kwargs...,
 )
-    0 < prob < 1 || throw(DomainError(prob, "HDI `prob` must be in the range `(0, 1)`."))
+    0 < prob < 1 || throw(ArgumentError("HDI `prob` must be in the range `(0, 1)`."))
     ndims(x) > 0 ||
         throw(ArgumentError("HDI cannot be computed for a 0-dimensional array."))
     isempty(x) && throw(ArgumentError("HDI cannot be computed for an empty array."))
