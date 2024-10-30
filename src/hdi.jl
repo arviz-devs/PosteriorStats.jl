@@ -105,6 +105,8 @@ See also: [`hdi!`](@ref), [`eti`](@ref), [`eti!`](@ref).
      with the highest density and computes the HDI from those points.
 - `is_discrete::Union{Bool,Nothing}=nothing`: Specify if the data is discrete. If `nothing`,
     it's automatically determined.
+- `kwargs`: For continuous data and multimodal `method`s, remaining keywords are forwarded
+    to [`kde_reflected`](@ref).
 
 # Returns
 - `intervals`: If `samples` is a vector or matrix, then a single
