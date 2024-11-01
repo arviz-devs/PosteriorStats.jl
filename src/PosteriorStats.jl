@@ -4,8 +4,11 @@ using Compat: @constprop
 using DataInterpolations: DataInterpolations
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
+using FFTW: FFTW
+using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
-using LinearAlgebra: mul!, norm
+using KernelDensity: KernelDensity
+using LinearAlgebra: mul!, norm, normalize
 using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
 using MCMCDiagnosticTools: MCMCDiagnosticTools
@@ -15,6 +18,7 @@ using PrettyTables: PrettyTables
 using Printf: Printf
 using PSIS: PSIS, PSISResult, psis, psis!
 using Random: Random
+using Roots: Roots
 using Setfield: Setfield
 using Statistics: Statistics
 using StatsBase: StatsBase
@@ -48,6 +52,8 @@ const DEFAULT_INTERVAL_PROB = 0.94
 const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)
 
 include("utils.jl")
+include("density_estimation.jl")
+include("kde.jl")
 include("eti.jl")
 include("hdi.jl")
 include("elpdresult.jl")
