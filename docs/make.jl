@@ -30,4 +30,6 @@ makedocs(;
     plugins=[links],
 )
 
-deploydocs(; repo="github.com/arviz-devs/PosteriorStats.jl.git", devbranch="main")
+deploydocs(;
+    repo="github.com/arviz-devs/PosteriorStats.jl.git", devbranch="main", preview=true
+)
