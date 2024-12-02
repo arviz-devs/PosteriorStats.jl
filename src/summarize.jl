@@ -184,7 +184,8 @@ See also [`SummaryStats`](@ref), [`default_summary_stats`](@ref), [`default_stat
 
 # Examples
 
-Compute `mean`, `std` and the Monte Carlo standard error (MCSE) of the mean estimate:
+Compute [`Statistics.mean`](@extref), [`Statistics.std`](@extref) and the Monte Carlo
+standard error (MCSE) of the mean estimate:
 
 ```jldoctest summarize; setup = (using Random; Random.seed!(84))
 julia> using Statistics, StatsBase
@@ -199,7 +200,8 @@ Mean/Std
  3  19.98    0.988      0.016
 ```
 
-Avoid recomputing the mean by using `mean_and_std`, and provide parameter names:
+Avoid recomputing the mean by using [`StatsBase.mean_and_std`](@extref), and provide
+parameter names:
 ```jldoctest summarize
 julia> summarize(x, (:mean, :std) => mean_and_std, mad; var_names=[:a, :b, :c])
 SummaryStats
@@ -234,7 +236,7 @@ SummaryStats
  c  20.0       0.988   18.5 .. 21.6
 ```
 
-Compute the summary stats focusing on `Statistics.median`:
+Compute the summary stats focusing on [`Statistics.median`](@extref):
 
 ```jldoctest summarize
 julia> summarize(x, default_summary_stats(median)...; var_names=[:a, :b, :c])
@@ -245,7 +247,7 @@ SummaryStats
  c  19.99   0.979   18.1 .. 21.9        0.020      3892        3829  1.00
 ```
 
-Compute multiple quantiles simultaneously:
+Compute multiple [quantiles](@extref `Statistics.quantile`) simultaneously:
 
 ```jldoctest summarize
 julia> qs = (0.05, 0.25, 0.5, 0.75, 0.95);
@@ -313,8 +315,8 @@ end
 Default statistics to be computed with [`summarize`](@ref).
 
 The value of `focus` determines the statistics to be returned:
-- `Statistics.mean`: `mean`, `std`, `hdi_94%`
-- `Statistics.median`: `median`, `mad`, `eti_94%`
+- [`Statistics.mean`](@extref): `mean`, [`std`](@extref `Statistics.std`), `hdi_94%`
+- [`Statistics.median`](@extref): `median`, [`mad`](@extref `StatsBase.mad`), `eti_94%`
 
 If `prob_interval` is set to a different value than the default, then different HDI and ETI
 statistics are computed accordingly. [`hdi`](@ref) refers to the highest-density interval,
@@ -352,8 +354,8 @@ end
 Default diagnostics to be computed with [`summarize`](@ref).
 
 The value of `focus` determines the diagnostics to be returned:
-- `Statistics.mean`: `mcse_mean`, `mcse_std`, `ess_tail`, `ess_bulk`, `rhat`
-- `Statistics.median`: `mcse_median`, `ess_tail`, `ess_bulk`, `rhat`
+- [`Statistics.mean`](@extref): `mcse_mean`, `mcse_std`, `ess_tail`, `ess_bulk`, `rhat`
+- [`Statistics.median`](@extref): `mcse_median`, `ess_tail`, `ess_bulk`, `rhat`
 """
 default_diagnostics(; kwargs...) = default_diagnostics(Statistics.mean; kwargs...)
 function default_diagnostics(::typeof(Statistics.mean); kwargs...)

@@ -113,9 +113,9 @@ See also: [`hdi!`](@ref), [`eti`](@ref), [`eti!`](@ref).
 
 # Returns
 - `intervals`: If `samples` is a vector or matrix, then a single
-    `IntervalSets.ClosedInterval` is returned for `:unimodal` method, or a vector of
-    `IntervalSets.ClosedInterval` for multimodal methods. For higher dimensional inputs,
-    an array with the shape `(params...,)` is returned, containing marginal HDIs for each parameter.
+    [`IntervalSets.ClosedInterval`](@extref) is returned for `:unimodal` method, or a vector
+    of `ClosedInterval` for multimodal methods. For higher dimensional inputs, an array with
+    the shape `(params...,)` is returned, containing marginal HDIs for each parameter.
 
 !!! note
     Any default value of `prob` is arbitrary. The default value of
