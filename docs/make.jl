@@ -31,5 +31,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/arviz-devs/PosteriorStats.jl.git", devbranch="main", preview=true
+    repo="github.com/arviz-devs/PosteriorStats.jl.git", devbranch="main", push_preview=true
 )
