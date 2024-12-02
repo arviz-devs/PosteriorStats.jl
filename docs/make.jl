@@ -1,5 +1,6 @@
 using PosteriorStats
 using Documenter
+using DocumenterInterLinks
 
 DocMeta.setdocmeta!(PosteriorStats, :DocTestSetup, :(using PosteriorStats); recursive=true)
 
