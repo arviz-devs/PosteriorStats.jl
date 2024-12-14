@@ -5,8 +5,8 @@ Compare models based on their expected log pointwise predictive density (ELPD).
 
 The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
 cross-validation (LOO) or using the widely applicable information criterion (WAIC).
-We recommend loo. Read more theory here - in a paper by some of the
-leading authorities on model comparison dx.doi.org/10.1111/1467-9868.00353
+[`loo`](@ref) is the default and recommended method for computing the ELPD. For more theory,
+see [Spiegelhalter2002](@citet).
 
 # Arguments
 
@@ -72,6 +72,10 @@ ModelComparisonResult with BootstrappedPseudoBMA weights
  centered         2   -31        1.4       0.06           0.067    0.48  0.9   ⋯
                                                                 1 column omitted
 ```
+
+# References
+
+- [Spiegelhalter2002](@cite) Spiegelhalter et al. J. R. Stat. Soc. B 64 (2002)
 """
 function compare(
     inputs;

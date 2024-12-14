@@ -20,16 +20,10 @@ Compute weights for each model in `elpd_results` using `method`.
 collection.
 
 [`Stacking`](@ref) is the recommended approach, as it performs well even when the true data
-generating process is not included among the candidate models. See [^YaoVehtari2018] for
+generating process is not included among the candidate models. See [Yao2018](@citet) for
 details.
 
 See also: [`AbstractModelWeightsMethod`](@ref), [`compare`](@ref)
-
-[^YaoVehtari2018]: Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
-                   Using Stacking to Average Bayesian Predictive Distributions.
-                   2018. Bayesian Analysis. 13, 3, 917–1007.
-                   doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
-                   arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
 
 # Examples
 
@@ -64,6 +58,10 @@ pairs(::NamedTuple) with 2 entries:
   :centered     => 0.483727
   :non_centered => 0.516273
 ```
+
+# References
+
+- [Yao2018](@cite) Yao et al. Bayesian Analysis 13, 3 (2018)
 """
 function model_weights(elpd_results; method::AbstractModelWeightsMethod=Stacking())
     return model_weights(method, elpd_results)
@@ -90,15 +88,13 @@ the ELPD estimate.
 
     This approach is not recommended, as it produces unstable weight estimates. It is
     recommended to instead use [`BootstrappedPseudoBMA`](@ref) to stabilize the weights
-    or [`Stacking`](@ref). For details, see [^YaoVehtari2018].
-
-[^YaoVehtari2018]: Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
-                   Using Stacking to Average Bayesian Predictive Distributions.
-                   2018. Bayesian Analysis. 13, 3, 917–1007.
-                   doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
-                   arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
+    or [`Stacking`](@ref). For details, see [Yao2018](@citet).
 
 See also: [`Stacking`](@ref)
+
+# References
+
+- [Yao2018](@cite) Yao et al. Bayesian Analysis 13, 3 (2018)
 """
 struct PseudoBMA <: AbstractModelWeightsMethod
     regularize::Bool
@@ -118,7 +114,7 @@ end
 $(TYPEDEF)
 
 Model weighting method using pseudo Bayesian Model Averaging using Akaike-type weighting
-with the Bayesian bootstrap (pseudo-BMA+)[^YaoVehtari2018].
+with the Bayesian bootstrap (pseudo-BMA+)[Yao2018](@citep).
 
 The Bayesian bootstrap stabilizes the model weights.
 
@@ -131,11 +127,9 @@ $(TYPEDFIELDS)
 
 See also: [`Stacking`](@ref)
 
-[^YaoVehtari2018]: Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
-                   Using Stacking to Average Bayesian Predictive Distributions.
-                   2018. Bayesian Analysis. 13, 3, 917–1007.
-                   doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
-                   arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
+# References
+
+- [Yao2018](@cite) Yao et al. Bayesian Analysis 13, 3 (2018)
 """
 struct BootstrappedPseudoBMA{R<:Random.AbstractRNG,T<:Real} <: AbstractModelWeightsMethod
     "The random number generator to use for the Bayesian bootstrap"
@@ -181,7 +175,7 @@ end
 """
 $(TYPEDEF)
 
-Model weighting using stacking of predictive distributions[^YaoVehtari2018].
+Model weighting using stacking of predictive distributions[Yao2018](@citep).
 
     Stacking(; optimizer=Optim.LBFGS(), options=Optim.Options()
     Stacking(optimizer[, options])
@@ -192,11 +186,9 @@ $(TYPEDFIELDS)
 
 See also: [`BootstrappedPseudoBMA`](@ref)
 
-[^YaoVehtari2018]: Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
-                   Using Stacking to Average Bayesian Predictive Distributions.
-                   2018. Bayesian Analysis. 13, 3, 917–1007.
-                   doi: [10.1214/17-BA1091](https://doi.org/10.1214/17-BA1091)
-                   arXiv: [1704.02030](https://arxiv.org/abs/1704.02030)
+# References
+
+- [Yao2018](@cite) Yao et al. Bayesian Analysis 13, 3 (2018)
 """
 struct Stacking{O<:Optim.AbstractOptimizer} <: AbstractModelWeightsMethod
     """The optimizer to use for the optimization of the weights. The optimizer must support

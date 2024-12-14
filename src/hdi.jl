@@ -14,16 +14,14 @@ abstract type HDIEstimationMethod end
 """
     UnimodalHDI <: HDIEstimationMethod
 
-Unimodal HDI estimation method using the method of [^ChenShao1999].
+Unimodal HDI estimation method using the method of [ChenShao1999](@citet).
 
 A single interval is returned whose bounds are selected from the sample. This estimator
 assumes the true distribution is unimodal.
 
-[^ChenShao1999]: Ming-Hui Chen & Qi-Man Shao (1999)
-                 Monte Carlo Estimation of Bayesian Credible and HPD Intervals,
-                 J Comput. Graph. Stat., 8:1, 69-92.
-                 DOI: [10.1080/10618600.1999.10474802](https://doi.org/10.1080/00031305.1996.10474359)
-                 [jstor](https://doi.org/10.2307/1390921).
+# References
+
+- [ChenShao1999](@cite) Chen & Shao, J Comput. Graph. Stat., 8:1 (1999)
 """
 struct UnimodalHDI <: HDIEstimationMethod end
 
@@ -84,8 +82,8 @@ _hdi_eltype(::MultimodalHDI, x) = Vector{IntervalSets.ClosedInterval{eltype(x)}}
 Estimate the highest density interval (HDI) of `samples` for the probability `prob`.
 
 The HDI is the minimum width Bayesian credible interval (BCI). That is, it is the smallest
-possible interval containing `(100*prob)`% of the probability mass.[^Hyndman1996]
-This implementation uses the algorithm of [^ChenShao1999].
+possible interval containing `(100*prob)`% of the probability mass.[Hyndman1996](@citep)
+This implementation uses the algorithm of [ChenShao1999](@citet).
 
 See also: [`hdi!`](@ref), [`eti`](@ref), [`eti!`](@ref).
 
@@ -122,16 +120,6 @@ See also: [`hdi!`](@ref), [`eti`](@ref), [`eti!`](@ref).
     `prob=$(DEFAULT_INTERVAL_PROB)` instead of a more common default like `prob=0.95` is
     chosen to remind the user of this arbitrariness.
 
-[^Hyndman1996]: Rob J. Hyndman (1996) Computing and Graphing Highest Density Regions,
-                Amer. Stat., 50(2): 120-6.
-                DOI: [10.1080/00031305.1996.10474359](https://doi.org/10.1080/00031305.1996.10474359)
-                [jstor](https://doi.org/10.2307/2684423).
-[^ChenShao1999]: Ming-Hui Chen & Qi-Man Shao (1999)
-                 Monte Carlo Estimation of Bayesian Credible and HPD Intervals,
-                 J Comput. Graph. Stat., 8:1, 69-92.
-                 DOI: [10.1080/10618600.1999.10474802](https://doi.org/10.1080/00031305.1996.10474359)
-                 [jstor](https://doi.org/10.2307/1390921).
-
 # Examples
 
 Here we calculate the 83% HDI for a normal random variable:
@@ -165,6 +153,11 @@ julia> hdi(x; method=:multimodal)
  -1.8882401079608677 .. 2.0017686164555037
  2.9839268475847436 .. 6.9235952578447275
 ```
+
+# References
+
+- [Hyndman1996](@cite) Hyndman, J. Comput. Graph. Stat., 50:2 (1996)
+- [ChenShao1999](@cite) Chen & Shao, J Comput. Graph. Stat., 8:1 (1999)
 """
 function hdi(x::AbstractArray{<:Real}; kwargs...)
     xcopy = _copymutable(x)

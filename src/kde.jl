@@ -1,23 +1,23 @@
 """
     isj_bandwidth(data; max_order=7[, npoints])
 
-Estimate the KDE bandwidth using the Improved Sheather-Jones (ISJ) method [^Botev2010].
+Estimate the KDE bandwidth using the Improved Sheather-Jones (ISJ) method
+[Botev2010](@citep).
 
 ISJ is especially good for multimodal distributions with well-separated modes, but it also
 works well for smooth, unimodal distributions. It uses an iterative approach to find the
 bandwidth by estimating the roughness of each derivative of the KDE up to `max_order`.
-This implementation is based on the reference code [^ISJRefCode], with one departure: if it
-fails to find a solution to a fixed point problem, it returns the Silverman's rule of thumb
-bandwidth.
+This implementation is based on the reference code [Botev2010Code](@citep), with one
+departure: if it fails to find a solution to a fixed point problem, it returns the
+Silverman's rule of thumb bandwidth.
 
 Optionally `npoints` can be specified to control the number of points used in the KDE.
 This can be much less than what will be used for the actual KDE.
 
-[^Botev2010]: Kernel density estimation via diffusion.
-              Z. I. Botev, J. F. Grotowski, and D. P. Kroese (2010)
-              Annals of Statistics, Volume 38, Number 5, pages 2916-2957.
-              doi: [10.1214/10-AOS799](https://doi.org/10.1214/10-AOS799)
-[^ISJRefCode]: http://web1.maths.unsw.edu.au/~zdravkobotev/php/kde_m.php
+# References
+
+- [Botev2010](@cite) Botev et al. Ann. Stat., 38: 5 (2010)
+    [code](@cite Botev2010Code)
 """
 function isj_bandwidth(
     data::AbstractVector{<:Real};
@@ -102,12 +102,11 @@ the usual KDE, trimming the KDE to the bounds, and renormalizing.
 
 Any non-finite `bounds` are ignored. Remaining `kwargs` are passed to `KernelDensity.kde`.
 The default bandwidth is estimated using the Improved Sheather-Jones (ISJ) method
-[^Botev2010].
+[Botev2010](@citep).
 
-[^Botev2010]: Kernel density estimation via diffusion.
-              Z. I. Botev, J. F. Grotowski, and D. P. Kroese (2010)
-              Annals of Statistics, Volume 38, Number 5, pages 2916-2957.
-              doi: [10.1214/10-AOS799](https://doi.org/10.1214/10-AOS799)
+# References
+
+- [Botev2010](@cite) Botev et al. Ann. Stat., 38: 5 (2010)
 """
 function kde_reflected(
     data::AbstractVector{<:Real};

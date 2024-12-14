@@ -1,17 +1,12 @@
 """
     r2_score(y_true::AbstractVector, y_pred::AbstractArray) -> (; r2, r2_std)
 
-``R²`` for linear Bayesian regression models.[^GelmanGoodrich2019]
+``R²`` for linear Bayesian regression models.[Gelman2019](@citep)
 
 # Arguments
 
   - `y_true`: Observed data of length `noutputs`
   - `y_pred`: Predicted data with size `(ndraws[, nchains], noutputs)`
-
-[^GelmanGoodrich2019]: Andrew Gelman, Ben Goodrich, Jonah Gabry & Aki Vehtari (2019)
-    R-squared for Bayesian Regression Models, The American Statistician,
-    73:3, 307-9,
-    DOI: [10.1080/00031305.2018.1549100](https://doi.org/10.1080/00031305.2018.1549100).
 
 # Examples
 
@@ -29,6 +24,10 @@ pairs(::NamedTuple) with 2 entries:
   :r2     => 0.683197
   :r2_std => 0.0368838
 ```
+
+# References
+
+- [Gelman2019](@cite) Gelman et al, The Am. Stat., 73(3) (2019)
 """
 function r2_score(y_true, y_pred)
     r_squared = r2_samples(y_true, y_pred)
