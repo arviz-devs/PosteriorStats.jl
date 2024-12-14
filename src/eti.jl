@@ -6,7 +6,8 @@ Estimate the equal-tailed interval (ETI) of `samples` for the probability `prob`
 
 The ETI of a given probability is the credible interval wih the property that the
 probability of being below the interval is equal to the probability of being above it.
-That is, it is defined by the `(1-prob)/2` and `1 - (1-prob)/2` quantiles of the samples.
+That is, it is defined by the `(1-prob)/2` and `1 - (1-prob)/2`
+[quantiles](@extref `Statistics.quantile`) of the samples.
 
 See also: [`eti!`](@ref), [`hdi`](@ref), [`hdi!`](@ref).
 
@@ -17,11 +18,11 @@ See also: [`eti!`](@ref), [`hdi`](@ref), [`hdi!`](@ref).
 # Keywords
 - `prob`: the probability mass to be contained in the ETI. Default is
     `$(DEFAULT_INTERVAL_PROB)`.
-- `kwargs`: remaining keywords are passed to `Statistics.quantile`.
+- `kwargs`: remaining keywords are passed to [`Statistics.quantile`](@extref).
 
 # Returns
 - `intervals`: If `samples` is a vector or matrix, then a single
-    `IntervalSets.ClosedInterval` is returned. Otherwise, an array with the shape
+    [`IntervalSets.ClosedInterval`](@extref) is returned. Otherwise, an array with the shape
     `(params...,)`, is returned, containing a marginal ETI for each parameter.
 
 !!! note

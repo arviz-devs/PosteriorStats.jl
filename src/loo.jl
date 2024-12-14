@@ -12,7 +12,7 @@ struct PSISLOOResult{E,P,R<:PSIS.PSISResult} <: AbstractELPDResult
     estimates::E
     "Pointwise estimates"
     pointwise::P
-    "Pareto-smoothed importance sampling (PSIS) results"
+    "A [`PSIS.PSISResult`](@extref) with Pareto-smoothed importance sampling (PSIS) results"
     psis_result::R
 end
 
@@ -43,8 +43,8 @@ Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (
   - `reff::Union{Real,AbstractArray{<:Real}}`: The relative effective sample size(s) of the
     _likelihood_ values. If an array, it must have the same data dimensions as the
     corresponding log-likelihood variable. If not provided, then this is estimated using
-    `MCMCDiagnosticTools.ess`.
-  - `kwargs`: Remaining keywords are forwarded to [`PSIS.psis`].
+    [`MCMCDiagnosticTools.ess`](@extref).
+  - `kwargs`: Remaining keywords are forwarded to [`PSIS.psis`](@extref).
 
 See also: [`PSISLOOResult`](@ref), [`waic`](@ref)
 
