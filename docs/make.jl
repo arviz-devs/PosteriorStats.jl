@@ -1,8 +1,11 @@
 using PosteriorStats
 using Documenter
+using DocumenterCitations
 using DocumenterInterLinks
 
 DocMeta.setdocmeta!(PosteriorStats, :DocTestSetup, :(using PosteriorStats); recursive=true)
+
+bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:numeric)
 
 links = InterLinks(
     "IntervalSets" => (
@@ -23,11 +26,11 @@ makedocs(;
     repo=Remotes.GitHub("arviz-devs", "PosteriorStats.jl"),
     sitename="PosteriorStats.jl",
     format=Documenter.HTML(;
-        prettyurls=get(ENV, "CI", "false") == "true", edit_link="main", assets=String[]
+        prettyurls=get(ENV, "CI", "false") == "true", edit_link="main", assets=[joinpath("assets", "citations.css")]
     ),
-    pages=["Home" => "index.md", "API" => "api.md"],
+    pages=["Home" => "index.md", "API" => "api.md", "References" => "references.md"],
     warnonly=[:footnote, :missing_docs],
-    plugins=[links],
+    plugins=[bib, links],
 )
 
 deploydocs(;
