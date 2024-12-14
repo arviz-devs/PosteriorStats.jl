@@ -26,20 +26,12 @@ end
 """
     waic(log_likelihood::AbstractArray) -> WAICResult{<:NamedTuple,<:NamedTuple}
 
-Compute the widely applicable information criterion (WAIC).[^Watanabe2010][^Vehtari2017][^LOOFAQ]
+Compute the widely applicable information criterion (WAIC). [Watanabe2010](@citep)
 
 `log_likelihood` must be an array of log-likelihood values with shape
 `(chains, draws[, params...])`.
 
 See also: [`WAICResult`](@ref), [`loo`](@ref)
-
-[^Watanabe2010]: Watanabe, S. Asymptotic Equivalence of Bayes Cross Validation and Widely Applicable Information Criterion in Singular Learning Theory. 11(116):3571−3594, 2010. https://jmlr.csail.mit.edu/papers/v11/watanabe10a.html
-[^Vehtari2017]: Vehtari, A., Gelman, A. & Gabry, J.
-    Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC.
-    Stat Comput 27, 1413–1432 (2017).
-    doi: [10.1007/s11222-016-9696-4](https://doi.org/10.1007/s11222-016-9696-4)
-    arXiv: [1507.04544](https://arxiv.org/abs/1507.04544)
-[^LOOFAQ]: Aki Vehtari. Cross-validation FAQ. https://mc-stan.org/loo/articles/online-only/faq.html
 
 # Examples
 
@@ -57,6 +49,10 @@ WAICResult with estimates
  elpd  elpd_mcse    p  p_mcse
   -31        1.4  0.9    0.33
 ```
+
+# References
+
+- [Watanabe2010](@cite) Watanabe, JMLR 11(116) (2010)
 """
 waic(ll::AbstractArray) = _waic(ll)
 

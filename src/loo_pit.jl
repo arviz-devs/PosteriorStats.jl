@@ -32,13 +32,8 @@ P(y_i^* \\le y_i \\mid y_{-i}) = \\int_{-\\infty}^{y_i} p(y_i^* \\mid y_{-i}) \\
 
 The LOO posterior predictions and the corresponding observations should have similar
 distributions, so if conditional predictive distributions are well-calibrated, then all
-LOO-PIT values should be approximately uniformly distributed on ``[0, 1]``.[^Gabry2019]
-
-[^Gabry2019]: Gabry, J., Simpson, D., Vehtari, A., Betancourt, M. & Gelman, A.
-    Visualization in Bayesian Workflow.
-    J. R. Stat. Soc. Ser. A Stat. Soc. 182, 389–402 (2019).
-    doi: [10.1111/rssa.12378](https://doi.org/10.1111/rssa.12378)
-    arXiv: [1709.01449](https://arxiv.org/abs/1709.01449)
+LOO-PIT values should be approximately uniformly distributed on ``[0, 1]``.
+[Gabry2019](@citep)
 
 # Examples
 
@@ -94,6 +89,10 @@ julia> loo_pit(T .^ 2, T_pred .^ 2, log_weights)
  "St. Paul's"        0.775086
  "Mt. Hermon"        0.296706
 ```
+
+# References
+
+- [Gabry2019](@cite) Gabry et al. J. R. Stat. Soc. Ser. A Stat. Soc. 182 (2019).
 """
 function loo_pit(
     y::Union{AbstractArray,Number},

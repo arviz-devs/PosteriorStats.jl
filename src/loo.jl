@@ -33,7 +33,7 @@ end
     loo(log_likelihood; reff=nothing, kwargs...) -> PSISLOOResult{<:NamedTuple,<:NamedTuple}
 
 Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (PSIS-LOO).
-[^Vehtari2017][^LOOFAQ]
+[Vehtari2017, LOOFAQ](@cite)
 
 `log_likelihood` must be an array of log-likelihood values with shape
 `(chains, draws[, params...])`.
@@ -47,13 +47,6 @@ Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (
   - `kwargs`: Remaining keywords are forwarded to [`PSIS.psis`](@extref).
 
 See also: [`PSISLOOResult`](@ref), [`waic`](@ref)
-
-[^Vehtari2017]: Vehtari, A., Gelman, A. & Gabry, J.
-    Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC.
-    Stat Comput 27, 1413–1432 (2017).
-    doi: [10.1007/s11222-016-9696-4](https://doi.org/10.1007/s11222-016-9696-4)
-    arXiv: [1507.04544](https://arxiv.org/abs/1507.04544)
-[^LOOFAQ]: Aki Vehtari. Cross-validation FAQ. https://mc-stan.org/loo/articles/online-only/faq.html
 
 # Examples
 
@@ -79,6 +72,11 @@ Pareto shape (k) diagnostic values:
  (-Inf, 0.5]  good  7 (87.5%)  151
   (0.5, 0.7]  okay  1 (12.5%)  446
 ```
+
+# References
+
+- [Vehtari2017](@cite) Vehtari et al. Stat. Comput. 27 (2017).
+- [LOOFAQ](@cite) Vehtari. Cross-validation FAQ.
 """
 loo(ll::AbstractArray; kwargs...) = _loo(ll; kwargs...)
 
