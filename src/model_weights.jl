@@ -55,8 +55,8 @@ Now we compute [`BootstrappedPseudoBMA`](@ref) weights for the same models:
 ```jldoctest model_weights; setup = :(using Random; Random.seed!(94))
 julia> model_weights(elpd_results; method=BootstrappedPseudoBMA()) |> pairs
 pairs(::NamedTuple) with 2 entries:
-  :centered     => 0.483727
-  :non_centered => 0.516273
+  :centered     => 0.492513
+  :non_centered => 0.507487
 ```
 
 # References

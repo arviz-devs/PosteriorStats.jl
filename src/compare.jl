@@ -50,8 +50,8 @@ julia> mc = compare(models; elpd_method=myloo)
 └ @ PSIS ~/.julia/packages/PSIS/...
 ModelComparisonResult with Stacking weights
                rank  elpd  elpd_mcse  elpd_diff  elpd_diff_mcse  weight    p   ⋯
- non_centered     1   -31        1.4       0              0.0       1.0  0.9   ⋯
- centered         2   -31        1.4       0.06           0.067     0.0  0.9   ⋯
+ non_centered     1   -31        1.5       0              0.0       1.0  0.9   ⋯
+ centered         2   -31        1.4       0.03           0.061     0.0  0.9   ⋯
                                                                 1 column omitted
 julia> mc.weight |> pairs
 pairs(::NamedTuple) with 2 entries:
@@ -68,8 +68,8 @@ julia> elpd_results = mc.elpd_result;
 julia> compare(elpd_results; weights_method=BootstrappedPseudoBMA())
 ModelComparisonResult with BootstrappedPseudoBMA weights
                rank  elpd  elpd_mcse  elpd_diff  elpd_diff_mcse  weight    p   ⋯
- non_centered     1   -31        1.4       0              0.0      0.52  0.9   ⋯
- centered         2   -31        1.4       0.06           0.067    0.48  0.9   ⋯
+ non_centered     1   -31        1.5       0              0.0      0.51  0.9   ⋯
+ centered         2   -31        1.4       0.03           0.061    0.49  0.9   ⋯
                                                                 1 column omitted
 ```
 
