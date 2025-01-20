@@ -32,7 +32,7 @@ Compare the centered and non centered models of the eight school problem using t
 [`loo`](@ref) and [`Stacking`](@ref) weights. A custom `myloo` method formates the inputs
 as expected by [`loo`](@ref).
 
-```jldoctest compare; filter = [r"└.*"]
+```jldoctest compare; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1"]
 julia> using ArviZExampleData
 
 julia> models = (

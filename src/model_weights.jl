@@ -29,7 +29,7 @@ See also: [`AbstractModelWeightsMethod`](@ref), [`compare`](@ref)
 
 Compute [`Stacking`](@ref) weights for two models:
 
-```jldoctest model_weights; filter = [r"└.*"]
+```jldoctest model_weights; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1"]
 julia> using ArviZExampleData
 
 julia> models = (
