@@ -29,7 +29,7 @@ See also: [`AbstractModelWeightsMethod`](@ref), [`compare`](@ref)
 
 Compute [`Stacking`](@ref) weights for two models:
 
-```jldoctest model_weights; filter = [r"└.*"]
+```jldoctest model_weights; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1"]
 julia> using ArviZExampleData
 
 julia> models = (
@@ -46,7 +46,7 @@ julia> elpd_results = map(models) do idata
 
 julia> model_weights(elpd_results; method=Stacking()) |> pairs
 pairs(::NamedTuple) with 2 entries:
-  :centered     => 5.34175e-19
+  :centered     => 3.50546e-31
   :non_centered => 1.0
 ```
 
@@ -55,8 +55,8 @@ Now we compute [`BootstrappedPseudoBMA`](@ref) weights for the same models:
 ```jldoctest model_weights; setup = :(using Random; Random.seed!(94))
 julia> model_weights(elpd_results; method=BootstrappedPseudoBMA()) |> pairs
 pairs(::NamedTuple) with 2 entries:
-  :centered     => 0.483727
-  :non_centered => 0.516273
+  :centered     => 0.492513
+  :non_centered => 0.507487
 ```
 
 # References

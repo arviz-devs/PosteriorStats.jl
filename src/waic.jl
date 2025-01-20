@@ -47,7 +47,7 @@ julia> log_like = PermutedDimsArray(idata.log_likelihood.obs, (:draw, :chain, :s
 julia> waic(log_like)
 WAICResult with estimates
  elpd  elpd_mcse    p  p_mcse
-  -31        1.4  0.9    0.33
+  -31        1.4  0.9    0.32
 ```
 
 # References
