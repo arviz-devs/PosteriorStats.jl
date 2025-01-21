@@ -193,7 +193,7 @@ end
 # - removes trailing decimal point if no significant digits after decimal point
 function _printf_with_sigdigits(v::Real, sigdigits)
     s = sprint(Printf.format, Printf.Format("%#.$(sigdigits)g"), v)
-    return replace(s, r"\.$" => "")
+    return replace(s, r"\.($|e)" => s"\1")
 end
 
 #
