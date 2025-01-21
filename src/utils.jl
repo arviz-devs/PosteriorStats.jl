@@ -289,7 +289,9 @@ function ft_printf_sigdigits_matching_se(
 end
 
 function _prettytables_rhat_formatter(data)
-    cols = findall(x -> x === :rhat, Tables.columnnames(data))
+    cols = findall(
+        x -> (x === :rhat || startswith(string(x), "rhat_")), Tables.columnnames(data)
+    )
     isempty(cols) && return nothing
     return PrettyTables.ft_printf("%.2f", cols)
 end
