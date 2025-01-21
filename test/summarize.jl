@@ -142,19 +142,21 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
             data = (
                 est=[111.11, 1.2345e-6, 5.4321e8, Inf, NaN],
                 mcse_est=[0.0012345, 5.432e-5, 2.1234e5, Inf, NaN],
+                se_est=vcat(0.0012345, 5.432e-5, 2.1234e5, Inf, NaN),
                 rhat=vcat(1.009, 1.011, 0.99, Inf, NaN),
+                rhat_bulk=vcat(1.009, 1.011, 0.99, Inf, NaN),
                 ess=vcat(312.45, 23.32, 1011.98, Inf, NaN),
                 ess_bulk=vcat(9.2345, 876.321, 999.99, Inf, NaN),
             )
             stats = SummaryStats(data, parameter_names)
             @test sprint(show, "text/plain", stats) == """
                 SummaryStats
-                              est  mcse_est  rhat   ess  ess_bulk
-                 a    111.110       0.0012   1.01   312         9
-                 bb     1.e-06      5.4e-05  1.01    23       876
-                 ccc    5.432e+08   2.1e+05  0.99  1012      1000
-                 d       Inf         Inf      Inf   Inf       Inf
-                 e       NaN         NaN      NaN   NaN       NaN"""
+                              est  mcse_est   se_est  rhat  rhat_bulk   ess  ess_bulk
+                 a    111.110       0.0012   0.0012   1.01       1.01   312         9
+                 bb     1e-06       5.4e-05  5.4e-05  1.01       1.01    23       876
+                 ccc    5.432e+08   2.1e+05  2.1e+05  0.99       0.99  1012      1000
+                 d       Inf         Inf      Inf      Inf        Inf   Inf       Inf
+                 e       NaN         NaN      NaN      NaN        NaN   NaN       NaN"""
 
             @test startswith(sprint(show, "text/html", stats), "<table")
         end
