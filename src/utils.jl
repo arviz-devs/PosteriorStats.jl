@@ -193,7 +193,7 @@ end
 # - removes trailing decimal point if no significant digits after decimal point
 function _printf_with_sigdigits(v::Real, sigdigits)
     s = sprint(Printf.format, Printf.Format("%#.$(sigdigits)g"), v)
-    return replace(s, r"\.$" => "")
+    return replace(s, r"\.($|e)" => s"\1")
 end
 
 #
@@ -289,7 +289,9 @@ function ft_printf_sigdigits_matching_se(
 end
 
 function _prettytables_rhat_formatter(data)
-    cols = findall(x -> x === :rhat, Tables.columnnames(data))
+    cols = findall(
+        x -> (x === :rhat || startswith(string(x), "rhat_")), Tables.columnnames(data)
+    )
     isempty(cols) && return nothing
     return PrettyTables.ft_printf("%.2f", cols)
 end
@@ -308,7 +310,8 @@ function _default_prettytables_formatters(data; sigdigits_se=2, sigdigits_defaul
     formatters = []
     col_names = Tables.columnnames(data)
     for (i, k) in enumerate(col_names)
-        for mcse_key in (Symbol("mcse_$k"), Symbol("$(k)_mcse"))
+        for mcse_key in
+            (Symbol("mcse_$k"), Symbol("$(k)_mcse"), Symbol("se_$k"), Symbol("$(k)_se"))
             if haskey(data, mcse_key)
                 push!(
                     formatters,
@@ -320,7 +323,10 @@ function _default_prettytables_formatters(data; sigdigits_se=2, sigdigits_defaul
     end
     mcse_cols = findall(col_names) do k
         s = string(k)
-        return startswith(s, "mcse_") || endswith(s, "_mcse")
+        return startswith(s, "mcse_") ||
+               endswith(s, "_mcse") ||
+               startswith(s, "se_") ||
+               endswith(s, "_se")
     end
     isempty(mcse_cols) || push!(formatters, ft_printf_sigdigits(sigdigits_se, mcse_cols))
     ess_cols = findall(_is_ess_label, col_names)

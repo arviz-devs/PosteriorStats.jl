@@ -133,8 +133,8 @@ using Test
     end
 
     @testset "_printf_with_sigdigits" begin
-        @test PosteriorStats._printf_with_sigdigits(123.456, 1) == "1.e+02"
-        @test PosteriorStats._printf_with_sigdigits(-123.456, 1) == "-1.e+02"
+        @test PosteriorStats._printf_with_sigdigits(123.456, 1) == "1e+02"
+        @test PosteriorStats._printf_with_sigdigits(-123.456, 1) == "-1e+02"
         @test PosteriorStats._printf_with_sigdigits(123.456, 2) == "1.2e+02"
         @test PosteriorStats._printf_with_sigdigits(-123.456, 2) == "-1.2e+02"
         @test PosteriorStats._printf_with_sigdigits(123.456, 3) == "123"
@@ -148,7 +148,7 @@ using Test
         @test PosteriorStats._printf_with_sigdigits(123.456, 7) == "123.4560"
         @test PosteriorStats._printf_with_sigdigits(-123.456, 7) == "-123.4560"
         @test PosteriorStats._printf_with_sigdigits(123.456, 8) == "123.45600"
-        @test PosteriorStats._printf_with_sigdigits(0.00000123456, 1) == "1.e-06"
+        @test PosteriorStats._printf_with_sigdigits(0.00000123456, 1) == "1e-06"
         @test PosteriorStats._printf_with_sigdigits(0.00000123456, 2) == "1.2e-06"
     end
 
