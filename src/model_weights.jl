@@ -105,7 +105,7 @@ function model_weights(method::PseudoBMA, elpd_results)
     elpds = map(elpd_results) do result
         est = elpd_estimates(result)
         method.regularize || return est.elpd
-        return est.elpd - est.elpd_mcse / 2
+        return est.elpd - est.se_elpd / 2
     end
     return _akaike_weights(elpds)
 end

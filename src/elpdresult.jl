@@ -17,7 +17,7 @@ function _show_elpd_estimates(
     io::IO, mime::MIME"text/plain", r::AbstractELPDResult; kwargs...
 )
     estimates = elpd_estimates(r)
-    table = map(Base.vect, NamedTuple{(:elpd, :elpd_mcse, :p, :p_mcse)}(estimates))
+    table = map(Base.vect, NamedTuple{(:elpd, :se_elpd, :p, :se_p)}(estimates))
     _show_prettytable(io, mime, table; kwargs...)
     return nothing
 end
@@ -66,7 +66,7 @@ function _lpd_pointwise(log_likelihood, dims)
 end
 
 function _elpd_estimates_from_pointwise(pointwise)
-    elpd, elpd_mcse = _sum_and_se(pointwise.elpd)
-    p, p_mcse = _sum_and_se(pointwise.p)
-    return (; elpd, elpd_mcse, p, p_mcse)
+    elpd, se_elpd = _sum_and_se(pointwise.elpd)
+    p, se_p = _sum_and_se(pointwise.p)
+    return (; elpd, se_elpd, p, se_p)
 end

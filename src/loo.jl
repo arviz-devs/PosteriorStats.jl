@@ -101,13 +101,13 @@ end
 function _loo(log_like, psis_result, dims=(1, 2))
     # compute pointwise estimates
     lpd_i = _maybe_scalar(_lpd_pointwise(log_like, dims))
-    elpd_i, elpd_se_i = map(
+    elpd_i, se_elpd_i = map(
         _maybe_scalar, _elpd_loo_pointwise_and_se(psis_result, log_like, dims)
     )
     p_i = lpd_i - elpd_i
     pointwise = (;
         elpd=elpd_i,
-        elpd_mcse=elpd_se_i,
+        se_elpd=se_elpd_i,
         p=p_i,
         reff=psis_result.reff,
         pareto_shape=psis_result.pareto_shape,
@@ -126,6 +126,6 @@ function _elpd_loo_pointwise_and_se(psis_result::PSIS.PSISResult, log_likelihood
     elpd_i_se = _se_log_mean(log_likelihood, log_weights; dims, log_mean=elpd_i)
     return (
         elpd=_maybe_scalar(dropdims(elpd_i; dims)),
-        elpd_se=_maybe_scalar(dropdims(elpd_i_se; dims) ./ sqrt.(psis_result.reff)),
+        se_elpd=_maybe_scalar(dropdims(elpd_i_se; dims) ./ sqrt.(psis_result.reff)),
     )
 end

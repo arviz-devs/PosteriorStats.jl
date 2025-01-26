@@ -65,21 +65,13 @@ end
             @test Tables.columnaccess(typeof(mc1))
             @test Tables.columns(mc1) == mc1
             @test Tables.columnnames(mc1) == (
-                :name,
-                :rank,
-                :elpd,
-                :elpd_mcse,
-                :elpd_diff,
-                :elpd_diff_mcse,
-                :weight,
-                :p,
-                :p_mcse,
+                :name, :rank, :elpd, :se_elpd, :elpd_diff, :se_elpd_diff, :weight, :p, :se_p
             )
             table = Tables.columntable(mc1)
-            for k in (:name, :rank, :elpd_diff, :elpd_diff_mcse, :weight)
+            for k in (:name, :rank, :elpd_diff, :se_elpd_diff, :weight)
                 @test getproperty(table, k) == collect(getproperty(mc1, k))
             end
-            for k in (:elpd, :elpd_mcse, :p, :p_mcse)
+            for k in (:elpd, :se_elpd, :p, :se_p)
                 @test getproperty(table, k) ==
                     collect(map(x -> getproperty(x.estimates, k), mc1.elpd_result))
             end
@@ -111,15 +103,15 @@ end
             mc5 = compare(eight_schools_loo_results; weights_method=PseudoBMA())
             @test sprint(show, "text/plain", mc1) == """
                 ModelComparisonResult with Stacking weights
-                               rank  elpd  elpd_mcse  elpd_diff  elpd_diff_mcse  weight    p  p_mcse
-                 non_centered     1   -31        1.5       0              0.0       1.0  0.9    0.32
-                 centered         2   -31        1.4       0.03           0.061     0.0  0.9    0.33"""
+                               rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p
+                 non_centered     1   -31      1.5       0            0.0       1.0  0.9  0.32
+                 centered         2   -31      1.4       0.03         0.061     0.0  0.9  0.33"""
 
             @test sprint(show, "text/plain", mc5) == """
                 ModelComparisonResult with PseudoBMA weights
-                               rank  elpd  elpd_mcse  elpd_diff  elpd_diff_mcse  weight    p  p_mcse
-                 non_centered     1   -31        1.5       0              0.0      0.51  0.9    0.32
-                 centered         2   -31        1.4       0.03           0.061    0.49  0.9    0.33"""
+                               rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p
+                 non_centered     1   -31      1.5       0            0.0      0.51  0.9  0.32
+                 centered         2   -31      1.4       0.03         0.061    0.49  0.9  0.33"""
 
             @test startswith(sprint(show, "text/html", mc1), "<table")
         end
