@@ -23,7 +23,7 @@ function _show_elpd_estimates(
 end
 
 """
-    $(FUNCTIONNAME)(result::AbstractELPDResult; pointwise=false) -> (; elpd, elpd_mcse, lpd)
+    $(FUNCTIONNAME)(result::AbstractELPDResult; pointwise=false) -> (; elpd, se_elpd, lpd)
 
 Return the (E)LPD estimates from the `result`.
 """
