@@ -49,10 +49,9 @@ julia> mc = compare(models; elpd_method=myloo)
 ┌ Warning: 1 parameters had Pareto shape values 0.7 < k ≤ 1. Resulting importance sampling estimates are likely to be unstable.
 └ @ PSIS ~/.julia/packages/PSIS/...
 ModelComparisonResult with Stacking weights
-               rank  elpd  elpd_mcse  elpd_diff  elpd_diff_mcse  weight    p   ⋯
- non_centered     1   -31        1.5       0              0.0       1.0  0.9   ⋯
- centered         2   -31        1.4       0.03           0.061     0.0  0.9   ⋯
-                                                                1 column omitted
+               rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p ⋯
+ non_centered     1   -31      1.5       0            0.0       1.0  0.9  0.32 ⋯
+ centered         2   -31      1.4       0.03         0.061     0.0  0.9  0.33 ⋯
 julia> mc.weight |> pairs
 pairs(::NamedTuple) with 2 entries:
   :non_centered => 1.0
@@ -67,10 +66,9 @@ julia> elpd_results = mc.elpd_result;
 
 julia> compare(elpd_results; weights_method=BootstrappedPseudoBMA())
 ModelComparisonResult with BootstrappedPseudoBMA weights
-               rank  elpd  elpd_mcse  elpd_diff  elpd_diff_mcse  weight    p   ⋯
- non_centered     1   -31        1.5       0              0.0      0.51  0.9   ⋯
- centered         2   -31        1.4       0.03           0.061    0.49  0.9   ⋯
-                                                                1 column omitted
+               rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p ⋯
+ non_centered     1   -31      1.5       0            0.0      0.51  0.9  0.32 ⋯
+ centered         2   -31      1.4       0.03         0.061    0.49  0.9  0.33 ⋯
 ```
 
 # References
@@ -91,18 +89,18 @@ function compare(
     perm = _sortperm(elpd_results; by=x -> elpd_estimates(x).elpd, rev=true)
     i_elpd_max = first(perm)
     elpd_max_i = elpd_estimates(elpd_results[i_elpd_max]; pointwise=true).elpd
-    elpd_diff_and_mcse = map(elpd_results) do r
+    se_elpd_diff_and = map(elpd_results) do r
         elpd_diff_j = similar(elpd_max_i)
         # workaround for named dimension packages that check dimension names are exact, for
         # cases where dimension names differ
         map!(-, elpd_diff_j, elpd_max_i, elpd_estimates(r; pointwise=true).elpd)
         return _sum_and_se(elpd_diff_j)
     end
-    elpd_diff = map(first, elpd_diff_and_mcse)
-    elpd_diff_mcse = map(last, elpd_diff_and_mcse)
+    elpd_diff = map(first, se_elpd_diff_and)
+    se_elpd_diff = map(last, se_elpd_diff_and)
     rank = _assimilar(elpd_results, (1:length(elpd_results))[perm])
     result = ModelComparisonResult(
-        model_names, rank, elpd_diff, elpd_diff_mcse, weights, elpd_results, weights_method
+        model_names, rank, elpd_diff, se_elpd_diff, weights, elpd_results, weights_method
     )
     sort || return result
     return _permute(result, perm)
@@ -136,8 +134,8 @@ struct ModelComparisonResult{E,N,R,W,ER,M}
     rank::R
     "ELPD of a model subtracted from the largest ELPD of any model"
     elpd_diff::E
-    "Monte Carlo standard error of the ELPD difference"
-    elpd_diff_mcse::E
+    "Standard error of the ELPD difference"
+    se_elpd_diff::E
     "Model weights computed with `weights_method`"
     weight::W
     """`AbstactELPDResult`s for each model, which can be used to access useful stats like
@@ -191,16 +189,14 @@ Tables.istable(::Type{<:ModelComparisonResult}) = true
 Tables.columnaccess(::Type{<:ModelComparisonResult}) = true
 Tables.columns(r::ModelComparisonResult) = r
 function Tables.columnnames(::ModelComparisonResult)
-    return (
-        :name, :rank, :elpd, :elpd_mcse, :elpd_diff, :elpd_diff_mcse, :weight, :p, :p_mcse
-    )
+    return (:name, :rank, :elpd, :se_elpd, :elpd_diff, :se_elpd_diff, :weight, :p, :se_p)
 end
 function Tables.getcolumn(r::ModelComparisonResult, i::Int)
     return Tables.getcolumn(r, Tables.columnnames(r)[i])
 end
 function Tables.getcolumn(r::ModelComparisonResult, nm::Symbol)
     nm ∈ fieldnames(typeof(r)) && return getfield(r, nm)
-    if nm ∈ (:elpd, :elpd_mcse, :p, :p_mcse)
+    if nm ∈ (:elpd, :se_elpd, :p, :se_p)
         return map(e -> getproperty(elpd_estimates(e), nm), r.elpd_result)
     end
     throw(ArgumentError("Unrecognized column name $nm"))

@@ -21,9 +21,8 @@ using Test
             estimates = elpd_estimates(loo_result)
             pointwise = elpd_estimates(loo_result; pointwise=true)
             @testset "return types and values as expected" begin
-                @test estimates isa NamedTuple{(:elpd, :elpd_mcse, :p, :p_mcse),NTuple{4,T}}
-                @test pointwise isa
-                    NamedTuple{(:elpd, :elpd_mcse, :p, :reff, :pareto_shape)}
+                @test estimates isa NamedTuple{(:elpd, :se_elpd, :p, :se_p),NTuple{4,T}}
+                @test pointwise isa NamedTuple{(:elpd, :se_elpd, :p, :reff, :pareto_shape)}
                 if length(sz) == 2
                     @test eltype(pointwise) === T
                 else
@@ -93,8 +92,8 @@ using Test
         # regression test
         @test sprint(show, "text/plain", loo(loglike)) == """
             PSISLOOResult with estimates
-             elpd  elpd_mcse    p  p_mcse
-              -31        1.4  0.9    0.33
+             elpd  se_elpd    p  se_p
+              -31      1.4  0.9  0.33
 
             and PSISResult with 500 draws, 4 chains, and 8 parameters
             Pareto shape (k) diagnostic values:
@@ -112,13 +111,12 @@ using Test
                     result_r = loo_r(log_likelihood; reff)
                     result = loo(log_likelihood; reff)
                     @test result.estimates.elpd ≈ result_r.estimates.elpd
-                    @test result.estimates.elpd_mcse ≈ result_r.estimates.elpd_mcse
+                    @test result.estimates.se_elpd ≈ result_r.estimates.se_elpd
                     @test result.estimates.p ≈ result_r.estimates.p
-                    @test result.estimates.p_mcse ≈ result_r.estimates.p_mcse
+                    @test result.estimates.se_p ≈ result_r.estimates.se_p
                     @test result.pointwise.elpd ≈ result_r.pointwise.elpd
-                    # increased tolerance for elpd_mcse, since we use a different approach
-                    @test result.pointwise.elpd_mcse ≈ result_r.pointwise.elpd_mcse rtol =
-                        0.01
+                    # increased tolerance for se_elpd, since we use a different approach
+                    @test result.pointwise.se_elpd ≈ result_r.pointwise.se_elpd rtol = 0.01
                     @test result.pointwise.p ≈ result_r.pointwise.p
                     @test result.pointwise.reff ≈ result_r.pointwise.reff
                     @test result.pointwise.pareto_shape ≈ result_r.pointwise.pareto_shape

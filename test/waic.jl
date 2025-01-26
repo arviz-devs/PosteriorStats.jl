@@ -21,7 +21,7 @@ using Test
             estimates = elpd_estimates(waic_result)
             pointwise = elpd_estimates(waic_result; pointwise=true)
             @testset "return types and values as expected" begin
-                @test estimates isa NamedTuple{(:elpd, :elpd_mcse, :p, :p_mcse),NTuple{4,T}}
+                @test estimates isa NamedTuple{(:elpd, :se_elpd, :p, :se_p),NTuple{4,T}}
                 @test pointwise isa NamedTuple{(:elpd, :p)}
                 if length(sz) == 2
                     @test eltype(pointwise) === T
@@ -59,8 +59,8 @@ using Test
         # regression test
         @test sprint(show, "text/plain", waic(loglike)) == """
             WAICResult with estimates
-             elpd  elpd_mcse    p  p_mcse
-              -31        1.4  0.9    0.32"""
+             elpd  se_elpd    p  se_p
+              -31      1.4  0.9  0.32"""
     end
     @testset "agrees with R waic" begin
         if r_loo_installed()
@@ -71,9 +71,9 @@ using Test
                 result_r = waic_r(log_likelihood)
                 result = waic(log_likelihood)
                 @test result.estimates.elpd ≈ result_r.estimates.elpd
-                @test result.estimates.elpd_mcse ≈ result_r.estimates.elpd_mcse
+                @test result.estimates.se_elpd ≈ result_r.estimates.se_elpd
                 @test result.estimates.p ≈ result_r.estimates.p
-                @test result.estimates.p_mcse ≈ result_r.estimates.p_mcse
+                @test result.estimates.se_p ≈ result_r.estimates.se_p
                 @test result.pointwise.elpd ≈ result_r.pointwise.elpd
                 @test result.pointwise.p ≈ result_r.pointwise.p
             end
