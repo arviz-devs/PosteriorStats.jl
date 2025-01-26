@@ -14,14 +14,14 @@ function loo_r(log_likelihood; reff=nothing)
     estimates = rcopy(R"$(result)$estimates")
     estimates = (
         elpd=estimates[1, 1],
-        elpd_mcse=estimates[1, 2],
+        se_elpd=estimates[1, 2],
         p=estimates[2, 1],
-        p_mcse=estimates[2, 2],
+        se_p=estimates[2, 2],
     )
     pointwise = rcopy(R"$(result)$pointwise")
     pointwise = (
         elpd=pointwise[:, 1],
-        elpd_mcse=pointwise[:, 2],
+        se_elpd=pointwise[:, 2],
         p=pointwise[:, 3],
         reff=reff,
         pareto_shape=pointwise[:, 5],
@@ -36,9 +36,9 @@ function waic_r(log_likelihood)
     estimates = rcopy(R"$(result)$estimates")
     estimates = (
         elpd=estimates[1, 1],
-        elpd_mcse=estimates[1, 2],
+        se_elpd=estimates[1, 2],
         p=estimates[2, 1],
-        p_mcse=estimates[2, 2],
+        se_p=estimates[2, 2],
     )
     pointwise = rcopy(R"$(result)$pointwise")
     pointwise = (elpd=pointwise[:, 1], p=pointwise[:, 2])
