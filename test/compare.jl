@@ -112,14 +112,14 @@ end
             @test sprint(show, "text/plain", mc1) == """
                 ModelComparisonResult with Stacking weights
                                rank  elpd  elpd_mcse  elpd_diff  elpd_diff_mcse  weight    p  p_mcse
-                 non_centered     1   -31        1.4       0              0.0       1.0  0.9    0.32
-                 centered         2   -31        1.4       0.06           0.067     0.0  0.9    0.34"""
+                 non_centered     1   -31        1.5       0              0.0       1.0  0.9    0.32
+                 centered         2   -31        1.4       0.03           0.061     0.0  0.9    0.33"""
 
             @test sprint(show, "text/plain", mc5) == """
                 ModelComparisonResult with PseudoBMA weights
                                rank  elpd  elpd_mcse  elpd_diff  elpd_diff_mcse  weight    p  p_mcse
-                 non_centered     1   -31        1.4       0              0.0      0.52  0.9    0.32
-                 centered         2   -31        1.4       0.06           0.067    0.48  0.9    0.34"""
+                 non_centered     1   -31        1.5       0              0.0      0.51  0.9    0.32
+                 centered         2   -31        1.4       0.03           0.061    0.49  0.9    0.33"""
 
             @test startswith(sprint(show, "text/html", mc1), "<table")
         end
