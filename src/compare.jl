@@ -56,7 +56,7 @@ ModelComparisonResult with Stacking weights
 julia> mc.weight |> pairs
 pairs(::NamedTuple) with 2 entries:
   :non_centered => 1.0
-  :centered     => 3.50546e-31
+  :centered     => 3.50538e-31
 ```
 
 Compare the same models from pre-computed PSIS-LOO results and computing
