@@ -52,7 +52,7 @@ julia> elpd_results = map(models) do idata
 
 julia> model_weights(elpd_results; method=Stacking()) |> pairs
 pairs(::NamedTuple) with 2 entries:
-  :centered     => 5.34175e-19
+  :centered     => 3.50546e-31
   :non_centered => 1.0
 ```
 
