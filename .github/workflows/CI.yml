@@ -60,8 +60,9 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - name: Build RCall
         run: |
-          using Pkg
-          Pkg.build("RCall")
+          using Pkg; Pkg.activate(; temp=true);
+          Pkg.add("RCall");
+          Pkg.build("RCall");
         shell: julia --color=yes {0}
       - name: Build Conda
         run: |
