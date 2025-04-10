@@ -71,13 +71,13 @@ julia> reff = ess(log_like; kind=:basic, split_chains=1, relative=true);
 julia> loo(log_like; reff)
 PSISLOOResult with estimates
  elpd  elpd_mcse    p  p_mcse
-  -31        1.4  0.9    0.34
+  -31        1.4  0.9    0.33
 
 and PSISResult with 500 draws, 4 chains, and 8 parameters
 Pareto shape (k) diagnostic values:
                     Count      Min. ESS
- (-Inf, 0.5]  good  7 (87.5%)  151
-  (0.5, 0.7]  okay  1 (12.5%)  446
+ (-Inf, 0.5]  good  5 (62.5%)  290
+  (0.5, 0.7]  okay  3 (37.5%)  399
 ```
 """
 loo(ll::AbstractArray; kwargs...) = _loo(ll; kwargs...)

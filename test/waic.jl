@@ -60,7 +60,7 @@ using Test
         @test sprint(show, "text/plain", waic(loglike)) == """
             WAICResult with estimates
              elpd  elpd_mcse    p  p_mcse
-              -31        1.4  0.9    0.33"""
+              -31        1.4  0.9    0.32"""
     end
     @testset "agrees with R waic" begin
         if r_loo_installed()

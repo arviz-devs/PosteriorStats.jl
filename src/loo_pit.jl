@@ -62,14 +62,14 @@ julia> loo_pit(y, y_pred, log_weights)
 ├────────────────────────────────┴─────────────────────────────────────── dims ┐
   ↓ school Categorical{String} [Choate, Deerfield, …, St. Paul's, Mt. Hermon] Unordered
 └──────────────────────────────────────────────────────────────────────────────┘
- "Choate"            0.943511
- "Deerfield"         0.63797
- "Phillips Andover"  0.316697
- "Phillips Exeter"   0.582252
- "Hotchkiss"         0.295321
- "Lawrenceville"     0.403318
- "St. Paul's"        0.902508
- "Mt. Hermon"        0.655275
+ "Choate"            0.942759
+ "Deerfield"         0.641057
+ "Phillips Andover"  0.32729
+ "Phillips Exeter"   0.581451
+ "Hotchkiss"         0.288523
+ "Lawrenceville"     0.393741
+ "St. Paul's"        0.886175
+ "Mt. Hermon"        0.638821
 ```
 
 Calculate LOO-PIT values using as test quantity the square of the difference between
@@ -89,14 +89,14 @@ julia> loo_pit(T .^ 2, T_pred .^ 2, log_weights)
 ├────────────────────────────────┴─────────────────────────────────────── dims ┐
   ↓ school Categorical{String} [Choate, Deerfield, …, St. Paul's, Mt. Hermon] Unordered
 └──────────────────────────────────────────────────────────────────────────────┘
- "Choate"            0.873577
- "Deerfield"         0.243686
- "Phillips Andover"  0.357563
- "Phillips Exeter"   0.149908
- "Hotchkiss"         0.435094
- "Lawrenceville"     0.220627
- "St. Paul's"        0.775086
- "Mt. Hermon"        0.296706
+ "Choate"            0.868148
+ "Deerfield"         0.27421
+ "Phillips Andover"  0.321719
+ "Phillips Exeter"   0.193169
+ "Hotchkiss"         0.370422
+ "Lawrenceville"     0.195601
+ "St. Paul's"        0.817408
+ "Mt. Hermon"        0.326795
 ```
 """
 function loo_pit(
