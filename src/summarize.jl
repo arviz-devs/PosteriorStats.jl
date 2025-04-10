@@ -194,7 +194,7 @@ julia> x = randn(1000, 4, 3) .+ reshape(0:10:20, 1, 1, :);
 julia> summarize(x, mean, std, :mcse_mean => sem; name="Mean/Std")
 Mean/Std
        mean    std  mcse_mean
- 1   0.0003  0.990      0.016
+ 1   0.0003  0.989      0.016
  2  10.02    0.988      0.016
  3  19.98    0.988      0.016
 ```
@@ -204,7 +204,7 @@ Avoid recomputing the mean by using `mean_and_std`, and provide parameter names:
 julia> summarize(x, (:mean, :std) => mean_and_std, mad; var_names=[:a, :b, :c])
 SummaryStats
          mean    std    mad
- a   0.000305  0.990  0.978
+ a   0.000275  0.989  0.978
  b  10.0       0.988  0.995
  c  20.0       0.988  0.979
 ```
@@ -229,7 +229,7 @@ names:
 julia> summarize(x, default_stats(; prob_interval=0.89)...; var_names=[:a, :b, :c])
 SummaryStats
          mean    std  hdi_5.5%  hdi_94.5%
- a   0.000305  0.990     -1.63       1.52
+ a   0.000275  0.989     -1.63       1.52
  b  10.0       0.988      8.53      11.6
  c  20.0       0.988     18.5       21.6
 ```
