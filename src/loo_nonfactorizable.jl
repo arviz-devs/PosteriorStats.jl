@@ -23,8 +23,6 @@ function pointwise_normal_loglikelihood!(
     return nothing
 end
 
-function whitened_residual
-
 function pointwise_normal_loglikelihood(
     obs::AbstractVector,
     means::AbstractArray,
