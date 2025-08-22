@@ -1,21 +1,3 @@
-"""
-    diag_cov_from_cov_chol(F::LinearAlgebra.Cholesky)
-
-Diagonal of the covariance matrix `Σ = P⁻¹` given a Cholesky factorisation of the
-precision matrix `P`.
-
-`F` is the object returned by `cholesky(P)`.
-If `F.uplo == 'U'` we have `P = U'U`; if `F.uplo == 'L'` we have `P = LL'`.
-Using \(Σ = P^{-1}\) and the identities
-
-Σ = U⁻¹(U⁻¹)' # upper-triangular case
-Σ = (L⁻¹)'L⁻¹ # lower-triangular case
-
-each marginal variance is the squared 2-norm of a row (for `U⁻¹`) or a
-column (for `L⁻¹`). The function computes these norms without forming `Σ`.
-
-Returns a vector of type `eltype(F.factors)` containing `diag(inv(parent(F)))`.
-"""
 function diag_cov_from_cov_chol(F::Cholesky)
     if F.uplo == 'U'
         Uinv = inv(UpperTriangular(F.factors))
@@ -29,26 +11,6 @@ end
 whitened_residual(F::LinearAlgebra.Cholesky, r::AbstractVector) = F \ r
 whitened_residual(F::AbstractMatrix,         r::AbstractVector) = F * r
 
-"""
-    pointwise_normal_loglikelihood!(out, mean, obs, F, c)
-
-Overwrite `out` with the **per-element** log-likelihood of a Normal model.
-
-1. Compute the residual
-   `r = obs .- mean`.
-
-2. Whiten the residual
-   `g = F \\ r` if `F isa Cholesky`, otherwise `g = F * r`.
-
-3. Store for each index `i`
-
-out[i] = (log(c[i]) - g[i]^2 / c[i] - log2π) / 2
-
-`c` is a vector of scaling constants (often precisions); `log2π = log(2π)` is
-taken from `Base.MathConstants`.
-
-The function mutates and returns `out`.
-"""
 function pointwise_normal_loglikelihood!(
     out::AbstractArray,
     mean::AbstractVector,
