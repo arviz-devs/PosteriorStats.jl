@@ -8,8 +8,8 @@ function diag_cov_from_cov_chol(F::Cholesky)
     end
 end
 
-whitened_residual(F::LinearAlgebra.Cholesky, r::AbstractVector) = F \ r
-whitened_residual(F::AbstractMatrix,         r::AbstractVector) = F * r
+whitened_residual(F::Cholesky,       r::AbstractVector) = F \ r
+whitened_residual(F::AbstractMatrix, r::AbstractVector) = F * r
 
 function pointwise_normal_loglikelihood!(
     out::AbstractArray,
