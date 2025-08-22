@@ -20,7 +20,7 @@ using PSIS: PSIS, PSISResult, psis, psis!
 using Random: Random
 using Roots: Roots
 using Setfield: Setfield
-using Statistics: mean, Statistics
+using Statistics: cov, mean, Statistics
 using StatsBase: StatsBase
 using Tables: Tables
 using TableTraits: TableTraits
