@@ -47,25 +47,19 @@ function pointwise_normal_loglikelihood(
     return out
 end
 
-prepare_from_covariance(Σ) = begin
-    F = cholesky(Symmetric(Σ))
-    c = diag_cov_from_cov_chol(F)
-    (F, c)
-end
-
-prepare_from_precision(Λ) = (Λ, diag(Λ))
-
 function elements_from_d(d::Distributions.MvNormal)
     μ = mean(d)
     Σ = cov(d)
-    F, c = prepare_from_covariance(Σ)
+    F = cholesky(Symmetric(Σ))
+    c = diag_cov_from_cov_chol(F)
     return μ, F, c
 end
 
 function elements_from_d(d::Distributions.MvNormalCanon)
     μ = mean(d)
     Λ = d.J
-    F, c = prepare_from_precision(Λ)
+    F = Λ
+    c = diag(Λ)
     return μ, F, c
 end
 
