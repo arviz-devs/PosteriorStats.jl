@@ -24,77 +24,41 @@ function pointwise_normal_loglikelihood!(
     return nothing
 end
 
-function pointwise_normal_loglikelihood(
-    obs::AbstractVector, means::AbstractArray, Fs::AbstractArray, cs::AbstractArray
-)
-    num_sample_dims = ndims(means) - 1
-    D = size(means, num_sample_dims + 1)
-    @assert length(obs) == D
-    @assert axes(means)[1:num_sample_dims] == axes(Fs) == axes(cs)[1:num_sample_dims]
-
-    sample_dims = ntuple(identity, num_sample_dims)
-    out_axes = (map(i -> axes(means, i), sample_dims)..., Base.OneTo(D))
-    out = similar(obs, Base.promote_eltype(obs, means), out_axes)
-
-    foreach(
-        (out_i, μ_i, F_i, c_i) ->
-            pointwise_normal_loglikelihood!(out_i, μ_i, obs, F_i, c_i),
-        eachslice(out; dims=sample_dims),
-        eachslice(means; dims=sample_dims),
-        Fs,
-        eachslice(cs; dims=sample_dims),
-    )
-    return out
-end
-
 function elements_from_d(d::Distributions.MvNormal)
-    μ = mean(d)
-    Σ = cov(d)
-    F = cholesky(Symmetric(Σ))
+    μ = d.μ
+    F = d.Σ.chol
     c = diag_cov_from_cov_chol(F)
     return μ, F, c
 end
 
 function elements_from_d(d::Distributions.MvNormalCanon)
-    μ = mean(d)
-    Λ = d.J
-    F = Λ
-    c = diag(Λ)
-    return μ, F, c
+    μ = d.μ
+    iΣ = d.J
+    c = diag(iΣ)
+    return μ, iΣ, c
 end
 
 function pointwise_conditional_loglikelihood(
     obs::AbstractVector, d::Distributions.AbstractMvNormal
 )
     μ, F, c = elements_from_d(d)
-    out = similar(obs, promote_type(eltype(obs), eltype(μ), eltype(c)))
-    pointwise_normal_loglikelihood!(out, μ, obs, F, c)
-    return out
+    logl = similar(obs, promote_type(eltype(obs), eltype(μ), eltype(c)))
+    pointwise_normal_loglikelihood!(logl, obs, μ, F, c)
+    return logl
 end
 
 function pointwise_conditional_loglikelihood(
     obs::AbstractVector, ds::AbstractArray{<:Distributions.AbstractMvNormal}
 )
-    @assert !isempty(ds)
-    sample_axes = axes(ds)
+    D = length(obs)
+    N = length(ds)
+    logl = similar(obs, N, D)
 
-    d0 = ds[first(CartesianIndices(ds))]
-    μ0, F0, c0 = elements_from_d(d0)
-    D = length(μ0)
-    @assert length(obs) == D
-
-    means = Array{eltype(μ0)}(undef, (map(length, sample_axes)..., D))
-    Fs = Array{Any}(undef, map(length, sample_axes)...)
-    cs = Array{eltype(c0)}(undef, (map(length, sample_axes)..., D))
-
-    for I in CartesianIndices(ds)
-        μ, F, c = elements_from_d(ds[I])
-        means[I, :] = μ
-        Fs[I] = F
-        cs[I, :] = c
+    for i in 1:length(ds)
+        @views logl[i, :] .= pointwise_conditional_loglikelihood(obs, ds[i])
     end
 
-    return pointwise_normal_loglikelihood(obs, means, Fs, cs)
+    return logl
 end
 
 function loo_nonfactorized(
