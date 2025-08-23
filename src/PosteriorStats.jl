@@ -8,7 +8,16 @@ using FFTW: FFTW
 using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
 using KernelDensity: KernelDensity
-using LinearAlgebra: cholesky, Cholesky, LowerTriangular, mul!, norm, normalize, Symmetric, UpperTriangular
+using LinearAlgebra:
+    cholesky,
+    Cholesky,
+    diag,
+    LowerTriangular,
+    mul!,
+    norm,
+    normalize,
+    Symmetric,
+    UpperTriangular
 using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
 using MCMCDiagnosticTools: MCMCDiagnosticTools
