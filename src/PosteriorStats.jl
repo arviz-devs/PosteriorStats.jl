@@ -29,7 +29,7 @@ using PSIS: PSIS, PSISResult, psis, psis!
 using Random: Random
 using Roots: Roots
 using Setfield: Setfield
-using Statistics: cov, mean, Statistics
+using Statistics: Statistics
 using StatsBase: StatsBase
 using Tables: Tables
 using TableTraits: TableTraits
