@@ -39,7 +39,7 @@ using Test
         PosteriorStats.pointwise_loglikelihoods!(logl, y, dist)
 
         logl_ref = logpdf.(Normal.(μ, σ), y)
-        @test logl ≈ logl_ref atol
+        @test logl ≈ logl_ref
     end
 
     @testset "Consistency: MvNormal == MvNormalCanon" begin
