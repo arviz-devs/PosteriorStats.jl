@@ -171,7 +171,7 @@ A version of [`hdi`](@ref) that partially sorts `samples` in-place while computi
 
 See also: [`hdi`](@ref), [`eti`](@ref), [`eti!`](@ref).
 """
-@constprop :aggressive function hdi!(
+Base.@constprop :aggressive function hdi!(
     x::AbstractArray{<:Real};
     prob::Real=DEFAULT_INTERVAL_PROB,
     is_discrete::Union{Bool,Nothing}=nothing,
