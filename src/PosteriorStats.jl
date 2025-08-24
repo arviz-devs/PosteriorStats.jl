@@ -8,7 +8,7 @@ using FFTW: FFTW
 using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2, log2π
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
 using KernelDensity: KernelDensity
-using LinearAlgebra: mul!, norm, normalize
+using LinearAlgebra: LinearAlgebra, mul!, norm, normalize
 using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
 using MCMCDiagnosticTools: MCMCDiagnosticTools
