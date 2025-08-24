@@ -63,7 +63,7 @@ StatsBase = "0.33.17, 0.34"
 TableOperations = "1"
 TableTraits = "1"
 Tables = "1.9"
-julia = "1.8"
+julia = "1.10"
 
 [extras]
 ArviZExampleData = "2f96bb34-afd9-46ae-bcd0-9b2d4372fe3c"
