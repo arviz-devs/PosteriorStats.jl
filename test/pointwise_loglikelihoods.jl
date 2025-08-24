@@ -1,4 +1,5 @@
 using Logging: SimpleLogger, with_logger
+using LinearAlgebra
 using OffsetArrays
 using PDMats
 using PosteriorStats
