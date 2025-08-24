@@ -1,3 +1,4 @@
+using DimensionalData
 using Distributions
 using Logging: SimpleLogger, with_logger
 using LinearAlgebra
@@ -158,5 +159,17 @@ using Test
         dist32 = MvNormal(μf32, Σf32)
         logl2 = PosteriorStats.pointwise_loglikelihoods(yI, [dist32, dist32])
         @test eltype(logl2) == Float32
+    end
+
+    @testset "DimensionalData checks" begin
+        y = DimArray(randn(3), Y(1:3))
+        μ = zeros(3)
+        Σ = Matrix(I, 3, 3)
+        d = MvNormal(μ, Σ)
+        dists = fill(d, (Dim{:draw}(1:100), Dim{:chain}(1:4)))
+        pll = PosteriorStats.pointwise_loglikelihoods(y, dists)
+
+        @test pll isa DimArray
+        @test dims(pll) == (dims(dists)..., dims(y)...)
     end
 end
