@@ -1,6 +1,8 @@
 using Logging: SimpleLogger, with_logger
 using OffsetArrays
+using PDMats
 using PosteriorStats
+using Random
 using Test
 
 @testset "pointwise_loglikelihoods" begin
