@@ -381,9 +381,7 @@ _prob_to_string(prob; digits=2) = replace(string(round(100 * prob; digits)), r"\
 # another function
 
 Base.@constprop :aggressive function _summarize(
-    data::AbstractArray{<:Any,3},
-    funs,
-    fun_names,
+    data::AbstractArray{<:Any,3}, funs, fun_names
 )
     return merge(map(fun_names, funs) do fname, f
         return _map_over_params(fname, f, data)
