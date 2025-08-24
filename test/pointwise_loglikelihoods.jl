@@ -21,7 +21,7 @@ using Test
             D = 6
             Σ = make_spd(D)
             pd = PDMat(Matrix(Σ))
-            λ = _pd_diag_inv(pd)  # should be a vector of length D
+            λ = PosteriorStats._pd_diag_inv(pd)  # should be a vector of length D
             @test length(λ) == D
             @test λ ≈ diag(inv(Matrix(Σ))) atol = 1e-10 rtol = 1e-8
             @test all(λ .> 0)
