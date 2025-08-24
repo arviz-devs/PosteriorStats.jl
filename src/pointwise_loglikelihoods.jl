@@ -1,40 +1,42 @@
 function _pd_diag_inv(A::PDMats.AbstractPDMat)
     T = typeof(float(oneunit(eltype(A))))
-    I = Diagonal(ones(T, axes(A, 1)))
+    I = LinearAlgebra.Diagonal(ones(T, axes(A, 1)))
     return PDMats.invquad(A, I)
 end
 
-function pointwise_loglikelihood!(
-    logl::AbstractVector{<:Real}, y::AbstractVector{<:Real}, dist::Distributions.MvNormal
+function pointwise_loglikelihoods!(
+    log_like::AbstractVector{<:Real},
+    y::AbstractVector{<:Real},
+    dist::Distributions.MvNormal,
 )
-    Σ = cov(dist)
+    Σ = Distributions.cov(dist)
     λ = _pd_diag_inv(Σ)
-    g = Σ \ (y - mean(dist))
-    return @. logl = (log(λ) - g^2 / λ - log2π) / 2
+    g = Σ \ (y - Distributions.mean(dist))
+    return @. log_like = (log(λ) - g^2 / λ - log2π) / 2
 end
 
-function pointwise_loglikelihood!(
-    logl::AbstractVector{<:Real},
+function pointwise_loglikelihoods!(
+    log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
     dist::Distributions.MvNormalCanon,
 )
-    J = invcov(dist)
-    λ = diag(J)
+    J = Distributions.invcov(dist)
+    λ = LinearAlgebra.diag(J)
     cov_inv_y = J * y
-    return @. logl = (log(λ) - (cov_inv_y - dist.h)^2 / λ - log2π) / 2
+    return @. log_like = (log(λ) - (cov_inv_y - dist.h)^2 / λ - log2π) / 2
 end
 
 function pointwise_loglikelihoods(
-    obs::AbstractArray{<:Real,N},
+    y::AbstractArray{<:Real,N},
     dists::AbstractArray{
         <:Distributions.Distribution{<:Distributions.ArrayLikeVariate{N}},M
     },
 ) where {M,N}
-    T = typeof(log(one(promote_type(eltype(obs), eltype(eltype(dists))))))
+    T = typeof(log(one(promote_type(eltype(y), eltype(eltype(dists))))))
     sample_dims = ntuple(identity, M)
-    logl = similar(obs, T, (axes(dists)..., axes(obs)...))
-    for (dist, logl_i) in zip(dists, eachslice(logl; dims=sample_dims))
-        pointwise_loglikelihood!(logl_i, obs, dist)
+    log_like = similar(y, T, (axes(dists)..., axes(y)...))
+    for (dist, ll) in zip(dists, eachslice(log_like; dims=sample_dims))
+        pointwise_loglikelihood!(ll, y, dist)
     end
-    return logl
+    return log_like
 end
