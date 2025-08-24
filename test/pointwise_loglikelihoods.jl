@@ -11,19 +11,21 @@ using Test
     Random.seed!(1234)
 
     # Helper to make a well-conditioned SPD matrix
-    make_spd(D; jitter=1e-3) = begin
+    make_spd_and_inv(D; jitter=1e-3) = begin
         A = randn(D, D)
-        Symmetric(A * A' + I * D * jitter)
+        Σ = PDMat(A * A' + I * D * jitter)
+        J = inv(Matrix(Σ))
+        J = PDMat((J .+ J') ./ 2)
+        return Σ, J
     end
 
     # 1) _pd_diag_inv equals diag(inv(Σ)) for a generic SPD matrix
     @testset "_pd_diag_inv matches diag(inv(Σ))" begin
         D = 10
-        Σ = make_spd(D)
-        pd = PDMat(Matrix(Σ))
-        λ = PosteriorStats._pd_diag_inv(pd)  # should be a vector of length D
+        Σ, _ = make_spd_and_inv(D)
+        λ = PosteriorStats._pd_diag_inv(Σ)  # should be a vector of length D
         @test length(λ) == D
-        @test λ ≈ diag(inv(Matrix(Σ))) atol = 1e-10 rtol = 1e-8
+        @test λ ≈ diag(inv(Matrix(Σ)))
         @test all(λ .> 0)
     end
 
@@ -31,7 +33,7 @@ using Test
         D = 10
         μ = randn(D)
         σ = abs.(randn(D)) .+ 0.5
-        Σ = Diagonal(σ .^ 2)
+        Σ = PDMat(Diagonal(σ .^ 2))
         dist = MvNormal(μ, Σ)
         y = randn(D)
 
@@ -45,9 +47,7 @@ using Test
     @testset "Consistency: MvNormal == MvNormalCanon" begin
         D = 6
         μ = randn(D)
-        Σ = make_spd(D)               # full covariance (non-diagonal)
-        J = inv(Matrix(Σ))
-        J = (J .+ J') ./ 2
+        Σ, J = make_spd_and_inv(D)
         h = J * μ
 
         dist_cov = MvNormal(μ, Σ)
@@ -66,15 +66,13 @@ using Test
     @testset "Matches conditional Gaussian per-coordinate formula" begin
         D = 10
         μ = randn(D)
-        Σ = make_spd(D)
+        Σ, J = make_spd_and_inv(D)
         dist = MvNormal(μ, Σ)
 
         y = randn(D)
         logl = similar(y)
         PosteriorStats.pointwise_loglikelihoods!(logl, y, dist)
 
-        J = inv(Matrix(Σ))
-        J = (J .+ J') ./ 2
         λ = diag(J)
         r = J * (y .- μ)    # = (cov_inv_y - h)
         logl_ref = @. (log(λ) - r^2 / λ - log(2π)) / 2
@@ -85,9 +83,7 @@ using Test
     @testset "MvNormalCanon direct formula check" begin
         D = 10
         μ = randn(D)
-        Σ = make_spd(D)
-        J = inv(Matrix(Σ))
-        J = (J .+ J') ./ 2
+        Σ, J = make_spd_and_inv(D)
         h = J * μ
         dist = MvNormalCanon(h, J)
 
@@ -106,7 +102,8 @@ using Test
         D = 10
         y = randn(D)
         μ1, μ2 = randn(D), randn(D)
-        Σ1, Σ2 = make_spd(D), make_spd(D)
+        Σ1, J1 = make_spd_and_inv(D)
+        Σ2, J2 = make_spd_and_inv(D)
         dists = [MvNormal(μ1, Σ1), MvNormal(μ2, Σ2)]
 
         logl = PosteriorStats.pointwise_loglikelihoods(y, dists)
@@ -126,10 +123,9 @@ using Test
         y = randn(D)
 
         μ1, μ2 = randn(D), randn(D)
-        Σ1, Σ2 = make_spd(D), make_spd(D)
-        J1, J2 = inv(Matrix(Σ1)), inv(Matrix(Σ2))
-        J1 = (J1 .+ J1') ./ 2
-        J2 = (J2 .+ J2') ./ 2
+        Σ1, J1 = make_spd_and_inv(D)
+        Σ2, J2 = make_spd_and_inv(D)
+
         h1, h2 = J1 * μ1, J2 * μ2
         dists_can = [MvNormalCanon(h1, J1), MvNormalCanon(h2, J2)]
 
@@ -149,7 +145,7 @@ using Test
         D = 10
         # obs Float32, distribution Float64 -> promote to Float64
         y32 = rand(Float32, D)
-        Σ = make_spd(D)
+        Σ, _ = make_spd_and_inv(D)
         μ = randn(D)
         dist = MvNormal(μ, Σ)
         logl = PosteriorStats.pointwise_loglikelihoods(y32, [dist, dist])
@@ -158,7 +154,7 @@ using Test
         # obs Int, distribution Float32
         yI = round.(Int, 10 .* rand(D))  # integers
         μf32 = rand(Float32, D)
-        Σf32 = Diagonal((abs.(rand(Float32, D)) .+ 0.5f0) .^ 2)
+        Σf32 = PDMat(Diagonal((abs.(rand(Float32, D)) .+ 0.5f0) .^ 2))
         dist32 = MvNormal(μf32, Σf32)
         logl2 = PosteriorStats.pointwise_loglikelihoods(yI, [dist32, dist32])
         @test eltype(logl2) == Float32
