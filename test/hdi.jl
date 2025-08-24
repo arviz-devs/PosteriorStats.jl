@@ -139,11 +139,9 @@ end
         hdi_multimodal_sample(x, prob) = hdi(x; method=:multimodal_sample, prob)
 
         x = rand(1_000)
-        if VERSION >= v"1.7"
-            @inferred hdi_unimodal(x, 0.9)
-            @inferred hdi_multimodal(x, 0.9)
-            @inferred hdi_multimodal_sample(x, 0.9)
-        end
+        @inferred hdi_unimodal(x, 0.9)
+        @inferred hdi_multimodal(x, 0.9)
+        @inferred hdi_multimodal_sample(x, 0.9)
 
         @testset "$name" for (name, method) in methods
             @test hdi(x; method=name, prob=0.9) == hdi(x; method, prob=0.9)
@@ -158,13 +156,8 @@ end
             prob=0.9,
         )
         @test eltype(interval_discrete) === ClosedInterval{Int}
-        if VERSION >= v"1.7"
-            @test @inferred(hdi_multimodal(x, 0.9)) == interval_discrete
-            @test @inferred(hdi_multimodal_sample(x, 0.9)) == interval_discrete
-        else
-            @test hdi_multimodal(x, 0.9) == interval_discrete
-            @test hdi_multimodal_sample(x, 0.9) == interval_discrete
-        end
+        @test @inferred(hdi_multimodal(x, 0.9)) == interval_discrete
+        @test @inferred(hdi_multimodal_sample(x, 0.9)) == interval_discrete
     end
 
     @testset "Method-specific behavior" begin

@@ -165,11 +165,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
     @testset "summarize" begin
         @testset "base cases" begin
             x = randn(1_000, 4, 3)
-            if VERSION ≥ v"1.9.0-"
-                stats1 = @inferred summarize(x, mean, std, median)
-            else
-                stats1 = summarize(x, mean, std, median)
-            end
+            stats1 = @inferred summarize(x, mean, std, median)
             @test stats1 isa SummaryStats
             @test getfield(stats1, :name) == "SummaryStats"
             @test stats1 == SummaryStats(
@@ -184,11 +180,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
             function _compute_stats(x)
                 return summarize(x, (:mean, :std) => mean_and_std, :median => median)
             end
-            if VERSION ≥ v"1.10.0-"
-                stats2 = @inferred _compute_stats(x)
-            else
-                stats2 = _compute_stats(x)
-            end
+            stats2 = @inferred _compute_stats(x)
             @test stats2 == stats1
 
             stats3 = summarize(x, mean, std; var_names=["a", "b", "c"], name="Stats")
@@ -256,11 +248,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                     ),
                 )
                 _compute_diagnostics(x) = summarize(x, default_diagnostics()...)
-                if VERSION ≥ v"1.10.0-"
-                    stats3 = @inferred _compute_diagnostics(x)
-                else
-                    stats3 = _compute_diagnostics(x)
-                end
+                stats3 = @inferred _compute_diagnostics(x)
                 @test all(
                     map(
                         _isapprox,
@@ -318,11 +306,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                 function _compute_diagnostics(x)
                     return summarize(x, default_diagnostics()...; name="foo")
                 end
-                if VERSION ≥ v"1.10.0-"
-                    stats1 = @inferred _compute_diagnostics(sample)
-                else
-                    stats1 = _compute_diagnostics(sample)
-                end
+                stats1 = @inferred _compute_diagnostics(sample)
                 @test stats1 isa SummaryStats
                 @test stats1.name == "foo"
                 @test stats1 == summarize(
