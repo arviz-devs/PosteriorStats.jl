@@ -2,16 +2,17 @@ module PosteriorStats
 
 using Compat: @constprop
 using DataInterpolations: DataInterpolations
-using Distributions: Distributions
+using Distributions: cov, Distributions, invcov, mean
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
 using FFTW: FFTW
-using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2
+using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2, log2π
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
 using KernelDensity: KernelDensity
 using LinearAlgebra:
     cholesky,
     Cholesky,
     diag,
+    Diagonal,
     LowerTriangular,
     mul!,
     norm,
@@ -25,6 +26,7 @@ using Optim: Optim
 using OrderedCollections: OrderedCollections
 using PrettyTables: PrettyTables
 using Printf: Printf
+using PDMats: PDMats
 using PSIS: PSIS, PSISResult, psis, psis!
 using Random: Random
 using Roots: Roots
