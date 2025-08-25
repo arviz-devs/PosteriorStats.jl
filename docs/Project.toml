@@ -1,5 +1,6 @@
 [deps]
 ArviZExampleData = "2f96bb34-afd9-46ae-bcd0-9b2d4372fe3c"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 DocumenterInterLinks = "d12716ef-a0f6-4df4-a9f1-a5a34e75c656"
