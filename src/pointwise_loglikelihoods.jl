@@ -69,9 +69,9 @@ function pointwise_loglikelihoods!(
     y::AbstractVector{<:Real},
     dist::Distributions.MvNormal,
 )
-    Σ = Distributions.cov(dist)
+    (; μ, Σ) = dist
     λ = _pd_diag_inv(Σ)
-    g = Σ \ (y - Distributions.mean(dist))
+    g = Σ \ (y - μ)
     return @. log_like = (log(λ) - g^2 / λ - log2π) / 2
 end
 
@@ -80,10 +80,10 @@ function pointwise_loglikelihoods!(
     y::AbstractVector{<:Real},
     dist::Distributions.MvNormalCanon,
 )
-    J = Distributions.invcov(dist)
+    (; h, J) = dist
     λ = LinearAlgebra.diag(J)
     cov_inv_y = _pdmul(J, y)
-    return @. log_like = (log(λ) - (cov_inv_y - dist.h)^2 / λ - log2π) / 2
+    return @. log_like = (log(λ) - (cov_inv_y - h)^2 / λ - log2π) / 2
 end
 
 function _pd_diag_inv(A::PDMats.AbstractPDMat)
