@@ -155,4 +155,16 @@ end
             end
         end
     end
+
+    @testset "DimensionalData checks" begin
+        y = DimArray(randn(3), Y(1:3))
+        μ = zeros(3)
+        Σ = Matrix(I, 3, 3)
+        d = MvNormal(μ, Σ)
+        dists = fill(d, (Dim{:draw}(1:100), Dim{:chain}(1:4)))
+        pll = PosteriorStats.pointwise_loglikelihoods(y, dists)
+
+        @test pll isa DimArray
+        @test dims(pll) == (dims(dists)..., dims(y)...)
+    end
 end
