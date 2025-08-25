@@ -41,8 +41,8 @@ function rand_dist(::Type{<:MatrixNormal}, T::Type{<:Real}, (D, K); factorized::
         U = Diagonal(rand(T, D))
         V = Diagonal(rand(T, K))
     else
-        U = rand_pdmat(T, D)
-        V = rand_pdmat(T, K)
+        U = rand_pdmat(T, D; jitter=T(1e-1))
+        V = rand_pdmat(T, K; jitter=T(1e-1))
     end
     dist = MatrixNormal(M, U, V)
     return convert(MatrixNormal{T}, dist)
