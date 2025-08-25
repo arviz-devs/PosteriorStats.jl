@@ -46,6 +46,7 @@ jobs:
         with:
           packages: |
             github::stan-dev/loo@v2.8.0
+          dependencies: '"hard"'
         if: ${{ env.install_r }}
       - name: Set R lib path for RCall.jl
         run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
