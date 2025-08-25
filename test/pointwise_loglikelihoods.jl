@@ -7,6 +7,11 @@ using PosteriorStats
 using Random
 using Test
 
+# Utility functions. To add a new distribution, overload:
+# - rand_dist
+# - conditional_distribution
+# - factorized_distributions (optional)
+
 function rand_pdmat(T::Type{<:Real}, D::Int)
     A = randn(T, D, D)
     S = PDMat(A * A')
@@ -14,7 +19,59 @@ function rand_pdmat(T::Type{<:Real}, D::Int)
 end
 rand_pdmat(D::Int) = rand_pdmat(Float64, D)
 
-@testset "pointwise_loglikelihoods" begin
+"""
+    rand_dist(dist_type, T, D; factorized=false) -> dist
+
+Randomly generate a distribution.
+"""
+function rand_dist(::Type{<:MvNormal}, T::Type{<:Real}, D::Int; factorized::Bool=false)
+    μ = randn(T, D)
+    Σ = factorized ? Diagonal(rand(T, D)) : rand_pdmat(T, D)
+    dist = MvNormal(μ, Σ)
+    return dist
+end
+function rand_dist(::Type{<:MvNormalCanon}, T::Type{<:Real}, D::Int; factorized::Bool=false)
+    h = randn(T, D)
+    J = factorized ? Diagonal(rand(T, D)) : rand_pdmat(T, D)
+    dist = MvNormalCanon(h, J)
+    return dist
+end
+
+"""
+    conditional_distribution(dist, y, i) -> ContinuousUnivariateDistribution
+
+Compute a conditional univariate distribution.
+
+Given an array-variate distribution `dist` and an array `y` in its support,
+return the univariate distribution of `y[i]` given the other elements of `y`.
+"""
+function conditional_distribution(dist::MvNormal, y::AbstractVector, i::Int)
+    # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
+    μ = mean(dist)
+    Σ = cov(dist)
+    ic = setdiff(eachindex(y), i)
+    Σ_ic_i = @views Σ[ic, i]
+    Σ_ic = @views Σ[ic, ic]
+    inv_Σ_ic_Σ_ic_i = cholesky(Symmetric(Σ_ic)) \ Σ_ic_i
+    Σ_cond = Σ[i, i] - inv_Σ_ic_Σ_ic_i' * Σ_ic_i  # Schur complement
+    μ_cond = μ[i] + inv_Σ_ic_Σ_ic_i' * @views(y[ic] - μ[ic])
+    return Normal(μ_cond, sqrt(Σ_cond))
+end
+function conditional_distribution(dist::MvNormalCanon, y::AbstractVector, i::Int)
+    return conditional_distribution(MvNormal(mean(dist), cov(dist)), y, i)
+end
+
+"""
+    factorized_distributions(dist) -> Array{<:ContinuousUnivariateDistribution}
+
+Factorize a factorizable array-variate distribution into univariate distributions.
+"""
+function factorized_distributions(dist::AbstractMvNormal)
+    @assert isdiag(cov(dist))
+    return Normal.(mean(dist), std(dist))
+end
+
+@testset "pointwise loglikelihoods" begin
     @testset "_pd_diag_inv" begin
         @testset for T in (Float32, Float64), D in (5, 10)
             Σ = rand_pdmat(T, D)
@@ -26,141 +83,67 @@ rand_pdmat(D::Int) = rand_pdmat(Float64, D)
         end
     end
 
-    @testset "Diagonal Σ matches Normal per-component logpdf" begin
-        D = 10
-        μ = randn(D)
-        σ = abs.(randn(D)) .+ 0.5
-        Σ = PDMat(Diagonal(σ .^ 2))
-        dist = MvNormal(μ, Σ)
-        y = randn(D)
+    @testset for dist_type in (MvNormal, MvNormalCanon),
+        T in (Float32, Float64),
+        D in (5, 10)
 
-        logl = similar(y)
-        PosteriorStats.pointwise_loglikelihoods!(logl, y, dist)
+        test_factorized = true
 
-        logl_ref = logpdf.(Normal.(μ, σ), y)
-        @test logl ≈ logl_ref
-    end
+        @testset "pointwise_loglikelihoods!" begin
+            @testset "consistent with conditional distributions" begin
+                dist = rand_dist(dist_type, T, D)
+                y = rand(dist)
+                @assert eltype(y) == T
+                log_like = similar(y)
+                PosteriorStats.pointwise_loglikelihoods!(log_like, y, dist)
+                conditional_dists = conditional_distribution.(
+                    Ref(dist), Ref(y), eachindex(y)
+                )
+                log_like_ref = loglikelihood.(conditional_dists, y)
+                @test log_like ≈ log_like_ref
+            end
 
-    @testset "Consistency: MvNormal == MvNormalCanon" begin
-        D = 6
-        μ = randn(D)
-        Σ = rand_pdmat(D)
-        J = PDMat(inv(Σ))
-        h = J * μ
+            test_factorized && @testset "consistent with factorized distributions" begin
+                dist = rand_dist(dist_type, T, D; factorized=true)
+                y = rand(dist)
+                @assert eltype(y) == T
+                log_like = similar(y)
+                PosteriorStats.pointwise_loglikelihoods!(log_like, y, dist)
+                factorized_dists = factorized_distributions(dist)
+                log_like_ref = loglikelihood.(factorized_dists, y)
+                @test log_like ≈ log_like_ref
+            end
+        end
 
-        dist_cov = MvNormal(μ, Σ)
-        dist_can = MvNormalCanon(h, J)
-
-        y = randn(D)
-        logl_cov = similar(y)
-        logl_can = similar(y)
-
-        PosteriorStats.pointwise_loglikelihoods!(logl_cov, y, dist_cov)
-        PosteriorStats.pointwise_loglikelihoods!(logl_can, y, dist_can)
-
-        @test logl_cov ≈ logl_can
-    end
-
-    @testset "Matches conditional Gaussian per-coordinate formula" begin
-        D = 10
-        μ = randn(D)
-        Σ = rand_pdmat(D)
-        J = PDMat(inv(Σ))
-        dist = MvNormal(μ, Σ)
-
-        y = randn(D)
-        logl = similar(y)
-        PosteriorStats.pointwise_loglikelihoods!(logl, y, dist)
-
-        λ = diag(J)
-        r = J * (y .- μ)    # = (cov_inv_y - h)
-        logl_ref = @. (log(λ) - r^2 / λ - log(2π)) / 2
-
-        @test logl ≈ logl_ref
-    end
-
-    @testset "MvNormalCanon direct formula check" begin
-        D = 10
-        μ = randn(D)
-        Σ = rand_pdmat(D)
-        J = PDMat(inv(Σ))
-        h = J * μ
-        dist = MvNormalCanon(h, J)
-
-        y = randn(D)
-        logl = similar(y)
-        PosteriorStats.pointwise_loglikelihoods!(logl, y, dist)
-
-        λ = diag(J)
-        cov_inv_y = J * y
-        r = cov_inv_y .- h
-        logl_ref = @. (log(λ) - r^2 / λ - log(2π)) / 2
-        @test logl ≈ logl_ref
-    end
-
-    @testset "pointwise_loglikelihoods shape and values" begin
-        D = 10
-        y = randn(D)
-        μ1, μ2 = randn(D), randn(D)
-        Σ1 = rand_pdmat(D)
-        J1 = PDMat(inv(Σ1))
-        Σ2 = rand_pdmat(D)
-        J2 = PDMat(inv(Σ2))
-        dists = [MvNormal(μ1, Σ1), MvNormal(μ2, Σ2)]
-
-        logl = PosteriorStats.pointwise_loglikelihoods(y, dists)
-        @test size(logl) == (length(dists), length(y))
-
-        # Rows should match calling the in-place kernel
-        logl1 = similar(y)
-        PosteriorStats.pointwise_loglikelihoods!(logl1, y, dists[1])
-        logl2 = similar(y)
-        PosteriorStats.pointwise_loglikelihoods!(logl2, y, dists[2])
-        @test @view(logl[1, :]) ≈ logl1
-        @test @view(logl[2, :]) ≈ logl2
-    end
-
-    @testset "pointwise_loglikelihoods with MvNormalCanon" begin
-        D = 10
-        y = randn(D)
-
-        μ1, μ2 = randn(D), randn(D)
-        Σ1 = rand_pdmat(D)
-        J1 = PDMat(inv(Σ1))
-        Σ2 = rand_pdmat(D)
-        J2 = PDMat(inv(Σ2))
-
-        h1, h2 = J1 * μ1, J2 * μ2
-        dists_can = [MvNormalCanon(h1, J1), MvNormalCanon(h2, J2)]
-
-        logl = PosteriorStats.pointwise_loglikelihoods(y, dists_can)
-        @test size(logl) == (length(dists_can), length(y))
-
-        # Compare to direct kernel
-        logl1 = similar(y)
-        PosteriorStats.pointwise_loglikelihoods!(logl1, y, dists_can[1])
-        logl2 = similar(y)
-        PosteriorStats.pointwise_loglikelihoods!(logl2, y, dists_can[2])
-        @test @view(logl[1, :]) ≈ logl1
-        @test @view(logl[2, :]) ≈ logl2
-    end
-
-    @testset "Output eltype" begin
-        D = 10
-        # obs Float32, distribution Float64 -> promote to Float64
-        y32 = rand(Float32, D)
-        Σ = rand_pdmat(D)
-        μ = randn(D)
-        dist = MvNormal(μ, Σ)
-        logl = PosteriorStats.pointwise_loglikelihoods(y32, [dist, dist])
-        @test eltype(logl) == Float64
-
-        # obs Int, distribution Float32
-        yI = round.(Int, 10 .* rand(D))  # integers
-        μf32 = rand(Float32, D)
-        Σf32 = PDMat(Diagonal((abs.(rand(Float32, D)) .+ 0.5f0) .^ 2))
-        dist32 = MvNormal(μf32, Σf32)
-        logl2 = PosteriorStats.pointwise_loglikelihoods(yI, [dist32, dist32])
-        @test eltype(logl2) == Float32
+        @testset "pointwise_loglikelihoods" begin
+            ndraws, nchains = 7, 3
+            @testset for dim_type in (UnitRange,)
+                if dim_type == UnitRange
+                    # Need to use Base.OneTo to avoid type-piracy promoting to OffsetArray if in scope
+                    draws_dim = Base.OneTo(ndraws)
+                    chains_dim = Base.OneTo(nchains)
+                    y_dim = Base.OneTo(D)
+                else
+                    throw(ArgumentError("Unsupported dimension type: $dim_type"))
+                end
+                # NOTE: for DimensionalData, this forms a DimArray
+                dists = [rand_dist(dist_type, T, D) for _ in draws_dim, _ in chains_dim]
+                @assert size(dists) == (ndraws, nchains)
+                y = zeros(T, y_dim)
+                rand!(first(dists), y)
+                log_like = @inferred PosteriorStats.pointwise_loglikelihoods(y, dists)
+                @test size(log_like) == (ndraws, nchains, D)
+                @test eltype(log_like) == T
+                @test all(isfinite, log_like)
+                log_like_ref = similar(log_like, ndraws, nchains, D)
+                for draw in 1:ndraws, chain in 1:nchains
+                    conditional_dists = conditional_distribution.(
+                        Ref(dists[draw, chain]), Ref(y), eachindex(y)
+                    )
+                    log_like_ref[draw, chain, :] .= loglikelihood.(conditional_dists, y)
+                end
+                @test log_like ≈ log_like_ref
+            end
+        end
     end
 end
