@@ -49,6 +49,7 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       - uses: julia-actions/setup-julia@v2
+        id: setup-julia
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
@@ -56,6 +57,7 @@ jobs:
       - uses: julia-actions/julia-downgrade-compat@v2
         with:
           skip: LinearAlgebra,Markdown,Printf,Random,Statistics,ArviZExampleData
+          julia_version: ${{ steps['setup-julia'].outputs.julia-version }}
         if: ${{ matrix.downgrade }}
         name: Downgrade dependencies to oldest supported versions
       - uses: julia-actions/julia-buildpkg@v1
