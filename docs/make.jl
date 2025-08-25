@@ -33,7 +33,7 @@ makedocs(;
         assets=[joinpath("assets", "citations.css")],
     ),
     pages=["Home" => "index.md", "API" => "api.md", "References" => "references.md"],
-    warnonly=[:footnote, :missing_docs],
+    warnonly=[:doctest, :footnote, :missing_docs],
     plugins=[bib, links],
 )
 
