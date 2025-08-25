@@ -15,14 +15,15 @@ end
 rand_pdmat(D::Int) = rand_pdmat(Float64, D)
 
 @testset "pointwise_loglikelihoods" begin
-    # 1) _pd_diag_inv equals diag(inv(Σ)) for a generic SPD matrix
-    @testset "_pd_diag_inv matches diag(inv(Σ))" begin
-        D = 10
-        Σ = rand_pdmat(D)
-        λ = PosteriorStats._pd_diag_inv(Σ)  # should be a vector of length D
-        @test length(λ) == D
-        @test λ ≈ diag(inv(Matrix(Σ)))
-        @test all(λ .> 0)
+    @testset "_pd_diag_inv" begin
+        @testset for T in (Float32, Float64), D in (5, 10)
+            Σ = rand_pdmat(T, D)
+            λ = @inferred PosteriorStats._pd_diag_inv(Σ)
+            @test length(λ) == D
+            @test eltype(λ) == T
+            @test λ ≈ diag(inv(Σ))
+            @test all(>(0), λ)
+        end
     end
 
     @testset "Diagonal Σ matches Normal per-component logpdf" begin
