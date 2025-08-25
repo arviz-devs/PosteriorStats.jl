@@ -122,15 +122,19 @@ end
                     draws_dim = Base.OneTo(ndraws)
                     chains_dim = Base.OneTo(nchains)
                     y_dim = Base.OneTo(D)
+                    dists = [rand_dist(dist_type, T, D) for _ in draws_dim, _ in chains_dim]
                 elseif dim_type <: Dim
                     draws_dim = Dim{:draws}(0:(ndraws - 1))
                     chains_dim = Dim{:chains}(2:(nchains + 1))
                     y_dim = Dim{:y}(-1:(D - 2))
+                    dists = DimArray(
+                        [rand_dist(dist_type, T, D) for _ in draws_dim, _ in chains_dim],
+                        (draws_dim, chains_dim),
+                    )
                 else
                     throw(ArgumentError("Unsupported dimension type: $dim_type"))
                 end
                 # NOTE: for DimensionalData, this forms a DimArray
-                dists = [rand_dist(dist_type, T, D) for _ in draws_dim, _ in chains_dim]
                 @assert size(dists) == (ndraws, nchains)
                 y = zeros(T, y_dim)
                 rand!(first(dists), y)
