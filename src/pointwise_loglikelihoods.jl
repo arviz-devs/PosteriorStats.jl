@@ -31,7 +31,7 @@ function pointwise_loglikelihoods!(
 )
     J = Distributions.invcov(dist)
     λ = LinearAlgebra.diag(J)
-    cov_inv_y = J * y
+    cov_inv_y = _pdmul(J, y)
     return @. log_like = (log(λ) - (cov_inv_y - dist.h)^2 / λ - log2π) / 2
 end
 
@@ -39,4 +39,13 @@ function _pd_diag_inv(A::PDMats.AbstractPDMat)
     T = typeof(float(oneunit(eltype(A))))
     I = LinearAlgebra.Diagonal(ones(T, axes(A, 1)))
     return PDMats.invquad(A, I)
+end
+
+# hack to aboid ambiguity with *(::AbstractPDMat, ::DimArray)
+_pdmul(A::PDMats.AbstractPDMat, b::StridedVector) = A * b
+function _pdmul(A::PDMats.AbstractPDMat, b::AbstractVector)
+    T = Base.promote_eltype(A, b)
+    y = similar(b, T)
+    mul!(y, A, b)
+    return y
 end
