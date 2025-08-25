@@ -39,6 +39,7 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
     + [`Distributions.MvNormal`](@extref) [Burkner2021](@cite)
     + [`Distributions.MvNormalCanon`](@extref)
     + [`Distributions.MatrixNormal`](@extref)
+    + [`Distributions.MvLogNormal`](@extref)
 
 # Returns
 
@@ -96,6 +97,18 @@ function pointwise_loglikelihoods!(
     λV = _pd_diag_inv(V)
     g = U \ (y - M) / V
     return @. log_like = (log(λU) + log(λV') - g^2 / λU / λV' - log2π) / 2
+end
+
+# Multivariate log-normal distribution
+function pointwise_loglikelihoods!(
+    log_like::AbstractVector{<:Real},
+    y::AbstractVector{<:Real},
+    dist::Distributions.MvLogNormal,
+)
+    logy = log.(y)
+    pointwise_loglikelihoods!(log_like, logy, dist.normal)
+    log_like .-= logy
+    return log_like
 end
 
 # Helper functions

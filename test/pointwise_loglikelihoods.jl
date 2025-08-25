@@ -47,6 +47,10 @@ function rand_dist(::Type{<:MatrixNormal}, T::Type{<:Real}, (D, K); factorized::
     dist = MatrixNormal(M, U, V)
     return convert(MatrixNormal{T}, dist)
 end
+function rand_dist(::Type{<:MvLogNormal}, T::Type{<:Real}, D::Int; factorized::Bool=false)
+    norm = rand_dist(MvNormal, T, D; factorized)
+    return MvLogNormal(norm)
+end
 
 """
     conditional_distribution(dist, y, i) -> ContinuousUnivariateDistribution
@@ -78,6 +82,10 @@ function conditional_distribution(dist::MatrixNormal, y::AbstractMatrix, i::Cart
     vec_i = LinearIndices(y)[i]
     return conditional_distribution(vec_dist, vec_y, vec_i)
 end
+function conditional_distribution(dist::MvLogNormal, y::AbstractVector, i::Int)
+    (; μ, σ) = conditional_distribution(dist.normal, log.(y), i)
+    return LogNormal(μ, σ)
+end
 
 """
     factorized_distributions(dist) -> Array{<:ContinuousUnivariateDistribution}
@@ -94,6 +102,10 @@ function factorized_distributions(dist::MatrixNormal)
     σ = reshape(sqrt.(diag(kron(Diagonal(V), Diagonal(U)))), size(M))
     return Normal.(M, σ)
 end
+function factorized_distributions(dist::MvLogNormal)
+    dnorms = factorized_distributions(dist.normal)
+    return map(d -> LogNormal(d.μ, d.σ), dnorms)
+end
 
 @testset "pointwise loglikelihoods" begin
     @testset "_pd_diag_inv" begin
@@ -107,7 +119,7 @@ end
         end
     end
 
-    @testset for dist_type in (MvNormal, MvNormalCanon, MatrixNormal),
+    @testset for dist_type in (MvNormal, MvNormalCanon, MatrixNormal, MvLogNormal),
         T in (Float32, Float64),
         sz in (dist_type <: MultivariateDistribution ? (5, 10) : ((2, 3),))
 
