@@ -4,7 +4,7 @@ using DataInterpolations: DataInterpolations
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
 using FFTW: FFTW
-using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2, log2π
+using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2, logπ, log2π
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
 using KernelDensity: KernelDensity
 using LinearAlgebra: LinearAlgebra, mul!, norm, normalize
@@ -20,6 +20,7 @@ using PSIS: PSIS, PSISResult, psis, psis!
 using Random: Random
 using Roots: Roots
 using Setfield: Setfield
+using SpecialFunctions: SpecialFunctions
 using Statistics: Statistics
 using StatsBase: StatsBase
 using Tables: Tables

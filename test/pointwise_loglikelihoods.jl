@@ -51,6 +51,15 @@ function rand_dist(::Type{<:MvLogNormal}, T::Type{<:Real}, D::Int; factorized::B
     norm = rand_dist(MvNormal, T, D; factorized)
     return MvLogNormal(norm)
 end
+function rand_dist(
+    ::Type{<:Distributions.GenericMvTDist}, T::Type{<:Real}, D::Int; factorized::Bool=false
+)
+    @assert !factorized "factorized=true not supported for GenericMvTDist"
+    μ = randn(T, D)
+    Σ = rand_pdmat(T, D)
+    ν = rand(T) * 8 + 2
+    return Distributions.GenericMvTDist(ν, μ, Σ)
+end
 
 """
     conditional_distribution(dist, y, i) -> ContinuousUnivariateDistribution
@@ -86,6 +95,25 @@ function conditional_distribution(dist::MvLogNormal, y::AbstractVector, i::Int)
     (; μ, σ) = conditional_distribution(dist.normal, log.(y), i)
     return LogNormal(μ, σ)
 end
+function conditional_distribution(
+    dist::Distributions.GenericMvTDist, y::AbstractVector, i::Int
+)
+    # https://en.wikipedia.org/wiki/Multivariate_t-distribution#Conditional_Distribution
+    (; μ, Σ) = dist
+    ν = dist.df
+    ic = setdiff(eachindex(y), i)
+    Σ_ic_i = @views Σ[ic, i]
+    Σ_ic = @views Σ[ic, ic]
+    chol_Σ_ic = cholesky(Symmetric(Σ_ic))
+    δ = @views y[ic] - μ[ic]
+    d = dot(δ, chol_Σ_ic \ δ)
+    inv_Σ_ic_Σ_ic_i = chol_Σ_ic \ Σ_ic_i
+    Σ_cond = Σ[i, i] - inv_Σ_ic_Σ_ic_i' * Σ_ic_i  # Schur complement
+    μ_cond = μ[i] + inv_Σ_ic_Σ_ic_i' * δ
+    ν_cond = ν + length(ic)
+    σ_cond = sqrt(Σ_cond * (ν + d) / ν_cond)
+    return TDist(ν_cond) * σ_cond + μ_cond
+end
 
 """
     factorized_distributions(dist) -> Array{<:ContinuousUnivariateDistribution}
@@ -119,11 +147,13 @@ end
         end
     end
 
-    @testset for dist_type in (MvNormal, MvNormalCanon, MatrixNormal, MvLogNormal),
+    @testset for dist_type in (
+            MvNormal, MvNormalCanon, MatrixNormal, MvLogNormal, Distributions.GenericMvTDist
+        ),
         T in (Float32, Float64),
         sz in (dist_type <: MultivariateDistribution ? (5, 10) : ((2, 3),))
 
-        test_factorized = true
+        test_factorized = !(dist_type <: Distributions.GenericMvTDist)
 
         @testset "pointwise_loglikelihoods!" begin
             @testset "consistent with conditional distributions" begin

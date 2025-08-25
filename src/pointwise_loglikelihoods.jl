@@ -36,10 +36,11 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
   - `dists`: array of shape `(draws[, chains])` containing parametrized
     `Distributions.Distribution`s representing a non-factorized observation
     model, one for each posterior draw. The following distributions are currently supported:
-    + [`Distributions.MvNormal`](@extref) [Burkner2021](@cite)
+    + [`Distributions.MvNormal`](@extref) [Burkner2021](@citep)
     + [`Distributions.MvNormalCanon`](@extref)
     + [`Distributions.MatrixNormal`](@extref)
     + [`Distributions.MvLogNormal`](@extref)
+    + `Distributions.GenericMvTDist` [Burkner2021; but uses a more efficient implementation](@citep)
 
 # Returns
 
@@ -109,6 +110,28 @@ function pointwise_loglikelihoods!(
     pointwise_loglikelihoods!(log_like, logy, dist.normal)
     log_like .-= logy
     return log_like
+end
+
+# Array-variate t-distribution
+function pointwise_loglikelihoods!(
+    log_like::AbstractVector{T},
+    y::AbstractVector{<:Real},
+    dist::Distributions.GenericMvTDist,
+) where {T<:Real}
+    (; μ, Σ) = dist
+    ν = dist.df
+    νi = ν + length(dist) - 1
+    α = (νi + 1) / 2
+    logc = SpecialFunctions.loggamma(α) - SpecialFunctions.loggamma(νi / 2) - T(logπ) / 2
+    λ = _pd_diag_inv(Σ)
+    d = y - μ
+    g = Σ \ d
+    sqmahal = LinearAlgebra.dot(d, g)
+    return map!(log_like, λ, g) do λi, gi
+        γ = gi^2 / λi
+        β = ν + sqmahal - γ
+        return logc - α * log1p(γ / β) + (log(λi) - log(β)) / 2
+    end
 end
 
 # Helper functions
