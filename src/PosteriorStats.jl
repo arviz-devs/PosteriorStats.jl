@@ -1,6 +1,5 @@
 module PosteriorStats
 
-using Compat: @constprop
 using DataInterpolations: DataInterpolations
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES

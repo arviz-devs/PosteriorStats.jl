@@ -37,8 +37,8 @@ function _smooth_data!(y_interp, interp_method, y, x, x_interp, ::Colon)
 end
 function _smooth_data!(y_interp, interp_method, y, x, x_interp, dims)
     for (y_interp_i, y_i) in zip(
-        _eachslice(y_interp; dims=_otherdims(y_interp, dims)),
-        _eachslice(y; dims=_otherdims(y, dims)),
+        eachslice(y_interp; dims=_otherdims(y_interp, dims)),
+        eachslice(y; dims=_otherdims(y, dims)),
     )
         interp = interp_method(vec(y_i), x)
         interp(vec(y_interp_i), x_interp)
@@ -93,23 +93,6 @@ end
 
 # TODO: try to find a way to do this that works for arrays with named indices
 _indices(x) = keys(x)
-
-# eachslice-like iterator that accepts multiple dimensions and has a `size` even for older
-# Julia versions
-@static if VERSION ≥ v"1.9-"
-    _eachslice(x; dims) = eachslice(x; dims)
-else
-    function _eachslice(x; dims)
-        _dims = _astuple(dims)
-        alldims_perm = (_otherdims(x, _dims)..., _dims...)
-        dims_axes = map(Base.Fix1(axes, x), _dims)
-        other_dims = ntuple(_ -> Colon(), ndims(x) - length(_dims))
-        xperm = PermutedDimsArray(x, alldims_perm)
-        return Base.Iterators.map(CartesianIndices(dims_axes)) do i
-            return view(xperm, other_dims..., i)
-        end
-    end
-end
 
 _alldims(x) = ntuple(identity, ndims(x))
 
