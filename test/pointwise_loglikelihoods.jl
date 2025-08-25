@@ -137,7 +137,6 @@ end
                 else
                     throw(ArgumentError("Unsupported dimension type: $dim_type"))
                 end
-                # NOTE: for DimensionalData, this forms a DimArray
                 @assert size(dists) == (ndraws, nchains)
                 y = zeros(T, y_dims...)
                 rand!(first(dists), y)
