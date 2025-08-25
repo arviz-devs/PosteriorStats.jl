@@ -28,25 +28,6 @@ using Test
         end
     end
 
-    @testset "_eachslice" begin
-        x = randn(2, 3, 4)
-        slices = PosteriorStats._eachslice(x; dims=(3, 1))
-        @test size(slices) == (size(x, 3), size(x, 1))
-        slices = collect(slices)
-        for i in axes(x, 3), j in axes(x, 1)
-            @test slices[i, j] == x[j, :, i]
-        end
-
-        @test PosteriorStats._eachslice(x; dims=2) ==
-            PosteriorStats._eachslice(x; dims=(2,))
-
-        if VERSION ≥ v"1.9-"
-            for dims in ((3, 1), (2, 3), 3)
-                @test PosteriorStats._eachslice(x; dims) === eachslice(x; dims)
-            end
-        end
-    end
-
     @testset "_logabssubexp" begin
         x, y = rand(2)
         @test @inferred(PosteriorStats._logabssubexp(log(x), log(y))) ≈ log(abs(x - y))
