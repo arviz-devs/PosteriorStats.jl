@@ -8,8 +8,6 @@ using Random
 using Test
 
 @testset "pointwise_loglikelihoods" begin
-    Random.seed!(1234)
-
     # Helper to make a well-conditioned SPD matrix
     make_spd_and_inv(D; jitter=1e-3) = begin
         A = randn(D, D)
