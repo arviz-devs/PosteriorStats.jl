@@ -1,7 +1,6 @@
+using DimensionalData
 using Distributions
-using Logging: SimpleLogger, with_logger
 using LinearAlgebra
-using OffsetArrays
 using PDMats
 using PosteriorStats
 using Random
@@ -117,12 +116,16 @@ end
 
         @testset "pointwise_loglikelihoods" begin
             ndraws, nchains = 7, 3
-            @testset for dim_type in (UnitRange,)
-                if dim_type == UnitRange
+            @testset for dim_type in (UnitRange, DimensionalData.Dim)
+                if dim_type <: UnitRange
                     # Need to use Base.OneTo to avoid type-piracy promoting to OffsetArray if in scope
                     draws_dim = Base.OneTo(ndraws)
                     chains_dim = Base.OneTo(nchains)
                     y_dim = Base.OneTo(D)
+                elseif dim_type <: Dim
+                    draws_dim = Dim{:draws}(0:(ndraws - 1))
+                    chains_dim = Dim{:chains}(2:(nchains + 1))
+                    y_dim = Dim{:y}(-1:(D - 2))
                 else
                     throw(ArgumentError("Unsupported dimension type: $dim_type"))
                 end
@@ -135,6 +138,12 @@ end
                 @test size(log_like) == (ndraws, nchains, D)
                 @test eltype(log_like) == T
                 @test all(isfinite, log_like)
+
+                if dim_type <: Dim
+                    @test log_like isa DimArray
+                    @test dims(log_like) == (draws_dim, chains_dim, y_dim)
+                end
+
                 log_like_ref = similar(log_like, ndraws, nchains, D)
                 for draw in 1:ndraws, chain in 1:nchains
                     conditional_dists = conditional_distribution.(
