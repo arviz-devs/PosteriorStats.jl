@@ -1,3 +1,54 @@
+"""
+    pointwise_loglikelihoods
+
+Compute pointwise conditional log-likelihoods for use in ELPD-based model comparison.
+
+Given model parameters ``\\theta`` and observations ``y``, the pointwise conditional
+log-likelihood of ``y_i`` given ``y_{-i}`` (the elements of ``y`` excluding ``y_i``) and
+``\\theta`` is defined as
+```math
+\\log p(y_i \\mid y_{-i}, \\theta)
+```
+
+This method is a utility function that dependant packages can override to provide pointwise
+conditional log-likelihoods for their own models/distributions.
+
+See also: [`loo`](@ref)
+"""
+pointwise_loglikelihoods
+
+@doc """
+    pointwise_loglikelihoods(y, dists)
+
+Compute pointwise conditional log-likelihoods of `y` for non-factorized distributions.
+
+A non-factorized observation model ``p(y \\mid \\theta)``, where ``y`` is an array of
+observations and ``\\theta`` are model parameters, can be factorized as
+``p(y_i \\mid y_{-i}, \\theta) p(y_{-i} \\mid \\theta)``. However, completely factorizing
+into individual likelihood terms can be tedious, expensive, and poorly supported by a given
+PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms for all
+``i``; the resulting pointwise conditional log-likelihoods can be used e.g. in
+[`loo`](@ref).
+
+# Arguments
+
+  - `y`: array of observations with shape `(params...,)`
+  - `dists`: array of shape `(draws[, chains])` containing parametrized
+    `Distributions.Distribution`s representing a non-factorized observation
+    model, one for each posterior draw. The following distributions are currently supported:
+    + [`Distributions.MvNormal`](@extref) [Burkner2021](@cite)
+    + [`Distributions.MvNormalCanon`](@extref)
+
+# Returns
+
+  - `log_like`: log-likelihood values with shape `(draws[, chains], params...)`
+
+# References
+
+- [Burkner2021](@cite) Bürkner et al. Comput. Stat. 36 (2021).
+- [LOOFactorized](@cite) Vehtari et al. Leave-one-out cross-validation for non-factorized
+    models
+"""
 function pointwise_loglikelihoods(
     y::AbstractArray{<:Real,N},
     dists::AbstractArray{
