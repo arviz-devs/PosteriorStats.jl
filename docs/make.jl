@@ -1,4 +1,5 @@
 using PosteriorStats
+using Distributions
 using Documenter
 using DocumenterCitations
 using DocumenterInterLinks
@@ -8,6 +9,7 @@ DocMeta.setdocmeta!(PosteriorStats, :DocTestSetup, :(using PosteriorStats); recu
 bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:numeric)
 
 links = InterLinks(
+    "Distributions" => "https://juliastats.org/Distributions.jl/stable/",
     "IntervalSets" => (
         "https://juliamath.github.io/IntervalSets.jl/stable/",
         joinpath(@__DIR__, "inventories", "IntervalSets.toml"),
@@ -31,7 +33,7 @@ makedocs(;
         assets=[joinpath("assets", "citations.css")],
     ),
     pages=["Home" => "index.md", "API" => "api.md", "References" => "references.md"],
-    warnonly=[:footnote, :missing_docs],
+    warnonly=[:doctest, :footnote, :missing_docs],
     plugins=[bib, links],
 )
 

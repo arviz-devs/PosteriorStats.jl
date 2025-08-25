@@ -62,5 +62,12 @@ r2_score
 
 ```@docs
 PosteriorStats.kde_reflected
+PosteriorStats.pointwise_loglikelihoods
+PosteriorStats.pointwise_loglikelihoods(
+    y::AbstractArray{<:Real,N},
+    dists::AbstractArray{
+        <:Distributions.Distribution{<:Distributions.ArrayLikeVariate{N}},M
+    },
+) where {M,N}
 PosteriorStats.smooth_data
 ```

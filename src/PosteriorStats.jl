@@ -4,10 +4,10 @@ using DataInterpolations: DataInterpolations
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
 using FFTW: FFTW
-using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2
+using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2, log2π
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
 using KernelDensity: KernelDensity
-using LinearAlgebra: mul!, norm, normalize
+using LinearAlgebra: LinearAlgebra, mul!, norm, normalize
 using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
 using MCMCDiagnosticTools: MCMCDiagnosticTools
@@ -15,6 +15,7 @@ using Optim: Optim
 using OrderedCollections: OrderedCollections
 using PrettyTables: PrettyTables
 using Printf: Printf
+using PDMats: PDMats
 using PSIS: PSIS, PSISResult, psis, psis!
 using Random: Random
 using Roots: Roots
@@ -56,6 +57,7 @@ include("kde.jl")
 include("eti.jl")
 include("hdi.jl")
 include("elpdresult.jl")
+include("pointwise_loglikelihoods.jl")
 include("loo.jl")
 include("waic.jl")
 include("model_weights.jl")
