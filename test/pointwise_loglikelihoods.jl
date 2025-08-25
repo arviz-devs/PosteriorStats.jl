@@ -121,31 +121,34 @@ end
                     # Need to use Base.OneTo to avoid type-piracy promoting to OffsetArray if in scope
                     draws_dim = Base.OneTo(ndraws)
                     chains_dim = Base.OneTo(nchains)
-                    y_dim = Base.OneTo(D)
                     dists = [rand_dist(dist_type, T, D) for _ in draws_dim, _ in chains_dim]
+                    y_dims = map(Base.OneTo, size(first(dists)))
                 elseif dim_type <: Dim
                     draws_dim = Dim{:draws}(0:(ndraws - 1))
                     chains_dim = Dim{:chains}(2:(nchains + 1))
-                    y_dim = Dim{:y}(-1:(D - 2))
                     dists = DimArray(
                         [rand_dist(dist_type, T, D) for _ in draws_dim, _ in chains_dim],
                         (draws_dim, chains_dim),
                     )
+                    sz = size(first(dists))
+                    y_dims = ntuple(length(sz)) do i
+                        return Dim{Symbol(:y, i)}(-1:(sz[i] - 2))
+                    end
                 else
                     throw(ArgumentError("Unsupported dimension type: $dim_type"))
                 end
                 # NOTE: for DimensionalData, this forms a DimArray
                 @assert size(dists) == (ndraws, nchains)
-                y = zeros(T, y_dim)
+                y = zeros(T, y_dims...)
                 rand!(first(dists), y)
                 log_like = @inferred PosteriorStats.pointwise_loglikelihoods(y, dists)
-                @test size(log_like) == (ndraws, nchains, D)
+                @test size(log_like) == (ndraws, nchains, size(y)...)
                 @test eltype(log_like) == T
                 @test all(isfinite, log_like)
 
                 if dim_type <: Dim
                     @test log_like isa DimArray
-                    @test dims(log_like) == (draws_dim, chains_dim, y_dim)
+                    @test dims(log_like) == (draws_dim, chains_dim, y_dims...)
                 end
 
                 log_like_ref = similar(log_like, ndraws, nchains, D)
