@@ -67,7 +67,7 @@ Factorize a factorizable array-variate distribution into univariate distribution
 """
 function factorized_distributions(dist::AbstractMvNormal)
     @assert isdiag(cov(dist))
-    return Normal.(mean(dist), std(dist))
+    return Normal.(mean(dist), sqrt.(var(dist)))
 end
 
 @testset "pointwise loglikelihoods" begin
