@@ -1,7 +1,7 @@
 """
     pointwise_loglikelihoods
 
-Compute pointwise conditional log-likelihoods for use in ELPD-based model comparison.
+Compute pointwise conditional log-likelihoods for ELPD-based model comparison/validation.
 
 Given model parameters ``\\theta`` and observations ``y``, the pointwise conditional
 log-likelihood of ``y_i`` given ``y_{-i}`` (the elements of ``y`` excluding ``y_i``) and
