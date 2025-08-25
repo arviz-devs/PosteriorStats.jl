@@ -44,7 +44,7 @@ jobs:
       - name: Install R loo
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          dependencies: |
+          packages: |
             github::stan-dev/loo@v2.8.0
         if: ${{ env.install_r }}
       - name: Set R lib path for RCall.jl
