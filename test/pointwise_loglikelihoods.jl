@@ -11,12 +11,12 @@ using Test
 # - conditional_distribution
 # - factorized_distributions (optional)
 
-function rand_pdmat(T::Type{<:Real}, D::Int)
+function rand_pdmat(T::Type{<:Real}, D::Int; jitter::Real=T(1e-3))
     A = randn(T, D, D)
-    S = PDMat(A * A')
+    S = PDMat(A * A' + T(jitter) * I)
     return S
 end
-rand_pdmat(D::Int) = rand_pdmat(Float64, D)
+rand_pdmat(D::Int; kwargs...) = rand_pdmat(Float64, D; kwargs...)
 
 """
     rand_dist(dist_type, T, D; factorized=false) -> dist
