@@ -229,16 +229,6 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                         if kind ∈ [:all_median, :diagnostics_median]
                             @test haskey(stats, :ess_median)
                         end
-
-                        kind ∈ [:stats, :stats_median] && continue
-                        @testset "check that keywords are forwarded" begin
-                            stats2 = summarize(x; kind, split_chains=8)
-                            @testset for k in [:rhat, :ess_tail, :mcse_mean, :mcse_std]
-                                if k ∈ keys(stats)
-                                    @test stats[k] != stats2[k]
-                                end
-                            end
-                        end
                     end
                 end
 
