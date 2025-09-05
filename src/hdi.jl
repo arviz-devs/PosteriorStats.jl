@@ -92,8 +92,7 @@ See also: [`hdi!`](@ref), [`eti`](@ref), [`eti!`](@ref).
     present, a marginal HDI is computed for each.
 
 # Keywords
-- `prob`: the probability mass to be contained in the HDI. Default is
-    `$(DEFAULT_INTERVAL_PROB)`.
+- `prob`: the probability mass to be contained in the HDI. Default is `$(DEFAULT_CI_PROB)`.
 - `sorted=false`: if `true`, the input samples are assumed to be sorted.
 - `method::Symbol`: the method used to estimate the HDI. Available options are:
   - `:unimodal`: Assumes a unimodal distribution (default). Bounds are entries in `samples`.
@@ -116,9 +115,9 @@ See also: [`hdi!`](@ref), [`eti`](@ref), [`eti!`](@ref).
     the shape `(params...,)` is returned, containing marginal HDIs for each parameter.
 
 !!! note
-    Any default value of `prob` is arbitrary. The default value of
-    `prob=$(DEFAULT_INTERVAL_PROB)` instead of a more common default like `prob=0.95` is
-    chosen to remind the user of this arbitrariness.
+    Any default value of `prob` is arbitrary. The default value of `prob=$(DEFAULT_CI_PROB)`
+    instead of a more common default like `prob=0.95` is chosen to remind the user of this
+    arbitrariness.
 
 # Examples
 
@@ -173,7 +172,7 @@ See also: [`hdi`](@ref), [`eti`](@ref), [`eti!`](@ref).
 """
 Base.@constprop :aggressive function hdi!(
     x::AbstractArray{<:Real};
-    prob::Real=DEFAULT_INTERVAL_PROB,
+    prob::Real=DEFAULT_CI_PROB,
     is_discrete::Union{Bool,Nothing}=nothing,
     method::Union{Symbol,HDIEstimationMethod}=UnimodalHDI(),
     sorted::Bool=false,

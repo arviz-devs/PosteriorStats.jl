@@ -41,7 +41,7 @@ export ModelComparisonResult, compare
 
 # Summary statistics
 export SummaryStats, summarize
-export default_diagnostics, default_stats, default_summary_stats
+export default_summary_stats
 
 # Credible intervals
 export eti, eti!, hdi, hdi!
@@ -49,7 +49,7 @@ export eti, eti!, hdi, hdi!
 # Others
 export loo_pit, r2_score
 
-const DEFAULT_INTERVAL_PROB = 0.94
+const DEFAULT_CI_PROB = 0.94
 const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)
 
 include("utils.jl")
