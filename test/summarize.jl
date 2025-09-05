@@ -210,7 +210,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
         @testset "default stats function sets" begin
             @testset "array inputs" begin
                 x = randn(1_000, 4, 3)
-                # not completely type-inferrable due to HDI
+                # not completely type-inferrable due to CI
                 stats1 = summarize(x, default_summary_stats()...)
                 @test all(
                     map(
@@ -220,16 +220,16 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                             x,
                             mean,
                             std,
-                            Symbol("hdi_94%") => hdi,
-                            :mcse_mean => mcse,
-                            :mcse_std => (x -> mcse(x; kind=std)),
+                            Symbol("eti_94%") => eti,
                             :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_bulk => (x -> ess(x; kind=:bulk)),
                             rhat,
+                            :mcse_mean => mcse,
+                            :mcse_std => (x -> mcse(x; kind=std)),
                         ),
                     ),
                 )
-                stats2 = summarize(x, default_summary_stats(median; prob_interval=0.9)...)
+                stats2 = summarize(x, default_summary_stats(median; ci_fun=hdi, ci_prob=0.9)...)
                 @test all(
                     map(
                         _isapprox,
@@ -238,12 +238,12 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                             x,
                             median,
                             mad,
-                            Symbol("eti_90%") =>
-                                (x -> PosteriorStats.eti(vec(x); prob=0.9)),
-                            :mcse_median => (x -> mcse(x; kind=median)),
+                            Symbol("hdi_90%") =>
+                                (x -> PosteriorStats.hdi(vec(x); prob=0.9)),
                             :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_median => (x -> ess(x; kind=median)),
                             rhat,
+                            :mcse_median => (x -> mcse(x; kind=median)),
                         ),
                     ),
                 )
@@ -255,11 +255,11 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                         stats3,
                         summarize(
                             x,
-                            :mcse_mean => mcse,
-                            :mcse_std => (x -> mcse(x; kind=std)),
                             :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_bulk => (x -> ess(x; kind=:bulk)),
                             rhat,
+                            :mcse_mean => mcse,
+                            :mcse_std => (x -> mcse(x; kind=std)),
                         ),
                     ),
                 )
@@ -268,7 +268,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                     map(
                         _isapprox,
                         summarize(x, default_stats()...),
-                        summarize(x, mean, std, Symbol("hdi_94%") => hdi),
+                        summarize(x, mean, std, Symbol("eti_94%") => eti),
                     ),
                 )
 
@@ -277,24 +277,24 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                 stats4 = summarize(x2, default_summary_stats()...)
                 @test stats4[:mean] ≈ [mean(skipmissing(x2[:, :, 1])); stats1[:mean][2:end]]
                 @test stats4[:std] ≈ [std(skipmissing(x2[:, :, 1])); stats1[:std][2:end]]
-                @test stats4[Symbol("hdi_94%")] == [
-                    hdi(collect(skipmissing(x2[:, :, 1])))
-                    stats1[Symbol("hdi_94%")][2:end]
+                @test stats4[Symbol("eti_94%")] == [
+                    eti(collect(skipmissing(x2[:, :, 1])))
+                    stats1[Symbol("eti_94%")][2:end]
                 ]
-                for k in (:mcse_mean, :mcse_std, :ess_tail, :ess_bulk, :rhat)
+                for k in (:ess_tail, :ess_bulk, :rhat, :mcse_mean, :mcse_std)
                     @test stats4[k][1] === missing
                     @test stats4[k][2:end] ≈ stats1[k][2:end]
                 end
 
-                stats5 = summarize(x2, default_summary_stats(median; prob_interval=0.9)...)
+                stats5 = summarize(x2, default_summary_stats(median; ci_fun=hdi, ci_prob=0.9)...)
                 @test stats5[:median] ≈
                     [median(skipmissing(x2[:, :, 1])); stats2[:median][2:end]]
                 @test stats5[:mad] ≈ [mad(skipmissing(x2[:, :, 1])); stats2[:mad][2:end]]
-                @test stats5[Symbol("eti_90%")] == [
-                    PosteriorStats.eti(collect(skipmissing(x2[:, :, 1])); prob=0.9)
-                    stats2[Symbol("eti_90%")][2:end]
+                @test stats5[Symbol("hdi_90%")] == [
+                    PosteriorStats.hdi(collect(skipmissing(x2[:, :, 1])); prob=0.9)
+                    stats2[Symbol("hdi_90%")][2:end]
                 ]
-                for k in (:mcse_median, :ess_tail, :ess_median, :rhat)
+                for k in (:ess_tail, :ess_median, :rhat, :mcse_median)
                     @test stats5[k][1] === missing
                     @test stats5[k][2:end] ≈ stats2[k][2:end]
                 end
