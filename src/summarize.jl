@@ -339,7 +339,7 @@ end
 
 function _interval_stat(; ci_fun=eti, ci_prob=DEFAULT_CI_PROB, kwargs...)
     ci_name = Symbol(_fname(ci_fun), _prob_to_string(ci_prob))
-    return ci_name => (x -> ci_fun(_cskipmissing(x); prob=ci_prob))
+    return ci_name => FixKeywords(ci_fun; prob=ci_prob) ∘ _cskipmissing
 end
 
 """
@@ -363,18 +363,18 @@ The value of `focus` determines the diagnostics to be returned:
 default_diagnostics(; kwargs...) = default_diagnostics(Statistics.mean; kwargs...)
 function default_diagnostics(::typeof(Statistics.mean); kwargs...)
     return (
-        :ess_tail => _ess_tail,
+        :ess_tail => FixKeywords(MCMCDiagnosticTools.ess; kind=:tail),
         (:ess_bulk, :rhat) => MCMCDiagnosticTools.ess_rhat,
         :mcse_mean => MCMCDiagnosticTools.mcse,
-        :mcse_std => _mcse_std,
+        :mcse_std => FixKeywords(MCMCDiagnosticTools.mcse; kind=Statistics.std),
     )
 end
 function default_diagnostics(::typeof(Statistics.median); kwargs...)
     return (
-        :ess_tail => _ess_tail,
-        :ess_median => _ess_median,
+        :ess_median => FixKeywords(MCMCDiagnosticTools.ess; kind=Statistics.median),
+        :ess_tail => FixKeywords(MCMCDiagnosticTools.ess; kind=:tail),
         MCMCDiagnosticTools.rhat,
-        :mcse_median => _mcse_median,
+        :mcse_median => FixKeywords(MCMCDiagnosticTools.mcse; kind=Statistics.median),
     )
 end
 
@@ -413,18 +413,10 @@ _fun_and_name(f) = nothing => f
 
 _fname(f) = nameof(f)
 
-# curried functions
-_mcse_std(x) = MCMCDiagnosticTools.mcse(x; kind=Statistics.std)
-_mcse_median(x) = MCMCDiagnosticTools.mcse(x; kind=Statistics.median)
-_ess_median(x) = MCMCDiagnosticTools.ess(x; kind=Statistics.median)
-_ess_tail(x) = MCMCDiagnosticTools.ess(x; kind=:tail)
-
 # functions that have a 3D array method
 _map_paramslices(f, x) = map(f, eachslice(x; dims=3))
-_map_paramslices(f::typeof(_ess_median), x) = f(x)
-_map_paramslices(f::typeof(_ess_tail), x) = f(x)
 _map_paramslices(f::typeof(MCMCDiagnosticTools.ess_rhat), x) = f(x)
 _map_paramslices(f::typeof(MCMCDiagnosticTools.rhat), x) = f(x)
 _map_paramslices(f::typeof(MCMCDiagnosticTools.mcse), x) = f(x)
-_map_paramslices(f::typeof(_mcse_std), x) = f(x)
-_map_paramslices(f::typeof(_mcse_median), x) = f(x)
+_map_paramslices(f::FixKeywords{typeof(MCMCDiagnosticTools.ess)}, x) = f.f(x; f.kwargs...)
+_map_paramslices(f::FixKeywords{typeof(MCMCDiagnosticTools.mcse)}, x) = f.f(x; f.kwargs...)
