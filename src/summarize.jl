@@ -354,8 +354,15 @@ end
 Default diagnostics to be computed with [`summarize`](@ref).
 
 The value of `focus` determines the diagnostics to be returned:
-- [`Statistics.mean`](@extref): `mcse_mean`, `mcse_std`, `ess_tail`, `ess_bulk`, `rhat`
-- [`Statistics.median`](@extref): `mcse_median`, `ess_tail`, `ess_bulk`, `rhat`
+- [`Statistics.mean`](@extref): [`mcse_mean`](@extref MCMCDiagnosticsTools.mcse),
+    [`mcse_std`](@extref MCMCDiagnosticsTools.mcse),
+    [`ess_tail`](@extref MCMCDiagnosticTools.ess),
+    [`ess_bulk`](@extref MCMCDiagnosticTools.ess),
+    [`rhat`](@extref MCMCDiagnosticTools.rhat)
+- [`Statistics.median`](@extref): [`mcse_median`](@extref MCMCDiagnosticsTools.mcse),
+    [`ess_tail`](@extref MCMCDiagnosticTools.ess),
+    [`ess_bulk`](@extref MCMCDiagnosticTools.ess),
+    [`rhat`](@extref MCMCDiagnosticTools.rhat)
 """
 default_diagnostics(; kwargs...) = default_diagnostics(Statistics.mean; kwargs...)
 function default_diagnostics(::typeof(Statistics.mean); kwargs...)
