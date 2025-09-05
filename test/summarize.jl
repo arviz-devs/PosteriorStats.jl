@@ -220,7 +220,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                             x,
                             mean,
                             std,
-                            Symbol("eti_94%") => eti,
+                            Symbol("eti94") => eti,
                             :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_bulk => (x -> ess(x; kind=:bulk)),
                             rhat,
@@ -240,8 +240,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                             x,
                             median,
                             mad,
-                            Symbol("hdi_90%") =>
-                                (x -> PosteriorStats.hdi(vec(x); prob=0.9)),
+                            Symbol("hdi90") => (x -> PosteriorStats.hdi(vec(x); prob=0.9)),
                             :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_median => (x -> ess(x; kind=median)),
                             rhat,
@@ -270,7 +269,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                     map(
                         _isapprox,
                         summarize(x, default_stats()...),
-                        summarize(x, mean, std, Symbol("eti_94%") => eti),
+                        summarize(x, mean, std, Symbol("eti94") => eti),
                     ),
                 )
 
@@ -279,9 +278,9 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                 stats4 = summarize(x2, default_summary_stats()...)
                 @test stats4[:mean] ≈ [mean(skipmissing(x2[:, :, 1])); stats1[:mean][2:end]]
                 @test stats4[:std] ≈ [std(skipmissing(x2[:, :, 1])); stats1[:std][2:end]]
-                @test stats4[Symbol("eti_94%")] == [
+                @test stats4[Symbol("eti94")] == [
                     eti(collect(skipmissing(x2[:, :, 1])))
-                    stats1[Symbol("eti_94%")][2:end]
+                    stats1[Symbol("eti94")][2:end]
                 ]
                 for k in (:ess_tail, :ess_bulk, :rhat, :mcse_mean, :mcse_std)
                     @test stats4[k][1] === missing
@@ -294,9 +293,9 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                 @test stats5[:median] ≈
                     [median(skipmissing(x2[:, :, 1])); stats2[:median][2:end]]
                 @test stats5[:mad] ≈ [mad(skipmissing(x2[:, :, 1])); stats2[:mad][2:end]]
-                @test stats5[Symbol("hdi_90%")] == [
+                @test stats5[Symbol("hdi90")] == [
                     PosteriorStats.hdi(collect(skipmissing(x2[:, :, 1])); prob=0.9)
-                    stats2[Symbol("hdi_90%")][2:end]
+                    stats2[Symbol("hdi90")][2:end]
                 ]
                 for k in (:ess_tail, :ess_median, :rhat, :mcse_median)
                     @test stats5[k][1] === missing

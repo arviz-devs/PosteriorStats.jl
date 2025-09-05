@@ -217,7 +217,7 @@ the number of significant digits that will be displayed.
 ```jldoctest summarize
 julia> summarize(x; var_names=[:a, :b, :c])
 SummaryStats
-       mean   std  eti_94%        ess_tail  ess_bulk  rhat  mcse_mean  mcse_st ⋯
+       mean   std  eti94          ess_tail  ess_bulk  rhat  mcse_mean  mcse_st ⋯
  a   0.0003  0.99  -1.83 .. 1.89      3567      3663  1.00      0.016     0.01 ⋯
  b  10.02    0.99   8.17 .. 11.9      3841      3906  1.00      0.016     0.01 ⋯
  c  19.98    0.99   18.1 .. 21.9      3892      3749  1.00      0.016     0.01 ⋯
@@ -230,7 +230,7 @@ names:
 ```jldoctest summarize
 julia> summarize(x, default_stats(; ci_prob=0.89)...; var_names=[:a, :b, :c])
 SummaryStats
-         mean    std  eti_89%
+         mean    std  eti89
  a   0.000275  0.989  -1.57 .. 1.59
  b  10.0       0.988   8.47 .. 11.6
  c  20.0       0.988   18.4 .. 21.6
@@ -241,7 +241,7 @@ Compute the summary stats focusing on [`Statistics.median`](@extref):
 ```jldoctest summarize
 julia> summarize(x, default_summary_stats(median)...; var_names=[:a, :b, :c])
 SummaryStats
-    median    mad  eti_94%        ess_tail  ess_median  rhat  mcse_median
+    median    mad  eti94          ess_tail  ess_median  rhat  mcse_median
  a   0.004  0.978  -1.83 .. 1.89      3567        3336  1.00        0.020
  b  10.02   0.995   8.17 .. 11.9      3841        3787  1.00        0.023
  c  19.99   0.979   18.1 .. 21.9      3892        3829  1.00        0.020
@@ -316,9 +316,9 @@ Default statistics to be computed with [`summarize`](@ref).
 
 The value of `focus` determines the statistics to be returned:
 - [`Statistics.mean`](@extref): `mean`, [`std`](@extref `Statistics.std`),
-    `<ci_fun>_<ci_perc>%`
+    `<ci_fun><ci_perc>`
 - [`Statistics.median`](@extref): `median`, [`mad`](@extref `StatsBase.mad`),
-    `<ci_fun>_<ci_perc>%`
+    `<ci_fun><ci_perc>`
 
 The credible interval is computed using the function `ci_fun` with probability `ci_prob`.
 Supported options for `ci_fun` are [`eti`](@ref) and [`hdi`](@ref).
@@ -339,7 +339,7 @@ function default_stats(::typeof(Statistics.median); kwargs...)
 end
 
 function _interval_stat(; ci_fun=eti, ci_prob=DEFAULT_CI_PROB, kwargs...)
-    ci_name = Symbol(_fname(ci_fun), "_", _prob_to_string(ci_prob), "%")
+    ci_name = Symbol(_fname(ci_fun), _prob_to_string(ci_prob))
     return ci_name => (x -> ci_fun(_cskipmissing(x); prob=ci_prob))
 end
 
