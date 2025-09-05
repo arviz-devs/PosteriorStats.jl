@@ -378,8 +378,8 @@ end
 
 _default_diagnostics(; kwargs...) = _default_diagnostics(Statistics.mean; kwargs...)
 function _default_diagnostics(::typeof(Statistics.mean); kwargs...)
-    ess_kwargs = _extract_keywords(kwargs, (:maxlag, :autocov_method, :split_chains))
-    ess_tail_kwargs = merge(ess_kwargs, _extract_keywords(kwargs, (:tail_prob,)))
+    ess_kwargs = filter(∈((:maxlag, :autocov_method, :split_chains)) ∘ first, kwargs)
+    ess_tail_kwargs = (ess_kwargs..., filter(k -> first(k) === :tail_prob, kwargs)...)
     mcse_kwargs = ess_kwargs
     return (
         :ess_tail => FixKeywords(MCMCDiagnosticTools.ess; kind=:tail, ess_tail_kwargs...),
@@ -390,10 +390,10 @@ function _default_diagnostics(::typeof(Statistics.mean); kwargs...)
     )
 end
 function _default_diagnostics(::typeof(Statistics.median); kwargs...)
-    ess_kwargs = _extract_keywords(kwargs, (:maxlag, :autocov_method, :split_chains))
-    ess_tail_kwargs = merge(ess_kwargs, _extract_keywords(kwargs, (:tail_prob,)))
+    ess_kwargs = filter(∈((:maxlag, :autocov_method, :split_chains)) ∘ first, kwargs)
+    ess_tail_kwargs = (ess_kwargs..., filter(k -> first(k) === :tail_prob, kwargs)...)
     mcse_kwargs = ess_kwargs
-    rhat_kwargs = _extract_keywords(kwargs, (:split_chains,))
+    rhat_kwargs = filter(x -> first(x) === :split_chains, kwargs)
     return (
         :ess_median =>
             FixKeywords(MCMCDiagnosticTools.ess; kind=Statistics.median, ess_kwargs...),
