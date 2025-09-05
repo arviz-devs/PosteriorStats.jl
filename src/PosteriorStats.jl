@@ -41,7 +41,7 @@ export ModelComparisonResult, compare
 
 # Summary statistics
 export SummaryStats, summarize
-export default_diagnostics, default_stats, default_summary_stats
+export default_summary_stats
 
 # Credible intervals
 export eti, eti!, hdi, hdi!

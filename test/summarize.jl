@@ -210,6 +210,28 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
         @testset "default stats function sets" begin
             @testset "array inputs" begin
                 x = randn(1_000, 4, 3)
+
+                @testset "all supported kinds accepted" begin
+                    @testset for kind in [
+                        :all,
+                        :stats,
+                        :diagnostics,
+                        :all_median,
+                        :stats_median,
+                        :diagnostics_median,
+                    ]
+                        stats = summarize(x; kind)
+                        @test stats isa SummaryStats
+                        @test stats.name == "SummaryStats"
+                        kind ∈ [:all, :stats] && @test haskey(stats, :mean)
+                        kind ∈ [:all, :diagnostics] && @test haskey(stats, :ess_bulk)
+                        kind ∈ [:all_median, :stats_median] && @test haskey(stats, :median)
+                        if kind ∈ [:all_median, :diagnostics_median]
+                            @test haskey(stats, :ess_median)
+                        end
+                    end
+                end
+
                 # not completely type-inferrable due to CI
                 stats1 = summarize(x, default_summary_stats()...)
                 @test all(
@@ -229,9 +251,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                         ),
                     ),
                 )
-                stats2 = summarize(
-                    x, default_summary_stats(median; ci_fun=hdi, ci_prob=0.9)...
-                )
+                stats2 = summarize(x; kind=:all_median, ci_fun=hdi, ci_prob=0.9)
                 @test all(
                     map(
                         _isapprox,
@@ -241,14 +261,14 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                             median,
                             mad,
                             Symbol("hdi90") => (x -> PosteriorStats.hdi(vec(x); prob=0.9)),
-                            :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_median => (x -> ess(x; kind=median)),
+                            :ess_tail => (x -> ess(x; kind=:tail)),
                             rhat,
                             :mcse_median => (x -> mcse(x; kind=median)),
                         ),
                     ),
                 )
-                _compute_diagnostics(x) = summarize(x, default_diagnostics()...)
+                _compute_diagnostics(x) = summarize(x; kind=:diagnostics)
                 stats3 = @inferred _compute_diagnostics(x)
                 @test all(
                     map(
@@ -268,14 +288,14 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                 @test all(
                     map(
                         _isapprox,
-                        summarize(x, default_stats()...),
+                        summarize(x; kind=:stats),
                         summarize(x, mean, std, Symbol("eti94") => eti),
                     ),
                 )
 
                 x2 = convert(Array{Union{Float64,Missing}}, x)
                 x2[1, 1, 1] = missing
-                stats4 = summarize(x2, default_summary_stats()...)
+                stats4 = summarize(x2)
                 @test stats4[:mean] ≈ [mean(skipmissing(x2[:, :, 1])); stats1[:mean][2:end]]
                 @test stats4[:std] ≈ [std(skipmissing(x2[:, :, 1])); stats1[:std][2:end]]
                 @test stats4[Symbol("eti94")] == [
@@ -287,9 +307,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                     @test stats4[k][2:end] ≈ stats1[k][2:end]
                 end
 
-                stats5 = summarize(
-                    x2, default_summary_stats(median; ci_fun=hdi, ci_prob=0.9)...
-                )
+                stats5 = summarize(x2; kind=:all_median, ci_fun=hdi, ci_prob=0.9)
                 @test stats5[:median] ≈
                     [median(skipmissing(x2[:, :, 1])); stats2[:median][2:end]]
                 @test stats5[:mad] ≈ [mad(skipmissing(x2[:, :, 1])); stats2[:mad][2:end]]
@@ -306,15 +324,12 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
             @testset "custom inputs" begin
                 x = randn(1_000, 4, 3)
                 sample = SampleWrapper(x, ["a", "b", "c"])
-                function _compute_diagnostics(x)
-                    return summarize(x, default_diagnostics()...; name="foo")
-                end
+                _compute_diagnostics(x) = summarize(x; kind=:diagnostics, name="foo")
                 stats1 = @inferred _compute_diagnostics(sample)
                 @test stats1 isa SummaryStats
                 @test stats1.name == "foo"
-                @test stats1 == summarize(
-                    x, default_diagnostics()...; name="foo", var_names=["a", "b", "c"]
-                )
+                @test stats1 ==
+                    summarize(x; kind=:diagnostics, name="foo", var_names=["a", "b", "c"])
 
                 stats2 = summarize(sample)
                 @test stats2.name == "SummaryStats"

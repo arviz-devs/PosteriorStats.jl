@@ -1,3 +1,20 @@
+const _DEFAULT_SUMMARY_STATS_KIND_DOCSTRING = """
+- `kind::Symbol`: The named collection of summary statistics to be computed:
+    + `:all`: Everything in `:stats` and `:diagnostics`
+    + `:stats`: `mean`, `std`, `<ci>`
+    + `:diagnostics`: `ess_tail`, `ess_bulk`, `rhat`, `mcse_mean`, `mcse_std`
+    + `:all_median`: Everything in `:stats_median` and `:diagnostics_median`
+    + `:stats_median`: `median`, `mad`, `<ci>`
+    + `:diagnostics_median`: `ess_median`, `ess_tail`, `rhat`, `mcse_median`
+"""
+const _DEFAULT_SUMMARY_STATS_CI_DOCSTRING = """
+- `ci_fun=eti`: The function to compute the credible interval `<ci>`, if any. Supported
+    options are [`eti`](@ref) and [`hdi`](@ref). CI column name is
+    `<ci_fun><100*ci_prob>`.
+- `ci_prob=$(DEFAULT_CI_PROB)`: The probability mass to be contained in the credible
+    interval `<ci>`.
+"""
+
 """
 $(TYPEDEF)
 
@@ -160,38 +177,72 @@ end
 TableTraits.isiterabletable(::SummaryStats) = true
 
 """
-    summarize(data, stats_funs...; name="SummaryStats", [var_names]) -> SummaryStats
+    summarize(data; kind=:all,kwargs...) -> SummaryStats
+    summarize(data, stats_funs...; kwargs...) -> SummaryStats
 
-Compute the summary statistics in `stats_funs` on each param in `data`.
+Compute summary statistics on each param in `data`.
 
-`stats_funs` is a collection of functions that reduces a matrix with shape `(draws, chains)`
-to a scalar or a collection of scalars. Alternatively, an item in `stats_funs` may be a
-`Pair` of the form `name => fun` specifying the name to be used for the statistic or of the
-form `(name1, ...) => fun` when the function returns a collection. When the function returns
-a collection, the names in this latter format must be provided.
+# Arguments
 
-If no stats functions are provided, then those specified in [`default_summary_stats`](@ref)
-are computed.
+- `data`: a 3D array of real samples with shape `(draws, chains, params)` or another object
+    for which a `summarize` method is defined.
+- `stats_funs`: a collection of functions that reduces a matrix with shape `(draws, chains)`
+    to a scalar or a collection of scalars. Alternatively, an item in `stats_funs` may be a
+    `Pair` of the form `name => fun` specifying the name to be used for the statistic or of
+    the form `(name1, ...) => fun` when the function returns a collection. When the function
+    returns a collection, the names in this latter format must be provided.
 
-`var_names` specifies the names of the parameters in `data`. If not provided, the names are
-inferred from `data`.
+# Keywords
 
-To support computing summary statistics from a custom object, overload this method
-specifying the type of `data`.
+- `var_names`: a collection specifying the names of the parameters in `data`. If not
+    provided, the names the indices of the parameter dimension in `data`.
+- `name::String`: the name of the summary statistics, used as the table title in display.
+$(_DEFAULT_SUMMARY_STATS_KIND_DOCSTRING)
+- `kwargs`: additional keyword arguments passed to [`default_summary_stats`](@ref),
+    including:
+    $(replace(_DEFAULT_SUMMARY_STATS_CI_DOCSTRING, r"\n" => "\n    "))
 
-See also [`SummaryStats`](@ref), [`default_summary_stats`](@ref), [`default_stats`](@ref),
-[`default_diagnostics`](@ref).
+See also [`SummaryStats`](@ref), [`default_summary_stats`](@ref)
 
-# Examples
+# Extended Help
 
-Compute [`Statistics.mean`](@extref), [`Statistics.std`](@extref) and the Monte Carlo
-standard error (MCSE) of the mean estimate:
+## Examples
+
+Compute all summary statistics (the default):\
+
+!!! details "Display precision"
+    When an estimator and its MCSE are both computed, the MCSE is used to determine
+    the number of significant digits that will be displayed.
 
 ```jldoctest summarize; setup = (using Random; Random.seed!(84))
 julia> using Statistics, StatsBase
 
 julia> x = randn(1000, 4, 3) .+ reshape(0:10:20, 1, 1, :);
 
+julia> summarize(x)
+SummaryStats
+       mean   std  eti94          ess_tail  ess_bulk  rhat  mcse_mean  mcse_std
+ 1   0.0003  0.99  -1.83 .. 1.89      3567      3663  1.00      0.016     0.012
+ 2  10.02    0.99   8.17 .. 11.9      3841      3906  1.00      0.016     0.011
+ 3  19.98    0.99   18.1 .. 21.9      3892      3749  1.00      0.016     0.012
+```
+
+Compute just the default statistics with an 89% [HDI](@ref hdi), and provide the parameter
+names:
+```jldoctest summarize
+julia> var_names=[:x, :y, :z];
+
+julia> summarize(x; var_names, kind=:stats, ci_fun=hdi, ci_prob=0.89)
+SummaryStats
+         mean    std  hdi89
+ x   0.000275  0.989  -1.63 .. 1.52
+ y  10.0       0.988   8.53 .. 11.6
+ z  20.0       0.988   18.5 .. 21.6
+```
+
+Compute [`Statistics.mean`](@extref), [`Statistics.std`](@extref) and the Monte Carlo
+standard error (MCSE) of the mean estimate:
+```jldoctest summarize
 julia> summarize(x, mean, std, :mcse_mean => sem; name="Mean/Std")
 Mean/Std
        mean    std  mcse_mean
@@ -200,87 +251,50 @@ Mean/Std
  3  19.98    0.988      0.016
 ```
 
-Avoid recomputing the mean by using [`StatsBase.mean_and_std`](@extref), and provide
-parameter names:
-```jldoctest summarize
-julia> summarize(x, (:mean, :std) => mean_and_std, mad; var_names=[:a, :b, :c])
-SummaryStats
-         mean    std    mad
- a   0.000275  0.989  0.978
- b  10.0       0.988  0.995
- c  20.0       0.988  0.979
-```
-
-Note that when an estimator and its MCSE are both computed, the MCSE is used to determine
-the number of significant digits that will be displayed.
-
-```jldoctest summarize
-julia> summarize(x; var_names=[:a, :b, :c])
-SummaryStats
-       mean   std  eti94          ess_tail  ess_bulk  rhat  mcse_mean  mcse_std
- a   0.0003  0.99  -1.83 .. 1.89      3567      3663  1.00      0.016     0.012
- b  10.02    0.99   8.17 .. 11.9      3841      3906  1.00      0.016     0.011
- c  19.98    0.99   18.1 .. 21.9      3892      3749  1.00      0.016     0.012
-```
-
-Compute just the statistics with an 89% HDI on all parameters, and provide the parameter
-names:
-
-```jldoctest summarize
-julia> summarize(x, default_stats(; ci_prob=0.89)...; var_names=[:a, :b, :c])
-SummaryStats
-         mean    std  eti89
- a   0.000275  0.989  -1.57 .. 1.59
- b  10.0       0.988   8.47 .. 11.6
- c  20.0       0.988   18.4 .. 21.6
-```
-
-Compute the summary stats focusing on [`Statistics.median`](@extref):
-
-```jldoctest summarize
-julia> summarize(x, default_summary_stats(median)...; var_names=[:a, :b, :c])
-SummaryStats
-    median    mad  eti94          ess_tail  ess_median  rhat  mcse_median
- a   0.004  0.978  -1.83 .. 1.89      3567        3336  1.00        0.020
- b  10.02   0.995   8.17 .. 11.9      3841        3787  1.00        0.023
- c  19.99   0.979   18.1 .. 21.9      3892        3829  1.00        0.020
-```
-
 Compute multiple [quantiles](@extref `Statistics.quantile`) simultaneously:
 
 ```jldoctest summarize
-julia> qs = (0.05, 0.25, 0.5, 0.75, 0.95);
+julia> percs = (5, 25, 50, 75, 95);
 
-julia> summarize(x, (:q5, :q25, :q50, :q75, :q95) => Base.Fix2(Statistics.quantile, qs))
+julia> summarize(x, Symbol.(:q, percs) => Base.Fix2(quantile, percs ./ 100))
 SummaryStats
        q5     q25       q50     q75    q95
  1  -1.61  -0.668   0.00447   0.653   1.64
  2   8.41   9.34   10.0      10.7    11.6
  3  18.4   19.3    20.0      20.6    21.6
 ```
+
+## Extending `summarize` to custom types
+
+To support computing summary statistics from a custom object `MyType`, overload the
+method `summarize(::MyType, stats_funs...; kwargs...)`, which should ultimately call
+`summarize(::AbstractArray{<:Union{Real,Missing},3}, stats_funs...; other_kwargs...)`,
+where `other_kwargs` are the keyword arguments passed to `summarize`.
 """
 function summarize end
 
-"""
-    summarize(data::AbstractArray, stats_funs...; kwargs...) -> SummaryStats
-
-Compute the summary statistics in `stats_funs` on each param in `data`, with size
-`(draws, chains, params)`.
-"""
 Base.@constprop :aggressive function summarize(
     data::AbstractArray{<:Union{Real,Missing},3},
     stats_funs_and_names...;
+    kind::Union{Symbol,Val}=:all,
     name::String="SummaryStats",
     var_names=axes(data, 3),
+    kwargs...,
 )
-    if isempty(stats_funs_and_names)
-        return summarize(data, default_summary_stats()...; name, var_names)
-    end
     length(var_names) == size(data, 3) || throw(
         DimensionMismatch(
             "length $(length(var_names)) of `var_names` does not match number of parameters $(size(data, 3)) in `data`.",
         ),
     )
+    if isempty(stats_funs_and_names)
+        return _summarize(data, default_summary_stats(kind; kwargs...), name, var_names)
+    else
+        return _summarize(data, stats_funs_and_names, name, var_names)
+    end
+end
+Base.@constprop :aggressive function _summarize(
+    data::AbstractArray, stats_funs_and_names, name::String, var_names
+)
     names_and_funs = map(_fun_and_name, stats_funs_and_names)
     fnames = map(first, names_and_funs)
     _check_function_names(fnames)
@@ -299,37 +313,54 @@ function _check_function_names(fnames)
 end
 
 """
-    default_summary_stats(focus=Statistics.mean; kwargs...)
+    default_summary_stats(kind::Symbol=:all; kwargs...)
 
-Combinatiton of [`default_stats`](@ref) and [`default_diagnostics`](@ref) to be used with
-[`summarize`](@ref).
+Return a collection of stats functions based on the named preset `kind`.
+
+These functions are then passed to [`summarize`](@ref).
+
+# Arguments
+
+$(_DEFAULT_SUMMARY_STATS_KIND_DOCSTRING)
+
+# Keywords
+
+$(_DEFAULT_SUMMARY_STATS_CI_DOCSTRING)
 """
-function default_summary_stats(focus=Statistics.mean; kwargs...)
-    return (default_stats(focus; kwargs...)..., default_diagnostics(focus; kwargs...)...)
+function default_summary_stats(kind::Symbol=:all; kwargs...)
+    return default_summary_stats(Val(kind); kwargs...)
+end
+function default_summary_stats(::Val{:all}; kwargs...)
+    return (_default_stats(kwargs...)..., _default_diagnostics(kwargs...)...)
+end
+default_summary_stats(::Val{:stats}; kwargs...) = _default_stats(; kwargs...)
+default_summary_stats(::Val{:diagnostics}; kwargs...) = _default_diagnostics(; kwargs...)
+function default_summary_stats(::Val{:all_median}; kwargs...)
+    focus = Statistics.median
+    return (_default_stats(focus; kwargs...)..., _default_diagnostics(focus; kwargs...)...)
+end
+function default_summary_stats(::Val{:stats_median}; kwargs...)
+    return _default_stats(Statistics.median; kwargs...)
+end
+function default_summary_stats(::Val{:diagnostics_median}; kwargs...)
+    return _default_diagnostics(Statistics.median; kwargs...)
+end
+function default_summary_stats(::Val{kind}; kwargs...) where {kind}
+    throw(
+        ArgumentError(
+            "Invalid kind: $kind. Must be one of [:all, :stats, " *
+            ":diagnostics, :all_median, :stats_median, :diagnostics_median].",
+        ),
+    )
 end
 
-"""
-    default_stats(focus=Statistics.mean; ci_fun=eti, ci_prob=$(DEFAULT_CI_PROB), kwargs...)
-
-Default statistics to be computed with [`summarize`](@ref).
-
-The value of `focus` determines the statistics to be returned:
-- [`Statistics.mean`](@extref): `mean`, [`std`](@extref `Statistics.std`),
-    `<ci_fun><ci_perc>`
-- [`Statistics.median`](@extref): `median`, [`mad`](@extref `StatsBase.mad`),
-    `<ci_fun><ci_perc>`
-
-The credible interval is computed using the function `ci_fun` with probability `ci_prob`.
-Supported options for `ci_fun` are [`eti`](@ref) and [`hdi`](@ref).
-"""
-function default_stats end
-default_stats(; kwargs...) = default_stats(Statistics.mean; kwargs...)
-function default_stats(::typeof(Statistics.mean); kwargs...)
+_default_stats(; kwargs...) = _default_stats(Statistics.mean; kwargs...)
+function _default_stats(::typeof(Statistics.mean); kwargs...)
     return (
         (:mean, :std) => StatsBase.mean_and_std ∘ _skipmissing, _interval_stat(; kwargs...)
     )
 end
-function default_stats(::typeof(Statistics.median); kwargs...)
+function _default_stats(::typeof(Statistics.median); kwargs...)
     return (
         :median => Statistics.median ∘ _skipmissing,
         :mad => StatsBase.mad ∘ _skipmissing,
@@ -342,26 +373,8 @@ function _interval_stat(; ci_fun=eti, ci_prob=DEFAULT_CI_PROB, kwargs...)
     return ci_name => FixKeywords(ci_fun; prob=ci_prob) ∘ _cskipmissing
 end
 
-"""
-    default_diagnostics(focus=Statistics.mean; kwargs...)
-
-Default diagnostics to be computed with [`summarize`](@ref).
-
-The value of `focus` determines the diagnostics to be returned:
-- [`Statistics.mean`](@extref):
-    [`ess_tail`](@extref `MCMCDiagnosticTools.ess`),
-    [`ess_bulk`](@extref `MCMCDiagnosticTools.ess`),
-    [`rhat`](@extref `MCMCDiagnosticTools.rhat`),
-    [`mcse_mean`](@extref `MCMCDiagnosticTools.mcse`),
-    [`mcse_std`](@extref `MCMCDiagnosticTools.mcse`)
-- [`Statistics.median`](@extref):
-    [`ess_tail`](@extref `MCMCDiagnosticTools.ess`),
-    [`ess_bulk`](@extref `MCMCDiagnosticTools.ess`),
-    [`rhat`](@extref `MCMCDiagnosticTools.rhat`),
-    [`mcse_median`](@extref `MCMCDiagnosticTools.mcse`)
-"""
-default_diagnostics(; kwargs...) = default_diagnostics(Statistics.mean; kwargs...)
-function default_diagnostics(::typeof(Statistics.mean); kwargs...)
+_default_diagnostics(; kwargs...) = _default_diagnostics(Statistics.mean; kwargs...)
+function _default_diagnostics(::typeof(Statistics.mean); kwargs...)
     return (
         :ess_tail => FixKeywords(MCMCDiagnosticTools.ess; kind=:tail),
         (:ess_bulk, :rhat) => MCMCDiagnosticTools.ess_rhat,
@@ -369,7 +382,7 @@ function default_diagnostics(::typeof(Statistics.mean); kwargs...)
         :mcse_std => FixKeywords(MCMCDiagnosticTools.mcse; kind=Statistics.std),
     )
 end
-function default_diagnostics(::typeof(Statistics.median); kwargs...)
+function _default_diagnostics(::typeof(Statistics.median); kwargs...)
     return (
         :ess_median => FixKeywords(MCMCDiagnosticTools.ess; kind=Statistics.median),
         :ess_tail => FixKeywords(MCMCDiagnosticTools.ess; kind=:tail),
