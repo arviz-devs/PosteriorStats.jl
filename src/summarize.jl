@@ -228,7 +228,7 @@ Compute just the statistics with an 89% HDI on all parameters, and provide the p
 names:
 
 ```jldoctest summarize
-julia> summarize(x, default_stats(; prob_interval=0.89)...; var_names=[:a, :b, :c])
+julia> summarize(x, default_stats(; ci_prob=0.89)...; var_names=[:a, :b, :c])
 SummaryStats
          mean    std  hdi_89%
  a   0.000275  0.989  -1.63 .. 1.52
@@ -310,42 +310,42 @@ function default_summary_stats(focus=Statistics.mean; kwargs...)
 end
 
 """
-    default_stats(focus=Statistics.mean; prob_interval=$(DEFAULT_INTERVAL_PROB), kwargs...)
+    default_stats(focus=Statistics.mean; ci_fun=eti, ci_prob=$(DEFAULT_CI_PROB), kwargs...)
 
 Default statistics to be computed with [`summarize`](@ref).
 
 The value of `focus` determines the statistics to be returned:
-- [`Statistics.mean`](@extref): `mean`, [`std`](@extref `Statistics.std`), `hdi_94%`
-- [`Statistics.median`](@extref): `median`, [`mad`](@extref `StatsBase.mad`), `eti_94%`
+- [`Statistics.mean`](@extref): `mean`, [`std`](@extref `Statistics.std`),
+    `<ci_fun>_<ci_perc>%`
+- [`Statistics.median`](@extref): `median`, [`mad`](@extref `StatsBase.mad`),
+    `<ci_fun>_<ci_perc>%`
 
-If `prob_interval` is set to a different value than the default, then different HDI and ETI
-statistics are computed accordingly. [`hdi`](@ref) refers to the highest-density interval,
-while [`eti`](@ref) refers to the equal-tailed interval.
-
-See also: [`hdi`](@ref), [`eti`](@ref)
+The credible interval is computed using the function `ci_fun` with probability `ci_prob`.
+Supported options for `ci_fun` are [`eti`](@ref) and [`hdi`](@ref).
 """
 function default_stats end
 default_stats(; kwargs...) = default_stats(Statistics.mean; kwargs...)
 function default_stats(
-    ::typeof(Statistics.mean); prob_interval::Real=DEFAULT_INTERVAL_PROB, kwargs...
+    ::typeof(Statistics.mean); kwargs...
 )
-    hdi_name = Symbol("hdi_$(_prob_to_string(prob_interval))%")
     return (
         (:mean, :std) => StatsBase.mean_and_std ∘ _skipmissing,
-        hdi_name => (x -> hdi(_cskipmissing(x); prob=prob_interval)),
+        _interval_stat(; kwargs...),
     )
 end
 function default_stats(
-    ::typeof(Statistics.median); prob_interval::Real=DEFAULT_INTERVAL_PROB, kwargs...
+    ::typeof(Statistics.median); kwargs...
 )
-    eti_name = Symbol("eti_$(_prob_to_string(prob_interval))%")
-    prob_tail = (1 - prob_interval) / 2
-    p = (prob_tail, 1 - prob_tail)
     return (
         :median => Statistics.median ∘ _skipmissing,
         :mad => StatsBase.mad ∘ _skipmissing,
-        eti_name => (x -> eti(_cskipmissing(x); prob=prob_interval)),
+        _interval_stat(; kwargs...),
     )
+end
+
+function _interval_stat(; ci_fun=eti, ci_prob=DEFAULT_CI_PROB, kwargs...)
+    ci_name = Symbol(_fname(ci_fun), "_", _prob_to_string(ci_prob), "%")
+    return ci_name => (x -> ci_fun(_cskipmissing(x); prob=ci_prob))
 end
 
 """
