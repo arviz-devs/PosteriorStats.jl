@@ -354,31 +354,33 @@ end
 Default diagnostics to be computed with [`summarize`](@ref).
 
 The value of `focus` determines the diagnostics to be returned:
-- [`Statistics.mean`](@extref): [`mcse_mean`](@extref MCMCDiagnosticsTools.mcse),
-    [`mcse_std`](@extref MCMCDiagnosticsTools.mcse),
+- [`Statistics.mean`](@extref):
     [`ess_tail`](@extref MCMCDiagnosticTools.ess),
     [`ess_bulk`](@extref MCMCDiagnosticTools.ess),
-    [`rhat`](@extref MCMCDiagnosticTools.rhat)
-- [`Statistics.median`](@extref): [`mcse_median`](@extref MCMCDiagnosticsTools.mcse),
+    [`rhat`](@extref MCMCDiagnosticTools.rhat),
+    [`mcse_mean`](@extref MCMCDiagnosticsTools.mcse),
+    [`mcse_std`](@extref MCMCDiagnosticsTools.mcse)
+- [`Statistics.median`](@extref):
     [`ess_tail`](@extref MCMCDiagnosticTools.ess),
     [`ess_bulk`](@extref MCMCDiagnosticTools.ess),
-    [`rhat`](@extref MCMCDiagnosticTools.rhat)
+    [`rhat`](@extref MCMCDiagnosticTools.rhat),
+    [`mcse_median`](@extref MCMCDiagnosticsTools.mcse)
 """
 default_diagnostics(; kwargs...) = default_diagnostics(Statistics.mean; kwargs...)
 function default_diagnostics(::typeof(Statistics.mean); kwargs...)
     return (
-        :mcse_mean => MCMCDiagnosticTools.mcse,
-        :mcse_std => _mcse_std,
         :ess_tail => _ess_tail,
         (:ess_bulk, :rhat) => MCMCDiagnosticTools.ess_rhat,
+        :mcse_mean => MCMCDiagnosticTools.mcse,
+        :mcse_std => _mcse_std,
     )
 end
 function default_diagnostics(::typeof(Statistics.median); kwargs...)
     return (
-        :mcse_median => _mcse_median,
         :ess_tail => _ess_tail,
         :ess_median => _ess_median,
         MCMCDiagnosticTools.rhat,
+        :mcse_median => _mcse_median,
     )
 end
 
