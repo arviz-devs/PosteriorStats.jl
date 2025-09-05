@@ -352,13 +352,13 @@ The value of `focus` determines the diagnostics to be returned:
     [`ess_tail`](@extref `MCMCDiagnosticTools.ess`),
     [`ess_bulk`](@extref `MCMCDiagnosticTools.ess`),
     [`rhat`](@extref `MCMCDiagnosticTools.rhat`),
-    [`mcse_mean`](@extref `MCMCDiagnosticsTools.mcse`),
-    [`mcse_std`](@extref `MCMCDiagnosticsTools.mcse`)
+    [`mcse_mean`](@extref `MCMCDiagnosticTools.mcse`),
+    [`mcse_std`](@extref `MCMCDiagnosticTools.mcse`)
 - [`Statistics.median`](@extref):
     [`ess_tail`](@extref `MCMCDiagnosticTools.ess`),
     [`ess_bulk`](@extref `MCMCDiagnosticTools.ess`),
     [`rhat`](@extref `MCMCDiagnosticTools.rhat`),
-    [`mcse_median`](@extref `MCMCDiagnosticsTools.mcse`)
+    [`mcse_median`](@extref `MCMCDiagnosticTools.mcse`)
 """
 default_diagnostics(; kwargs...) = default_diagnostics(Statistics.mean; kwargs...)
 function default_diagnostics(::typeof(Statistics.mean); kwargs...)
