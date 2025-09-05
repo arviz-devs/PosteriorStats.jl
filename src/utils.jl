@@ -11,6 +11,14 @@ end
 FixKeywords(f; kwargs...) = FixKeywords(f, NamedTuple(kwargs))
 (f::FixKeywords)(args...) = f.f(args...; f.kwargs...)
 
+# extract keywords from a NamedTuple or a collection of key-value pairs
+function _extract_keywords(kwargs::NamedTuple, ks::Tuple{Vararg{Symbol}})
+    return NamedTuple{filter(∈(keys(kwargs)), ks)}(kwargs)
+end
+function _extract_keywords(kwargs, ks::Tuple{Vararg{Symbol}})
+    return _extract_keywords(NamedTuple(kwargs), ks)
+end
+
 function _check_log_likelihood(x)
     if any(!isfinite, x)
         @warn "All log likelihood values must be finite, but some are not."
