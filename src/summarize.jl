@@ -217,11 +217,10 @@ the number of significant digits that will be displayed.
 ```jldoctest summarize
 julia> summarize(x; var_names=[:a, :b, :c])
 SummaryStats
-       mean   std  eti94          ess_tail  ess_bulk  rhat  mcse_mean  mcse_st ⋯
- a   0.0003  0.99  -1.83 .. 1.89      3567      3663  1.00      0.016     0.01 ⋯
- b  10.02    0.99   8.17 .. 11.9      3841      3906  1.00      0.016     0.01 ⋯
- c  19.98    0.99   18.1 .. 21.9      3892      3749  1.00      0.016     0.01 ⋯
-                                                                1 column omitted
+       mean   std  eti94          ess_tail  ess_bulk  rhat  mcse_mean  mcse_std
+ a   0.0003  0.99  -1.83 .. 1.89      3567      3663  1.00      0.016     0.012
+ b  10.02    0.99   8.17 .. 11.9      3841      3906  1.00      0.016     0.011
+ c  19.98    0.99   18.1 .. 21.9      3892      3749  1.00      0.016     0.012
 ```
 
 Compute just the statistics with an 89% HDI on all parameters, and provide the parameter

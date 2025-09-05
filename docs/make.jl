@@ -23,19 +23,22 @@ links = InterLinks(
     ),
 )
 
-makedocs(;
-    modules=[PosteriorStats],
-    repo=Remotes.GitHub("arviz-devs", "PosteriorStats.jl"),
-    sitename="PosteriorStats.jl",
-    format=Documenter.HTML(;
-        prettyurls=get(ENV, "CI", "false") == "true",
-        edit_link="main",
-        assets=[joinpath("assets", "citations.css")],
-    ),
-    pages=["Home" => "index.md", "API" => "api.md", "References" => "references.md"],
-    warnonly=[:doctest, :footnote, :missing_docs],
-    plugins=[bib, links],
-)
+# Increase the terminal width from 80 to 90 chars to avoid column truncation
+withenv("COLUMNS" => 90) do
+    makedocs(;
+        modules=[PosteriorStats],
+        repo=Remotes.GitHub("arviz-devs", "PosteriorStats.jl"),
+        sitename="PosteriorStats.jl",
+        format=Documenter.HTML(;
+            prettyurls=get(ENV, "CI", "false") == "true",
+            edit_link="main",
+            assets=[joinpath("assets", "citations.css")],
+        ),
+        pages=["Home" => "index.md", "API" => "api.md", "References" => "references.md"],
+        warnonly=[:doctest, :footnote, :missing_docs],
+        plugins=[bib, links],
+    )
+end
 
 deploydocs(;
     repo="github.com/arviz-devs/PosteriorStats.jl.git", devbranch="main", push_preview=true
