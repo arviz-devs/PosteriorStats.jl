@@ -229,7 +229,9 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                         ),
                     ),
                 )
-                stats2 = summarize(x, default_summary_stats(median; ci_fun=hdi, ci_prob=0.9)...)
+                stats2 = summarize(
+                    x, default_summary_stats(median; ci_fun=hdi, ci_prob=0.9)...
+                )
                 @test all(
                     map(
                         _isapprox,
@@ -286,7 +288,9 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                     @test stats4[k][2:end] ≈ stats1[k][2:end]
                 end
 
-                stats5 = summarize(x2, default_summary_stats(median; ci_fun=hdi, ci_prob=0.9)...)
+                stats5 = summarize(
+                    x2, default_summary_stats(median; ci_fun=hdi, ci_prob=0.9)...
+                )
                 @test stats5[:median] ≈
                     [median(skipmissing(x2[:, :, 1])); stats2[:median][2:end]]
                 @test stats5[:mad] ≈ [mad(skipmissing(x2[:, :, 1])); stats2[:mad][2:end]]

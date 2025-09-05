@@ -53,10 +53,7 @@ julia> eti(x)
 ```
 """
 function eti(
-    x::AbstractArray{<:Real};
-    prob::Real=DEFAULT_CI_PROB,
-    sorted::Bool=false,
-    kwargs...,
+    x::AbstractArray{<:Real}; prob::Real=DEFAULT_CI_PROB, sorted::Bool=false, kwargs...
 )
     return eti!(sorted ? x : _copymutable(x); prob, sorted, kwargs...)
 end

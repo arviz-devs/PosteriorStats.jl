@@ -325,17 +325,12 @@ Supported options for `ci_fun` are [`eti`](@ref) and [`hdi`](@ref).
 """
 function default_stats end
 default_stats(; kwargs...) = default_stats(Statistics.mean; kwargs...)
-function default_stats(
-    ::typeof(Statistics.mean); kwargs...
-)
+function default_stats(::typeof(Statistics.mean); kwargs...)
     return (
-        (:mean, :std) => StatsBase.mean_and_std ∘ _skipmissing,
-        _interval_stat(; kwargs...),
+        (:mean, :std) => StatsBase.mean_and_std ∘ _skipmissing, _interval_stat(; kwargs...)
     )
 end
-function default_stats(
-    ::typeof(Statistics.median); kwargs...
-)
+function default_stats(::typeof(Statistics.median); kwargs...)
     return (
         :median => Statistics.median ∘ _skipmissing,
         :mad => StatsBase.mad ∘ _skipmissing,
