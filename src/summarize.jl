@@ -217,10 +217,10 @@ the number of significant digits that will be displayed.
 ```jldoctest summarize
 julia> summarize(x; var_names=[:a, :b, :c])
 SummaryStats
-       mean   std  hdi_94%        mcse_mean  mcse_std  ess_tail  ess_bulk  rha ⋯
- a   0.0003  0.99  -1.92 .. 1.78      0.016     0.012      3567      3663  1.0 ⋯
- b  10.02    0.99   8.17 .. 11.9      0.016     0.011      3841      3906  1.0 ⋯
- c  19.98    0.99   18.1 .. 21.9      0.016     0.012      3892      3749  1.0 ⋯
+       mean   std  eti_94%        ess_tail  ess_bulk  rhat  mcse_mean  mcse_st ⋯
+ a   0.0003  0.99  -1.83 .. 1.89      3567      3663  1.00      0.016     0.01 ⋯
+ b  10.02    0.99   8.17 .. 11.9      3841      3906  1.00      0.016     0.01 ⋯
+ c  19.98    0.99   18.1 .. 21.9      3892      3749  1.00      0.016     0.01 ⋯
                                                                 1 column omitted
 ```
 
@@ -230,10 +230,10 @@ names:
 ```jldoctest summarize
 julia> summarize(x, default_stats(; ci_prob=0.89)...; var_names=[:a, :b, :c])
 SummaryStats
-         mean    std  hdi_89%
- a   0.000275  0.989  -1.63 .. 1.52
- b  10.0       0.988   8.53 .. 11.6
- c  20.0       0.988   18.5 .. 21.6
+         mean    std  eti_89%
+ a   0.000275  0.989  -1.57 .. 1.59
+ b  10.0       0.988   8.47 .. 11.6
+ c  20.0       0.988   18.4 .. 21.6
 ```
 
 Compute the summary stats focusing on [`Statistics.median`](@extref):
@@ -241,10 +241,10 @@ Compute the summary stats focusing on [`Statistics.median`](@extref):
 ```jldoctest summarize
 julia> summarize(x, default_summary_stats(median)...; var_names=[:a, :b, :c])
 SummaryStats
-    median    mad  eti_94%        mcse_median  ess_tail  ess_median  rhat
- a   0.004  0.978  -1.83 .. 1.89        0.020      3567        3336  1.00
- b  10.02   0.995   8.17 .. 11.9        0.023      3841        3787  1.00
- c  19.99   0.979   18.1 .. 21.9        0.020      3892        3829  1.00
+    median    mad  eti_94%        ess_tail  ess_median  rhat  mcse_median
+ a   0.004  0.978  -1.83 .. 1.89      3567        3336  1.00        0.020
+ b  10.02   0.995   8.17 .. 11.9      3841        3787  1.00        0.023
+ c  19.99   0.979   18.1 .. 21.9      3892        3829  1.00        0.020
 ```
 
 Compute multiple [quantiles](@extref `Statistics.quantile`) simultaneously:
