@@ -36,8 +36,11 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
   - `dists`: array of shape `(draws[, chains])` containing parametrized
     `Distributions.Distribution`s representing a non-factorized observation
     model, one for each posterior draw. The following distributions are currently supported:
-    + [`Distributions.MvNormal`](@extref) [Burkner2021](@cite)
+    + [`Distributions.MvNormal`](@extref) [Burkner2021](@citep)
     + [`Distributions.MvNormalCanon`](@extref)
+    + [`Distributions.MatrixNormal`](@extref)
+    + [`Distributions.MvLogNormal`](@extref)
+    + `Distributions.GenericMvTDist` [Burkner2021; but uses a more efficient implementation](@citep)
 
 # Returns
 
@@ -55,7 +58,7 @@ function pointwise_loglikelihoods(
         <:Distributions.Distribution{<:Distributions.ArrayLikeVariate{N}},M
     },
 ) where {M,N}
-    T = typeof(log(one(promote_type(eltype(y), eltype(eltype(dists))))))
+    T = typeof(log(one(promote_type(eltype(y), Distributions.partype(first(dists))))))
     sample_dims = ntuple(identity, M)
     log_like = similar(y, T, (axes(dists)..., axes(y)...))
     for (dist, ll) in zip(dists, eachslice(log_like; dims=sample_dims))
@@ -64,6 +67,7 @@ function pointwise_loglikelihoods(
     return log_like
 end
 
+# Array-variate normal distribution
 function pointwise_loglikelihoods!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
@@ -74,7 +78,6 @@ function pointwise_loglikelihoods!(
     g = Σ \ (y - μ)
     return @. log_like = (log(λ) - g^2 / λ - log2π) / 2
 end
-
 function pointwise_loglikelihoods!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
@@ -85,6 +88,53 @@ function pointwise_loglikelihoods!(
     cov_inv_y = _pdmul(J, y)
     return @. log_like = (log(λ) - (cov_inv_y - h)^2 / λ - log2π) / 2
 end
+function pointwise_loglikelihoods!(
+    log_like::AbstractMatrix{<:Real},
+    y::AbstractMatrix{<:Real},
+    dist::Distributions.MatrixNormal,
+)
+    (; M, U, V) = dist
+    λU = _pd_diag_inv(U)
+    λV = _pd_diag_inv(V)
+    g = U \ (y - M) / V
+    return @. log_like = (log(λU) + log(λV') - g^2 / λU / λV' - log2π) / 2
+end
+
+# Multivariate log-normal distribution
+function pointwise_loglikelihoods!(
+    log_like::AbstractVector{<:Real},
+    y::AbstractVector{<:Real},
+    dist::Distributions.MvLogNormal,
+)
+    logy = log.(y)
+    pointwise_loglikelihoods!(log_like, logy, dist.normal)
+    log_like .-= logy
+    return log_like
+end
+
+# Array-variate t-distribution
+function pointwise_loglikelihoods!(
+    log_like::AbstractVector{T},
+    y::AbstractVector{<:Real},
+    dist::Distributions.GenericMvTDist,
+) where {T<:Real}
+    (; μ, Σ) = dist
+    ν = dist.df
+    νi = ν + length(dist) - 1
+    α = (νi + 1) / 2
+    logc = SpecialFunctions.loggamma(α) - SpecialFunctions.loggamma(νi / 2) - T(logπ) / 2
+    λ = _pd_diag_inv(Σ)
+    d = y - μ
+    g = Σ \ d
+    sqmahal = LinearAlgebra.dot(d, g)
+    return map!(log_like, λ, g) do λi, gi
+        γ = gi^2 / λi
+        β = ν + sqmahal - γ
+        return logc - α * log1p(γ / β) + (log(λi) - log(β)) / 2
+    end
+end
+
+# Helper functions
 
 function _pd_diag_inv(A::PDMats.AbstractPDMat)
     T = typeof(float(oneunit(eltype(A))))

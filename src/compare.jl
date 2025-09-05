@@ -49,9 +49,9 @@ julia> mc = compare(models; elpd_method=myloo)
 ┌ Warning: 1 parameters had Pareto shape values 0.7 < k ≤ 1. Resulting importance sampling estimates are likely to be unstable.
 └ @ PSIS ~/.julia/packages/PSIS/...
 ModelComparisonResult with Stacking weights
-               rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p ⋯
- non_centered     1   -31      1.5       0            0.0       1.0  0.9  0.32 ⋯
- centered         2   -31      1.4       0.03         0.061     0.0  0.9  0.33 ⋯
+               rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p
+ non_centered     1   -31      1.5       0            0.0       1.0  0.9  0.32
+ centered         2   -31      1.4       0.03         0.061     0.0  0.9  0.33
 julia> mc.weight |> pairs
 pairs(::NamedTuple) with 2 entries:
   :non_centered => 1.0
@@ -66,9 +66,9 @@ julia> elpd_results = mc.elpd_result;
 
 julia> compare(elpd_results; weights_method=BootstrappedPseudoBMA())
 ModelComparisonResult with BootstrappedPseudoBMA weights
-               rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p ⋯
- non_centered     1   -31      1.5       0            0.0      0.51  0.9  0.32 ⋯
- centered         2   -31      1.4       0.03         0.061    0.49  0.9  0.33 ⋯
+               rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p
+ non_centered     1   -31      1.5       0            0.0      0.51  0.9  0.32
+ centered         2   -31      1.4       0.03         0.061    0.49  0.9  0.33
 ```
 
 # References

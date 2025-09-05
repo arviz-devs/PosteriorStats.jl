@@ -16,8 +16,7 @@ See also: [`eti!`](@ref), [`hdi`](@ref), [`hdi!`](@ref).
     present
 
 # Keywords
-- `prob`: the probability mass to be contained in the ETI. Default is
-    `$(DEFAULT_INTERVAL_PROB)`.
+- `prob`: the probability mass to be contained in the ETI. Default is `$(DEFAULT_CI_PROB)`.
 - `kwargs`: remaining keywords are passed to [`Statistics.quantile`](@extref).
 
 # Returns
@@ -27,7 +26,7 @@ See also: [`eti!`](@ref), [`hdi`](@ref), [`hdi!`](@ref).
 
 !!! note
     Any default value of `prob` is arbitrary. The default value of
-    `prob=$(DEFAULT_INTERVAL_PROB)` instead of a more common default like `prob=0.95` is
+    `prob=$(DEFAULT_CI_PROB)` instead of a more common default like `prob=0.95` is
     chosen to reminder the user of this arbitrariness.
 
 # Examples
@@ -54,10 +53,7 @@ julia> eti(x)
 ```
 """
 function eti(
-    x::AbstractArray{<:Real};
-    prob::Real=DEFAULT_INTERVAL_PROB,
-    sorted::Bool=false,
-    kwargs...,
+    x::AbstractArray{<:Real}; prob::Real=DEFAULT_CI_PROB, sorted::Bool=false, kwargs...
 )
     return eti!(sorted ? x : _copymutable(x); prob, sorted, kwargs...)
 end
@@ -69,7 +65,7 @@ A version of [`eti`](@ref) that partially sorts `samples` in-place while computi
 
 See also: [`eti`](@ref), [`hdi`](@ref), [`hdi!`](@ref).
 """
-function eti!(x::AbstractArray{<:Real}; prob::Real=DEFAULT_INTERVAL_PROB, kwargs...)
+function eti!(x::AbstractArray{<:Real}; prob::Real=DEFAULT_CI_PROB, kwargs...)
     ndims(x) > 0 ||
         throw(ArgumentError("ETI cannot be computed for a 0-dimensional array."))
     0 < prob < 1 || throw(DomainError(prob, "ETI `prob` must be in the range `(0, 1)`."))

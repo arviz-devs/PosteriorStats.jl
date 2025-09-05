@@ -6,6 +6,16 @@ using Statistics
 using Test
 
 @testset "utils" begin
+    @testset "FixKeywords" begin
+        x = randn(10, 5)
+        f = @inferred PosteriorStats.FixKeywords(sum; dims=1)
+        @test f.f === sum
+        @test f.kwargs === (dims=1,)
+        @test @inferred(f(x)) == sum(x; dims=1)
+        f = @inferred PosteriorStats.FixKeywords(sum; dims=2)
+        @test f(x) == sum(x; dims=2)
+    end
+
     @testset "_assimilar" begin
         @testset for x in ([8, 2, 5], (8, 2, 5), (; a=8, b=2, c=5))
             @test @inferred(PosteriorStats._assimilar((x=1.0, y=2.0, z=3.0), x)) ==
