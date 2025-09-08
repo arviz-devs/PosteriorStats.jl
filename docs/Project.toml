@@ -4,13 +4,14 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 DocumenterInterLinks = "d12716ef-a0f6-4df4-a9f1-a5a34e75c656"
+LogExpFunctions = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
 MCMCDiagnosticTools = "be115224-59cd-429b-ad48-344e309966f0"
 PosteriorStats = "7f36be82-ad55-44ba-a5c0-b8b5480d7aa5"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [sources]
-PosteriorStats = {path=".."}
+PosteriorStats = {path = ".."}
 
 [compat]
 Documenter = "1"
