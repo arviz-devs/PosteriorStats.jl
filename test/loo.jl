@@ -88,7 +88,7 @@ using Test
         @test occursin("Warning:", msg)
     end
     @testset "show" begin
-        loglike = log_likelihood_eight_schools(eight_schools_data().centered)
+        loglike = log_likelihood_eight_schools().centered
         # regression test
         @test sprint(show, "text/plain", loo(loglike)) == """
             PSISLOOResult with estimates

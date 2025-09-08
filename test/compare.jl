@@ -9,8 +9,8 @@ function _isequal(x::ModelComparisonResult, y::ModelComparisonResult)
 end
 
 @testset "compare" begin
-    data = eight_schools_data()
-    eight_schools_loo_results = map(loo ∘ log_likelihood_eight_schools, data)
+    data = log_likelihood_eight_schools()
+    eight_schools_loo_results = map(loo, data)
     mc1 = @inferred ModelComparisonResult compare(eight_schools_loo_results)
 
     @testset "basic checks" begin
@@ -34,7 +34,7 @@ end
         @test mc1.elpd_result ==
             NamedTuple{(:non_centered, :centered)}(eight_schools_loo_results)
 
-        mc2 = compare(data; elpd_method=loo ∘ log_likelihood_eight_schools)
+        mc2 = compare(data; elpd_method=loo)
         @test _isequal(mc2, mc1)
 
         @test_throws ArgumentError compare(eight_schools_loo_results; model_names=[:foo])
