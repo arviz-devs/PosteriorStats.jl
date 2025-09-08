@@ -7,6 +7,7 @@ Random.seed!(97)
 @testset "PosteriorStats" begin
     include("helpers.jl")
     include("utils.jl")
+    include("show_table.jl")
     include("kde.jl")
     include("density_estimation.jl")
     include("eti.jl")
