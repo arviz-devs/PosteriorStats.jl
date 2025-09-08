@@ -32,33 +32,19 @@ using Test
     end
 
     @testset "ft_printf_sigdigits_matching_se" begin
-        @testset "all columns" begin
-            @testset for scale in 1:3
-                se = rand(5)
-                ft = PosteriorStats.ft_printf_sigdigits_matching_se(se; scale)
-                for i in eachindex(se), j in 1:5
-                    v = randn()
-                    sigdigits = PosteriorStats.sigdigits_matching_se(v, se[i]; scale)
+        data = (x=randn(10), x_se=rand(10), y=randn(10), y_se=rand(10))
+        @testset for scale in 1:3, (col, se_col) in ((1, 2), (3, 4))
+            ft = PosteriorStats.ft_printf_sigdigits_matching_se(data, 1, 2; scale)
+            for i in eachindex(values(data)...), j in eachindex(data)
+                v = data[j][i]
+                if j == col
+                    sigdigits = PosteriorStats.sigdigits_matching_se(
+                        v, data[se_col][i]; scale
+                    )
                     @test ft(v, i, j) == PosteriorStats._printf_with_sigdigits(v, sigdigits)
                     @test ft("foo", i, j) == "foo"
-                end
-            end
-        end
-
-        @testset "subset of columns" begin
-            @testset for scale in 1:3
-                se = rand(5)
-                ft = PosteriorStats.ft_printf_sigdigits_matching_se(se, [2, 3]; scale)
-                for i in eachindex(se), j in 1:5
-                    v = randn()
-                    if j ∈ [2, 3]
-                        sigdigits = PosteriorStats.sigdigits_matching_se(v, se[i]; scale)
-                        @test ft(v, i, j) ==
-                            PosteriorStats._printf_with_sigdigits(v, sigdigits)
-                        @test ft("foo", i, j) == "foo"
-                    else
-                        @test ft(v, i, j) === v
-                    end
+                else
+                    @test ft(v, i, j) === v
                 end
             end
         end

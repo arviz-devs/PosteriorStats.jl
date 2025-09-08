@@ -3,16 +3,7 @@
 # formatting functions for special columns
 # see https://ronisbr.github.io/PrettyTables.jl/stable/man/usage/#Formatters
 
-"""
-    ft_printf_sigdigits(sigdigits[, columns])
-
-Use Printf to format the elements in the `columns` to the number of `sigdigits`.
-
-If `sigdigits` is a `Real`, and `columns` is not specified (or is empty), then the
-formatting will be applied to the entire table.
-Otherwise, if `sigdigits` is a `Real` and `columns` is a vector, then the elements in the
-columns will be formatted to the number of `sigdigits`.
-"""
+# Use Printf to format real elements to the number of `sigdigits`.
 function ft_printf_sigdigits(sigdigits::Int, columns::AbstractVector{Int}=Int[])
     if isempty(columns)
         return (v, _, _) -> begin
@@ -21,32 +12,18 @@ function ft_printf_sigdigits(sigdigits::Int, columns::AbstractVector{Int}=Int[])
         end
     else
         return (v, _, j) -> begin
-            v isa Real || return v
-            for col in columns
-                col == j && return _printf_with_sigdigits(v, sigdigits)
-            end
-            return v
+            (v isa Real && j ∈ columns) || return v
+            return _printf_with_sigdigits(v, sigdigits)
         end
     end
 end
 
-function ft_printf_sigdigits_interval(sigdigits::Int, columns::AbstractVector{Int}=Int[])
-    if isempty(columns)
-        return (v, _, _) -> begin
-            v isa IntervalSets.AbstractInterval || return v
-            tuple_string = map(Base.Fix2(_printf_with_sigdigits, sigdigits), extrema(v))
-            return join(tuple_string, _interval_delimiter(v))
-        end
-    else
-        return (v, _, j) -> begin
-            v isa Tuple{<:Real,Vararg{Real}} || return v
-            for col in columns
-                col == j || continue
-                tuple_string = map(Base.Fix2(_printf_with_sigdigits, sigdigits), extrema(v))
-                return join(tuple_string, _interval_delimiter(v))
-            end
-            return v
-        end
+# Use Printf to format interval elements to the number of `sigdigits`.
+function ft_printf_sigdigits_interval(sigdigits::Int)
+    return (v, _, _) -> begin
+        v isa IntervalSets.AbstractInterval || return v
+        tuple_string = map(Base.Fix2(_printf_with_sigdigits, sigdigits), extrema(v))
+        return join(tuple_string, _interval_delimiter(v))
     end
 end
 
@@ -55,55 +32,19 @@ function _interval_delimiter(x::IntervalSets.AbstractInterval)
     return occursin(" .. ", str) ? " .. " : ".."
 end
 
-"""
-    ft_printf_sigdigits_matching_se(se_vals[, columns]; kwargs...)
-
-Use Printf to format the elements in the `columns` to sigdigits based on the standard error
-column in `se_vals`.
-
-All values are formatted with Printf to the number of significant digits determined by
-[`sigdigits_matching_se`](@ref). `kwargs` are forwarded to that function.
-
-`se_vals` must be the same length as any of the columns in the table.
-If `columns` is a non-empty vector, then the formatting is only applied to those columns.
-Otherwise, the formatting is applied to the entire table.
-"""
-function ft_printf_sigdigits_matching_se(
-    se_vals::AbstractVector, columns::AbstractVector{Int}=Int[]; kwargs...
-)
-    if isempty(columns)
-        return (v, i, _) -> begin
-            (v isa Real && se_vals[i] isa Real) || return v
-            sigdigits = sigdigits_matching_se(v, se_vals[i]; kwargs...)
-            return _printf_with_sigdigits(v, sigdigits)
-        end
-    else
-        return (v, i, j) -> begin
-            (v isa Real && se_vals[i] isa Real) || return v
-            for col in columns
-                if col == j
-                    sigdigits = sigdigits_matching_se(v, se_vals[i]; kwargs...)
-                    return _printf_with_sigdigits(v, sigdigits)
-                end
-            end
-            return v
-        end
+function ft_printf_sigdigits_matching_se(data, col::Int, se_col::Int; kwargs...)
+    se_vals = Tables.getcolumn(data, se_col)
+    return (v, i, j) -> begin
+        (v isa Real && col == j && se_vals[i] isa Real) || return v
+        sigdigits = sigdigits_matching_se(v, se_vals[i]; kwargs...)
+        return _printf_with_sigdigits(v, sigdigits)
     end
 end
 
-function _prettytables_integer_formatter(data, columns::AbstractVector{Int}=Int[])
-    if isempty(columns)
-        return (v, _, _) -> begin
-            (v isa Integer) || return v
-            return string(v)
-        end
-    else
-        return (v, _, j) -> begin
-            (v isa Integer) || return v
-            col = findfirst(==(j), columns)
-            col === nothing && return v
-            return string(v)
-        end
+function _prettytables_integer_formatter(data)
+    return (v, _, _) -> begin
+        (v isa Integer) || return v
+        return string(v)
     end
 end
 
@@ -117,12 +58,10 @@ function _prettytables_se_formatters(data; sigdigits_se=2)
         m === nothing && continue
         push!(se_cols_inds, idx_se_col)
         col = Symbol(something(m.captures[1], m.captures[2]))
-        idx_col = findfirst(==(col), col_names)
-        idx_col === nothing && continue
-        push!(
-            formatters,
-            ft_printf_sigdigits_matching_se(Tables.getcolumn(data, se_col), [idx_col]),
-        )
+        col ∈ col_names || continue
+        idx_col = Tables.columnindex(data, col)
+        idx_col == 0 && continue
+        push!(formatters, ft_printf_sigdigits_matching_se(data, idx_col, idx_se_col))
     end
     if !isempty(se_cols_inds)
         push!(formatters, ft_printf_sigdigits(sigdigits_se, se_cols_inds))
