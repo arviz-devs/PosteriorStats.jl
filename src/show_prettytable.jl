@@ -4,17 +4,17 @@
 # see https://ronisbr.github.io/PrettyTables.jl/stable/man/usage/#Formatters
 
 # Use Printf to format real elements to the number of `sigdigits`.
-function ft_printf_sigdigits(sigdigits::Int, columns::AbstractVector{Int}=Int[])
-    if isempty(columns)
-        return (v, _, _) -> begin
-            v isa Real || return v
-            return _printf_with_sigdigits(v, sigdigits)
-        end
-    else
-        return (v, _, j) -> begin
-            (v isa Real && j ∈ columns) || return v
-            return _printf_with_sigdigits(v, sigdigits)
-        end
+function ft_printf_sigdigits(sigdigits::Int)
+    return (v, _, _) -> begin
+        v isa Real || return v
+        return _printf_with_sigdigits(v, sigdigits)
+    end
+end
+function ft_printf_sigdigits(sigdigits::Int, columns::AbstractVector{Int})
+    isempty(columns) && return ft_printf_sigdigits(sigdigits)
+    return (v, _, j) -> begin
+        (v isa Real && j ∈ columns) || return v
+        return _printf_with_sigdigits(v, sigdigits)
     end
 end
 
