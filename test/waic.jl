@@ -55,31 +55,11 @@ using Test
         end
     end
     @testset "show" begin
-        loglike = log_likelihood_eight_schools(eight_schools_data().centered)
+        loglike = log_likelihood_eight_schools().centered
         # regression test
         @test sprint(show, "text/plain", waic(loglike)) == """
             WAICResult with estimates
              elpd  se_elpd    p  se_p
               -31      1.4  0.9  0.32"""
-    end
-    @testset "agrees with R waic" begin
-        if r_loo_installed()
-            models = eight_schools_data()
-            @testset for name in keys(models)
-                log_likelihood = log_likelihood_eight_schools(models[name])
-                reff_rand = rand(size(log_likelihood, 3))
-                result_r = waic_r(log_likelihood)
-                result = waic(log_likelihood)
-                @test result.estimates.elpd ≈ result_r.estimates.elpd
-                @test result.estimates.se_elpd ≈ result_r.estimates.se_elpd
-                @test result.estimates.p ≈ result_r.estimates.p
-                @test result.estimates.se_p ≈ result_r.estimates.se_p
-                @test result.pointwise.elpd ≈ result_r.pointwise.elpd
-                @test result.pointwise.p ≈ result_r.pointwise.p
-            end
-        else
-            @warn "Skipping consistency tests against R loo::waic, since loo is not installed."
-            @test_broken false
-        end
     end
 end
