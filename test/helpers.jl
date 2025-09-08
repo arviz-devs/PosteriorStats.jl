@@ -1,4 +1,5 @@
 using ArviZExampleData
+using BSON
 using IntervalSets
 
 function log_likelihood_eight_schools(idata)
@@ -11,6 +12,9 @@ function eight_schools_data()
         centered=load_example_data("centered_eight"),
         non_centered=load_example_data("non_centered_eight"),
     )
+function log_likelihood_eight_schools()
+    dict = BSON.load(joinpath(@__DIR__, "data/eight_schools_loglikelihood.bson"))
+    return (centered=dict[:centered], non_centered=dict[:non_centered])
 end
 
 function _isapprox(x::AbstractArray{<:Number}, y::AbstractArray{<:Number}; kwargs...)
