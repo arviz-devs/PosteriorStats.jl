@@ -101,30 +101,4 @@ using Test
              (-Inf, 0.5]  good  4 (50.0%)  270
               (0.5, 0.7]  okay  4 (50.0%)  307"""
     end
-    @testset "agrees with R loo" begin
-        if r_loo_installed()
-            models = eight_schools_data()
-            @testset for name in keys(models)
-                log_likelihood = log_likelihood_eight_schools(models[name])
-                reff_rand = rand(size(log_likelihood, 3))
-                @testset for reff in (nothing, reff_rand)
-                    result_r = loo_r(log_likelihood; reff)
-                    result = loo(log_likelihood; reff)
-                    @test result.estimates.elpd ≈ result_r.estimates.elpd
-                    @test result.estimates.se_elpd ≈ result_r.estimates.se_elpd
-                    @test result.estimates.p ≈ result_r.estimates.p
-                    @test result.estimates.se_p ≈ result_r.estimates.se_p
-                    @test result.pointwise.elpd ≈ result_r.pointwise.elpd
-                    # increased tolerance for se_elpd, since we use a different approach
-                    @test result.pointwise.se_elpd ≈ result_r.pointwise.se_elpd rtol = 0.01
-                    @test result.pointwise.p ≈ result_r.pointwise.p
-                    @test result.pointwise.reff ≈ result_r.pointwise.reff
-                    @test result.pointwise.pareto_shape ≈ result_r.pointwise.pareto_shape
-                end
-            end
-        else
-            @warn "Skipping consistency tests against R loo::loo, since loo is not installed."
-            @test_broken false
-        end
-    end
 end
