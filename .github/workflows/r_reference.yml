@@ -1,0 +1,48 @@
+name: R-reference
+
+on:
+  push:
+    branches:
+      - main
+    tags: ['*']
+  pull_request:
+
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  test:
+    name: ${{ github.event_name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+      - name: Install R loo
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            github::stan-dev/loo@v2.8.0
+          dependencies: '"hard"'
+      - name: Set R lib path for RCall.jl
+        run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+      - uses: julia-actions/setup-julia@v2
+        id: setup-julia
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - name: Build Conda
+        run: |
+          using Pkg; Pkg.activate(; temp=true);
+          Pkg.add("Conda");
+          Pkg.build("Conda");
+        shell: julia --color=yes {0}
+      - name: Install dependencies, build, and run tests
+        run: |
+          using Pkg
+          Pkg.instantiate()
+          include(joinpath(pwd(), "test", "reference", "runtests.jl"))
+        shell: julia --color=yes --project=test/reference/ {0}

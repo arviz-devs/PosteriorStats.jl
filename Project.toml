@@ -56,7 +56,6 @@ PDMats = "0.11.11"
 PSIS = "0.9.1"
 PrettyTables = "2.1"
 Printf = "1"
-RCall = "0.14.7"
 Random = "1"
 Roots = "1, 2"
 Setfield = "1"
@@ -75,8 +74,7 @@ FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["ArviZExampleData", "DimensionalData", "FiniteDifferences", "GLM", "Logging", "OffsetArrays", "RCall", "Test"]
+test = ["ArviZExampleData", "DimensionalData", "FiniteDifferences", "GLM", "Logging", "OffsetArrays", "Test"]
