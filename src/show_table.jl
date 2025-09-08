@@ -1,4 +1,4 @@
-#
+# Utilities for displaying tables using PrettyTables.jl
 
 """
     ft_printf_sigdigits(sigdigits[, columns])
