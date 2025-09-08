@@ -48,8 +48,8 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
         end
 
         @testset "better model gets higher weight" begin
-            data = eight_schools_data()
-            elpd_results = map(loo ∘ log_likelihood_eight_schools, data)
+            data = log_likelihood_eight_schools()
+            elpd_results = map(loo, data)
             weights = model_weights(weights_method(), elpd_results)
             @test sum(weights) ≈ 1
             @test weights.non_centered > weights.centered
