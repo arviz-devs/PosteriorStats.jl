@@ -47,19 +47,11 @@ using Test
         y_pred = reshape(transpose(y_sample), ndraws, nchains, length(y))
         loglike = mapslices(yi -> logpdf.(dists, yi), y_pred; dims=3)
         log_weights = psis(loglike).log_weights
-        pit_vals = loo_pit(
-            PosteriorStats.smooth_data(y; dims=1),
-            PosteriorStats.smooth_data(y_pred; dims=3),
-            log_weights,
-        )
-        ϵ = sqrt(eps())
-        @test loo_pit(y, y_pred, log_weights) == pit_vals
-        @test loo_pit(y, y_pred, log_weights; is_discrete=true) == pit_vals
-        @test loo_pit(y, y_pred, log_weights; is_discrete=false) != pit_vals
-        @test !(loo_pit(y .+ ϵ, y_pred, log_weights) ≈ pit_vals)
-        @test loo_pit(y .+ ϵ, y_pred, log_weights; is_discrete=true) ≈ pit_vals
-        @test !(loo_pit(y, y_pred .+ ϵ, log_weights) ≈ pit_vals)
-        @test loo_pit(y, y_pred .+ ϵ, log_weights; is_discrete=true) ≈ pit_vals
+
+        @test_logs (
+            :warn,
+            "All data and predictions are integer-valued. `loo_pit` will not be uniformly distributed on [0, 1] and is not recommended.",
+        ) loo_pit(y, y_pred, log_weights)
     end
     # @testset "OffsetArrays data" begin
     #     draw_dim = Dim{:draw}(1:100)
