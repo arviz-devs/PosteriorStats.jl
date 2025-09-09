@@ -53,13 +53,13 @@ See also: [`PSISLOOResult`](@ref), [`waic`](@ref)
 Manually compute ``R_\\mathrm{eff}`` and calculate PSIS-LOO of a model:
 
 ```jldoctest
-julia> using ArviZExampleData, MCMCDiagnosticTools
+julia> using ArviZExampleData, LogExpFunctions, MCMCDiagnosticTools
 
 julia> idata = load_example_data("centered_eight");
 
 julia> log_like = PermutedDimsArray(idata.log_likelihood.obs, (:draw, :chain, :school));
 
-julia> reff = ess(log_like; kind=:basic, split_chains=1, relative=true);
+julia> reff = ess(softmax(log_like; dims=(1, 2)); kind=:basic, split_chains=1, relative=true);
 
 julia> loo(log_like; reff)
 PSISLOOResult with estimates
@@ -69,8 +69,8 @@ PSISLOOResult with estimates
 and PSISResult with 500 draws, 4 chains, and 8 parameters
 Pareto shape (k) diagnostic values:
                     Count      Min. ESS
- (-Inf, 0.5]  good  5 (62.5%)  290
-  (0.5, 0.7]  okay  3 (37.5%)  399
+ (-Inf, 0.5]  good  4 (50.0%)  270
+  (0.5, 0.7]  okay  4 (50.0%)  307
 ```
 
 # References
