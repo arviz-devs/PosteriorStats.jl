@@ -18,47 +18,6 @@ function _check_log_likelihood(x)
     return nothing
 end
 
-"""
-    smooth_data(y; dims=:, interp_method=CubicSpline, offset_frac=0.01)
-
-Smooth `y` along `dims` using `interp_method`.
-
-`interp_method` is a 2-argument callabale that takes the arguments `y` and `x` and returns
-a DataInterpolations.jl interpolation method, defaulting to a cubic spline interpolator.
-
-`offset_frac` is the fraction of the length of `y` to use as an offset when interpolating.
-"""
-function smooth_data(
-    y;
-    dims::Union{Int,Tuple{Int,Vararg{Int}},Colon}=Colon(),
-    interp_method=DataInterpolations.CubicSpline,
-    offset_frac=1//100,
-)
-    T = float(eltype(y))
-    y_interp = similar(y, T)
-    n = dims isa Colon ? length(y) : prod(Base.Fix1(size, y), dims)
-    x = range(0, 1; length=n)
-    x_interp = range(0 + offset_frac, 1 - offset_frac; length=n)
-    _smooth_data!(y_interp, interp_method, y, x, x_interp, dims)
-    return y_interp
-end
-
-function _smooth_data!(y_interp, interp_method, y, x, x_interp, ::Colon)
-    interp = interp_method(vec(y), x)
-    interp(vec(y_interp), x_interp)
-    return y_interp
-end
-function _smooth_data!(y_interp, interp_method, y, x, x_interp, dims)
-    for (y_interp_i, y_i) in zip(
-        eachslice(y_interp; dims=_otherdims(y_interp, dims)),
-        eachslice(y; dims=_otherdims(y, dims)),
-    )
-        interp = interp_method(vec(y_i), x)
-        interp(vec(y_interp_i), x_interp)
-    end
-    return y_interp
-end
-
 Base.@pure _typename(::T) where {T} = T.name.name
 
 _astuple(x) = (x,)
