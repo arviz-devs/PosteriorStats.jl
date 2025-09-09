@@ -1,5 +1,5 @@
 """
-    loo_pit(y, y_pred, log_weights; kwargs...) -> Union{Real,AbstractArray}
+    loo_pit(y, y_pred, log_weights) -> Union{Real,AbstractArray}
 
 Compute leave-one-out probability integral transform (LOO-PIT) checks.
 
@@ -9,13 +9,6 @@ Compute leave-one-out probability integral transform (LOO-PIT) checks.
   - `y_pred`: array of posterior predictive samples with shape `(draws, chains, params...)`.
   - `log_weights`: array of normalized log LOO importance weights with shape
     `(draws, chains, params...)`.
-
-# Keywords
-
-  - `is_discrete`: If not provided, then it is set to `true` iff elements of `y` and `y_pred`
-    are all integer-valued. If `true`, then data are smoothed using [`smooth_data`](@ref) to
-    make them non-discrete before estimating LOO-PIT values.
-  - `kwargs`: Remaining keywords are forwarded to `smooth_data` if data is discrete.
 
 # Returns
 
@@ -31,9 +24,13 @@ P(y_i^* \\le y_i \\mid y_{-i}) = \\int_{-\\infty}^{y_i} p(y_i^* \\mid y_{-i}) \\
 ```
 
 The LOO posterior predictions and the corresponding observations should have similar
-distributions, so if conditional predictive distributions are well-calibrated, then all
-LOO-PIT values should be approximately uniformly distributed on ``[0, 1]``.
-[Gabry2019](@citep)
+distributions, so if conditional predictive distributions are well-calibrated, then for
+continuous data, all LOO-PIT values should be approximately uniformly distributed on
+``[0, 1]``. [Gabry2019](@citep)
+
+!!! warning
+    For discrete data, the LOO-PIT values will typically not be uniformly distributed on
+    ``[0, 1]``, and this function is not recommended.
 
 # Examples
 
@@ -102,7 +99,6 @@ function loo_pit(
     y::Union{AbstractArray,Number},
     y_pred::AbstractArray,
     log_weights::AbstractArray;
-    is_discrete::Union{Bool,Nothing}=nothing,
     kwargs...,
 )
     sample_dims = (1, 2)
@@ -110,20 +106,11 @@ function loo_pit(
         throw(ArgumentError("data dimensions of `y` and `y_pred` must have the size"))
     size(log_weights) == size(y_pred) ||
         throw(ArgumentError("`log_weights` and `y_pred` must have same size"))
-    _is_discrete = if is_discrete === nothing
-        all(isinteger, y) && all(isinteger, y_pred)
-    else
-        is_discrete
+    if all(isinteger, y) && all(isinteger, y_pred)
+        @warn "All data and predictions are integer-valued. `loo_pit` will not be " *
+            "uniformly distributed on [0, 1] and is not recommended."
     end
-    if _is_discrete
-        is_discrete === nothing &&
-            @warn "All data and predictions are integer-valued. Smoothing data before running `loo_pit`."
-        y_smooth = smooth_data(y; kwargs...)
-        y_pred_smooth = smooth_data(y_pred; dims=_otherdims(y_pred, sample_dims), kwargs...)
-        return _loo_pit(y_smooth, y_pred_smooth, log_weights)
-    else
-        return _loo_pit(y, y_pred, log_weights)
-    end
+    return _loo_pit(y, y_pred, log_weights)
 end
 
 function _loo_pit(y::Number, y_pred, log_weights)

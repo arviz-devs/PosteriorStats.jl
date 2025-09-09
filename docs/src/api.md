@@ -67,5 +67,4 @@ PosteriorStats.pointwise_loglikelihoods(
         <:Distributions.Distribution{<:Distributions.ArrayLikeVariate{N}},M
     },
 ) where {M,N}
-PosteriorStats.smooth_data
 ```
