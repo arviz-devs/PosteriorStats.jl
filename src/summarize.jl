@@ -31,7 +31,7 @@ This object implements the Tables and TableTraits column table interfaces. It ha
     is not part of the public API and may change in the future. We recommend using it
     only interactively.
 
-# Constructors
+# Constructor
 
     SummaryStats(data; name="SummaryStats"[, labels])
 
