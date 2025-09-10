@@ -27,6 +27,32 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
         labels = ["a", "bb", "ccc", "d", "e"]
         data = (est=randn(5), mcse_est=rand(5), rhat=rand(5), ess=rand(5))
         data_with_labels = merge((; label=labels), data)
+        data_with_default_labels = merge((; label=Base.OneTo(5)), data)
+
+        @testset "constructors" begin
+            stats1 = SummaryStats(data)
+            @test stats1.data == data_with_default_labels
+            @test stats1.name == "SummaryStats"
+
+            stats2 = SummaryStats(data; name="Stats")
+            @test stats2.data == data_with_default_labels
+            @test stats2.name == "Stats"
+
+            stats3 = SummaryStats(data; labels)
+            @test stats3.data == data_with_labels
+            @test stats3.name == "SummaryStats"
+
+            stats4 = SummaryStats(data; labels, name="Stats")
+            @test stats4.data == data_with_labels
+            @test stats4.name == "Stats"
+
+            stats5 = SummaryStats(data_with_labels)
+            @test stats5.data == data_with_labels
+
+            stats6 = SummaryStats(merge(data, (; label=labels)))
+            @test stats6.data == data_with_labels
+            @test stats6.name == "SummaryStats"
+        end
 
         @inferred SummaryStats(data; name="Stats")
         stats_with_names(data, name, labels) = SummaryStats(data; name, labels)
