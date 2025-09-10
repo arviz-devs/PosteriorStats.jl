@@ -23,8 +23,11 @@ A container for a column table of values computed by [`summarize`](@ref).
 This object implements the Tables and TableTraits column table interfaces. It has a custom
 `show` method.
 
-`SummaryStats` behaves like an `OrderedDict` of columns, where the columns can be accessed
-using either `Symbol`s or a 1-based integer index.
+!!! note
+    `SummaryStats` behaves like an `OrderedDict` of columns, where the columns can be
+    accessed using either `Symbol`s or a 1-based integer index. However, this interface
+    is not part of the public API and may change in the future. We recommend using it
+    only interactively.
 
 $(TYPEDFIELDS)
 
