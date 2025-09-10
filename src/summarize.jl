@@ -16,32 +16,38 @@ const _DEFAULT_SUMMARY_STATS_CI_DOCSTRING = """
 """
 
 """
-$(TYPEDEF)
+    struct SummaryStats
 
 A container for a column table of values computed by [`summarize`](@ref).
 
 This object implements the Tables and TableTraits column table interfaces. It has a custom
 `show` method.
 
-`SummaryStats` behaves like an `OrderedDict` of columns, where the columns can be accessed
-using either `Symbol`s or a 1-based integer index.
+!!! note
+    `SummaryStats` behaves like an `OrderedDict` of columns, where the columns can be
+    accessed using either `Symbol`s or a 1-based integer index. However, this interface
+    is not part of the public API and may change in the future. We recommend using it
+    only interactively.
 
-$(TYPEDFIELDS)
+# Constructors
 
-    SummaryStats([name::String,] data[, parameter_names])
-    SummaryStats(data[, parameter_names]; name::String="SummaryStats")
+    SummaryStats([name,] data[, parameter_names])
+    SummaryStats(data[, parameter_names]; name="SummaryStats")
 
 Construct a `SummaryStats` from tabular `data` with optional stats `name` and `param_names`.
 
-`data` must not contain a column `:parameter`, as this is reserved for the parameter names,
-which are always in the first column.
+## Arguments
+
+$(TYPEDFIELDS)
 """
 struct SummaryStats{D,V<:AbstractVector}
     "The name of the collection of summary statistics, used as the table title in display."
     name::String
-    """The summary statistics for each parameter. It must implement the Tables interface."""
+    """The summary statistics for each parameter. It must implement the Tables interface and
+    may not contain a column `:parameter`, as this is reserved for the parameter names,
+    which are always in the first column."""
     data::D
-    "Names of the parameters"
+    "Names of the parameters."
     parameter_names::V
     function SummaryStats(name::String, data, parameter_names::V) where {V}
         coltable = Tables.columns(data)
