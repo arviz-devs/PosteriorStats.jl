@@ -137,9 +137,9 @@ julia> x = randn(1_000, 1, 1) .+ reshape(0:5:10, 1, 1, :);
 
 julia> hdi(x)
 3-element Vector{IntervalSets.ClosedInterval{Float64}}:
- -1.6402043796029502 .. 2.041852066407182
- 3.35979562039705 .. 7.041852066407182
- 8.35979562039705 .. 12.041852066407182
+ -1.5427053100097161 .. 1.5359155759683685
+ 3.4572946899902837 .. 6.535915575968368
+ 8.457294689990285 .. 11.53591557596837
 ```
 
 For multimodal distributions, you can use the `:multimodal` method:
@@ -149,8 +149,8 @@ julia> x = vcat(randn(1000), randn(1000) .+ 5);
 
 julia> hdi(x; method=:multimodal)
 2-element Vector{IntervalSets.ClosedInterval{Float64}}:
- -1.8882401079608677 .. 2.0017686164555037
- 2.9839268475847436 .. 6.9235952578447275
+ -1.684083621714902 .. 1.6431153298071857
+ 3.4032753058196996 .. 6.724956514470275
 ```
 
 # References
