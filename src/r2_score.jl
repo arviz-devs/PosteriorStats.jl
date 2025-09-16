@@ -1,5 +1,5 @@
 """
-    r2_score(y_true::AbstractVector, y_pred::AbstractArray) -> (; r2, r2_std)
+    r2_score(y_true::AbstractVector, y_pred::AbstractArray; kwargs...) -> (; r2, r2_std)
 
 ``R²`` for linear Bayesian regression models.[Gelman2019](@citep)
 
@@ -7,6 +7,15 @@
 
   - `y_true`: Observed data of length `noutputs`
   - `y_pred`: Predicted data with size `(ndraws[, nchains], noutputs)`
+
+# Keywords
+
+  - `summary::Bool=true`: Whether to return the mean and CI of the ``R²`` scores or the raw
+    samples.
+  - `ci_fun=eti`: The function used to compute the credible interval  if `summary` is `true`.
+    Supported options are [`eti`](@ref) and [`hdi`](@ref).
+  - `ci_prob=$(DEFAULT_CI_PROB)`: The probability mass to be contained in the credible
+    interval.
 
 # Examples
 
@@ -19,34 +28,24 @@ julia> y_true = idata.observed_data.y;
 
 julia> y_pred = PermutedDimsArray(idata.posterior_predictive.y, (:draw, :chain, :y_dim_0));
 
-julia> r2_score(y_true, y_pred) |> pairs
-pairs(::NamedTuple) with 2 entries:
-  :r2     => 0.683197
-  :r2_std => 0.0368838
+julia> r2_score(y_true, y_pred)
+(r2 = 0.683196996216511, eti = 0.6082075654135802 .. 0.7462891653797559)
 ```
 
 # References
 
 - [Gelman2019](@cite) Gelman et al, The Am. Stat., 73(3) (2019)
 """
-function r2_score(y_true, y_pred)
-    r_squared = r2_samples(y_true, y_pred)
-    return NamedTuple{(:r2, :r2_std)}(StatsBase.mean_and_std(r_squared; corrected=false))
+function r2_score(y_true, y_pred; summary=true, ci_fun=eti, ci_prob=DEFAULT_CI_PROB)
+    r_squared = _r2_samples(y_true, y_pred)
+    summary || return r_squared
+    r2 = Statistics.mean(r_squared)
+    ci = ci_fun(r_squared; prob=ci_prob)
+    ci_name = Symbol(_fname(ci_fun))
+    return (; r2, ci_name => ci)
 end
 
-"""
-    r2_samples(y_true::AbstractVector, y_pred::AbstractArray) -> AbstractVector
-
-``R²`` samples for Bayesian regression models. Only valid for linear models.
-
-See also [`r2_score`](@ref).
-
-# Arguments
-
-  - `y_true`: Observed data of length `noutputs`
-  - `y_pred`: Predicted data with size `(ndraws[, nchains], noutputs)`
-"""
-function r2_samples(y_true::AbstractVector, y_pred::AbstractArray)
+function _r2_samples(y_true::AbstractVector, y_pred::AbstractArray)
     @assert ndims(y_pred) ∈ (2, 3)
     corrected = false
     dims = ndims(y_pred)
