@@ -264,7 +264,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                             x,
                             mean,
                             std,
-                            Symbol("eti94") => eti,
+                            Symbol("eti89") => eti,
                             :ess_tail => (x -> ess(x; kind=:tail)),
                             :ess_bulk => (x -> ess(x; kind=:bulk)),
                             rhat,
@@ -311,7 +311,7 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                     map(
                         _isapprox,
                         summarize(x; kind=:stats),
-                        summarize(x, mean, std, Symbol("eti94") => eti),
+                        summarize(x, mean, std, Symbol("eti89") => eti),
                     ),
                 )
 
@@ -320,9 +320,9 @@ _mean_and_std(x) = (mean=mean(x), std=std(x))
                 stats4 = summarize(x2)
                 @test stats4[:mean] ≈ [mean(skipmissing(x2[:, :, 1])); stats1[:mean][2:end]]
                 @test stats4[:std] ≈ [std(skipmissing(x2[:, :, 1])); stats1[:std][2:end]]
-                @test stats4[Symbol("eti94")] == [
+                @test stats4[Symbol("eti89")] == [
                     eti(collect(skipmissing(x2[:, :, 1])))
-                    stats1[Symbol("eti94")][2:end]
+                    stats1[Symbol("eti89")][2:end]
                 ]
                 for k in (:ess_tail, :ess_bulk, :rhat, :mcse_mean, :mcse_std)
                     @test stats4[k][1] === missing
