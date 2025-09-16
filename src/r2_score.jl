@@ -8,8 +8,8 @@ data that is explained by the model. For each draw, it is computed as the varian
 predicted values divided by the variance of the predicted values plus the variance of the
 residuals.
 
-The distribution of the ``R²`` scores can then be summarized using the mean and a credible
-interval (CI).
+The distribution of the ``R²`` scores can then be summarized using a point estimate and a
+credible interval (CI).
 
 # Arguments
 
@@ -18,10 +18,16 @@ interval (CI).
 
 # Keywords
 
-  - `summary::Bool=true`: Whether to return the mean and CI of the ``R²`` scores or the raw
-    samples.
-  - `ci_fun=eti`: The function used to compute the credible interval  if `summary` is `true`.
-    Supported options are [`eti`](@ref) and [`hdi`](@ref).
+  - `summary::Bool=true`: Whether to return a summary or an array of ``R²`` scores. The
+    summary is a named tuple with the point estimate `:r2` and the credible interval
+    `:<ci_fun>`.
+  - `point_estimate=Statistics.mean`: The function used to compute the point estimate of the
+    ``R²`` scores if `summary` is `true`. Supported options are:
+    + [`Statistics.mean`](@extref) (default)
+    + [`Statistics.median`](@extref)
+    + [`StatsBase.mode`](@extref)
+  - `ci_fun=eti`: The function used to compute the credible interval if `summary` is
+    `true`. Supported options are [`eti`](@ref) and [`hdi`](@ref).
   - `ci_prob=$(DEFAULT_CI_PROB)`: The probability mass to be contained in the credible
     interval.
 
@@ -44,10 +50,17 @@ julia> r2_score(y_true, y_pred)
 
 - [Gelman2019](@cite) Gelman et al, The Am. Stat., 73(3) (2019)
 """
-function r2_score(y_true, y_pred; summary=true, ci_fun=eti, ci_prob=DEFAULT_CI_PROB)
+function r2_score(
+    y_true,
+    y_pred;
+    summary=true,
+    point_estimate=Statistics.mean,
+    ci_fun=eti,
+    ci_prob=DEFAULT_CI_PROB,
+)
     r_squared = _r2_samples(y_true, y_pred)
     summary || return r_squared
-    r2 = Statistics.mean(r_squared)
+    r2 = point_estimate(r_squared)
     ci = ci_fun(r_squared; prob=ci_prob)
     ci_name = Symbol(_fname(ci_fun))
     return (; r2, ci_name => ci)

@@ -23,9 +23,12 @@ using Test
             @test r2_val.r2 == mean(r2_draws)
             @test r2_val.eti == eti(r2_draws; prob=T(0.89))
 
-            r2_val2 = r2_score(y, y_pred; ci_fun=hdi, ci_prob=T(0.95))
+            r2_val2 = r2_score(
+                y, y_pred; point_estimate=median, ci_fun=hdi, ci_prob=T(0.95)
+            )
             @test r2_val2 isa @NamedTuple{r2::T, hdi::ClosedInterval{T}}
-            @test r2_val2.hdi == hdi(r2_draws; prob=0.95)
+            @test r2_val2.r2 == median(r2_draws)
+            @test r2_val2.hdi == hdi(r2_draws; prob=T(0.95))
 
             r2_draws2 = PosteriorStats.r2_score(y, y_pred; summary=false)
             @test r2_draws2 == r2_draws
