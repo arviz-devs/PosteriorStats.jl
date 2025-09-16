@@ -3,6 +3,14 @@
 
 ``R²`` for linear Bayesian regression models.[Gelman2019](@citep)
 
+The ``R²``, or coefficient of determination, is defined as the proportion of variance in the
+data that is explained by the model. For each draw, it is computed as the variance of the
+predicted values divided by the variance of the predicted values plus the variance of the
+residuals.
+
+The distribution of the ``R²`` scores can then be summarized using the mean and a credible
+interval (CI).
+
 # Arguments
 
   - `y_true`: Observed data of length `noutputs`
