@@ -48,7 +48,9 @@ function _prettytables_integer_formatter(data)
     end
 end
 
-function _prettytables_se_formatters(data; sigdigits_se=2)
+function _prettytables_se_formatters(
+    data; sigdigits_se=default_precision_settings().show_sigdigits_se
+)
     col_names = Tables.columnnames(data)
     pattern = r"^(?:mcse_|se_)(.*)|^(.*?)(?:_mcse|_se)$"
     formatters = Function[]
@@ -75,18 +77,30 @@ function _prettytables_ess_formatter(data)
     return PrettyTables.ft_printf("%d", cols)
 end
 
-function _prettytables_rhat_formatter(data)
+function _prettytables_rhat_formatter(
+    data, sigdigits_rhat::Int=default_precision_settings().show_sigdigits_rhat
+)
     col_names = Tables.columnnames(data)
     cols = findall(x -> (x === :rhat || startswith(string(x), "rhat_")), col_names)
     isempty(cols) && return nothing
-    return PrettyTables.ft_printf("%.2f", cols)
+    return PrettyTables.ft_printf("%.$(sigdigits_rhat)f", cols)
 end
 
-function _default_prettytables_formatters(data; sigdigits_se=2, sigdigits_default=3)
+function _default_prettytables_formatters(
+    data;
+    show_printf=default_precision_settings().show_printf,
+    sigdigits_se=default_precision_settings().show_sigdigits_se,
+    sigdigits_default=default_precision_settings().show_sigdigits_default,
+    show_sigdigits_using_se=default_precision_settings().show_sigdigits_using_se,
+    show_ess_int=default_precision_settings().show_ess_int,
+)
+    isempty(show_printf) || return [PrettyTables.ft_printf(show_printf)]
     formatters = Union{Function,Nothing}[]
     push!(formatters, _prettytables_integer_formatter(data))
-    append!(formatters, _prettytables_se_formatters(data; sigdigits_se))
-    push!(formatters, _prettytables_ess_formatter(data))
+    if show_sigdigits_using_se
+        append!(formatters, _prettytables_se_formatters(data; sigdigits_se))
+    end
+    show_ess_int && push!(formatters, _prettytables_ess_formatter(data))
     push!(formatters, ft_printf_sigdigits(sigdigits_default))
     push!(formatters, ft_printf_sigdigits_interval(sigdigits_default))
     return filter(!isnothing, formatters)
@@ -119,8 +133,10 @@ end
 function _show_prettytable(
     io::IO,
     data;
-    sigdigits_se=2,
-    sigdigits_default=3,
+    sigdigits_se=default_precision_settings().show_sigdigits_se,
+    sigdigits_default=default_precision_settings().show_sigdigits_default,
+    show_sigdigits_using_se=default_precision_settings().show_sigdigits_using_se,
+    show_ess_int=default_precision_settings().show_ess_int,
     extra_formatters=(),
     alignment=_text_alignment(data),
     show_subheader=false,
@@ -131,7 +147,9 @@ function _show_prettytable(
 )
     formatters = (
         extra_formatters...,
-        _default_prettytables_formatters(data; sigdigits_se, sigdigits_default)...,
+        _default_prettytables_formatters(
+            data; sigdigits_se, sigdigits_default, show_sigdigits_using_se, show_ess_int
+        )...,
     )
     PrettyTables.pretty_table(
         io,

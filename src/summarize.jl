@@ -118,8 +118,12 @@ end
 function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
     nt = parent(stats)
     data = nt[keys(nt)[2:end]]
-    rhat_formatter = _prettytables_rhat_formatter(data)
-    extra_formatters = rhat_formatter === nothing ? () : (rhat_formatter,)
+    if isempty(default_precision_settings().show_printf)
+        rhat_formatter = _prettytables_rhat_formatter(data)
+        extra_formatters = rhat_formatter === nothing ? () : (rhat_formatter,)
+    else
+        extra_formatters = ()
+    end
     return _show_prettytable(
         io,
         mime,

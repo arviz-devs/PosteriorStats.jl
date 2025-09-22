@@ -8,3 +8,12 @@
 ## which method to use to compare models (options: "Stacking", "BootstrappedPseudoBMA", "PseudoBMA")
 # weights_method = "Stacking"
 
+## precision settings for custom show methods. Note: these are considered internal and can be changed at any time
+## without a breaking release.
+# show_html_max_rows = 25         # options: integer >= 0
+# show_printf = ""                # options: a valid Printf format string; if provided, supercedes all settings below
+# show_sigdigits_using_se = true  # options: Bool
+# show_sigdigits_default = 3      # options: integer >= 0
+# show_sigdigits_se = 2           # options: integer >= 0
+# show_sigdigits_rhat = 2         # options: integer >= 0
+# show_ess_int = true             # options: Bool
