@@ -31,8 +31,8 @@ using IntervalSets
 export PSIS, PSISResult, psis, psis!
 
 # LOO-CV
-export AbstractELPDResult, PSISLOOResult, WAICResult
-export elpd_estimates, loo, waic
+export AbstractELPDResult, PSISLOOResult
+export elpd_estimates, loo
 
 # Model weighting and comparison
 export BootstrappedPseudoBMA, PseudoBMA, Stacking
@@ -48,7 +48,7 @@ export eti, eti!, hdi, hdi!
 # Others
 export loo_pit, r2_score
 
-const DEFAULT_CI_PROB = 0.94
+const DEFAULT_CI_PROB = 0.89
 
 include("utils.jl")
 include("show_prettytable.jl")
@@ -59,7 +59,6 @@ include("hdi.jl")
 include("elpdresult.jl")
 include("pointwise_loglikelihoods.jl")
 include("loo.jl")
-include("waic.jl")
 include("model_weights.jl")
 include("compare.jl")
 include("loo_pit.jl")

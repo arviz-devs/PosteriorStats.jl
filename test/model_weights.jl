@@ -36,7 +36,7 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
 
         @testset "weights invariant to order" begin
             elpd_results = map(
-                waic, (randn(1000, 4, 10), randn(1000, 4, 10), randn(1000, 4, 10))
+                loo, (randn(1000, 4, 10), randn(1000, 4, 10), randn(1000, 4, 10))
             )
             weights1 = PosteriorStats.model_weights(weights_method(), elpd_results)
             weights2 = PosteriorStats.model_weights(weights_method(), reverse(elpd_results))
@@ -46,7 +46,7 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
 
         @testset "identical models get the same weights" begin
             ll = randn(1000, 4, 10)
-            result = waic(ll)
+            result = loo(ll)
             elpd_results = fill(result, 3)
             weights = PosteriorStats.model_weights(weights_method(), elpd_results)
             @test sum(weights) ≈ 1
@@ -69,7 +69,7 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
         test_model_weights(PseudoBMA)
 
         @testset "regularization is respected" begin
-            elpd_results = map(waic, [randn(1000, 4, 2, 3) for _ in 1:2])
+            elpd_results = map(loo, [randn(1000, 4, 2, 3) for _ in 1:2])
             weights_reg = PosteriorStats.model_weights(PseudoBMA(true), elpd_results)
             weights_nonreg = PosteriorStats.model_weights(PseudoBMA(false), elpd_results)
             @test !(weights_reg ≈ weights_nonreg)
@@ -83,7 +83,7 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
         end
 
         @testset "number of samples can be configured" begin
-            elpd_results = map(waic, [randn(1000, 4, 2, 3) for _ in 1:2])
+            elpd_results = map(loo, [randn(1000, 4, 2, 3) for _ in 1:2])
             rng = MersenneTwister(64)
             weights1 = PosteriorStats.model_weights(
                 BootstrappedPseudoBMA(; rng, samples=10), elpd_results
@@ -128,7 +128,7 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
         test_model_weights(Stacking)
 
         @testset "alternate optimizer options are used" begin
-            elpd_results = map(waic, [randn(1000, 4, 2, 3) for _ in 1:10])
+            elpd_results = map(loo, [randn(1000, 4, 2, 3) for _ in 1:10])
             weights1 = PosteriorStats.model_weights(Stacking(), elpd_results)
             weights2 = PosteriorStats.model_weights(Stacking(), elpd_results)
             optimizer = GradientDescent()

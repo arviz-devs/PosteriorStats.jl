@@ -3,15 +3,14 @@
 
 Compare models based on their expected log pointwise predictive density (ELPD).
 
-The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
-cross-validation (LOO) or using the widely applicable information criterion (WAIC).
-[`loo`](@ref) is the default and recommended method for computing the ELPD. For more theory,
-see [Spiegelhalter2002](@citet).
+The ELPD is estimated by Pareto smoothed importance sampling leave-one-out cross-validation
+(PSIS-LOO), the same method used by [`loo`](@ref). For more theory, see
+[Spiegelhalter2002](@citet).
 
 # Arguments
 
   - `models`: a `Tuple`, `NamedTuple`, or `AbstractVector` whose values are either
-    [`AbstractELPDResult`](@ref) entries or any argument to `elpd_method`.
+    [`AbstractELPDResult`](@ref) entries or any argument to [`loo`](@ref).
 
 # Keywords
 
@@ -24,8 +23,6 @@ see [Spiegelhalter2002](@citet).
       weighting, where the weights are stabilized using the Bayesian bootstrap.
     + [`PseudoBMA`](@ref): pseudo-Bayesian Model averaging using Akaike-type weighting
       (not recommended).
-  - `elpd_method=loo`: a method that computes an `AbstractELPDResult` from an argument in
-    `models`.
   - `sort::Bool=true`: Whether to sort models by decreasing ELPD.
 
 # Returns
@@ -35,9 +32,7 @@ see [Spiegelhalter2002](@citet).
 
 # Examples
 
-Compare the centered and non centered models of the eight school problem using the defaults:
-[`loo`](@ref) and [`Stacking`](@ref) weights. A custom `myloo` method formates the inputs
-as expected by [`loo`](@ref).
+Compare the centered and non centered models of the eight school problem:
 
 ```jldoctest compare; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1"]
 julia> using ArviZExampleData
@@ -47,12 +42,7 @@ julia> models = (
            non_centered=load_example_data("non_centered_eight"),
        );
 
-julia> function myloo(idata)
-           log_like = PermutedDimsArray(idata.log_likelihood.obs, (2, 3, 1))
-           return loo(log_like)
-       end;
-
-julia> mc = compare(models; elpd_method=myloo)
+julia> mc = compare(models)
 ┌ Warning: 1 parameters had Pareto shape values 0.7 < k ≤ 1. Resulting importance sampling estimates are likely to be unstable.
 └ @ PSIS ~/.julia/packages/PSIS/...
 ModelComparisonResult with Stacking weights
@@ -86,13 +76,12 @@ ModelComparisonResult with BootstrappedPseudoBMA weights
 function compare(
     inputs;
     method::AbstractModelWeightsMethod=Stacking(),
-    elpd_method=loo,
     model_names=_indices(inputs),
     sort::Bool=true,
 )
     length(model_names) === length(inputs) ||
         throw(ArgumentError("Length of `model_names` must match length of `inputs`"))
-    elpd_results = map(Base.Fix1(_maybe_elpd_results, elpd_method), inputs)
+    elpd_results = map(_maybe_loo, inputs)
     weights = model_weights(method, elpd_results)
     perm = _sortperm(elpd_results; by=x -> elpd_estimates(x).elpd, rev=true)
     i_elpd_max = first(perm)
@@ -114,16 +103,8 @@ function compare(
     return _permute(result, perm)
 end
 
-_maybe_elpd_results(elpd_method, x::AbstractELPDResult; kwargs...) = x
-function _maybe_elpd_results(elpd_method, x; kwargs...)
-    elpd_result = elpd_method(x; kwargs...)
-    elpd_result isa AbstractELPDResult && return elpd_result
-    throw(
-        ErrorException(
-            "Return value of `elpd_method` must be an `AbstractELPDResult`, not `$(typeof(elpd_result))`.",
-        ),
-    )
-end
+_maybe_loo(x::AbstractELPDResult; kwargs...) = x
+_maybe_loo(x; kwargs...) = loo(x; kwargs...)
 
 """
     ModelComparisonResult
