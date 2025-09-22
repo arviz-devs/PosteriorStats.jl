@@ -71,7 +71,7 @@ Compare the same models from pre-computed PSIS-LOO results and computing
 ```jldoctest compare; setup = :(using Random; Random.seed!(23))
 julia> elpd_results = mc.elpd_result;
 
-julia> compare(elpd_results; weights_method=BootstrappedPseudoBMA())
+julia> compare(elpd_results; method=BootstrappedPseudoBMA())
 ModelComparisonResult with BootstrappedPseudoBMA weights
                rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p
  non_centered     1   -31      1.5       0            0.0      0.51  0.9  0.32
@@ -85,7 +85,7 @@ ModelComparisonResult with BootstrappedPseudoBMA weights
 """
 function compare(
     inputs;
-    weights_method::AbstractModelWeightsMethod=Stacking(),
+    method::AbstractModelWeightsMethod=Stacking(),
     elpd_method=loo,
     model_names=_indices(inputs),
     sort::Bool=true,
@@ -93,7 +93,7 @@ function compare(
     length(model_names) === length(inputs) ||
         throw(ArgumentError("Length of `model_names` must match length of `inputs`"))
     elpd_results = map(Base.Fix1(_maybe_elpd_results, elpd_method), inputs)
-    weights = model_weights(weights_method, elpd_results)
+    weights = model_weights(method, elpd_results)
     perm = _sortperm(elpd_results; by=x -> elpd_estimates(x).elpd, rev=true)
     i_elpd_max = first(perm)
     elpd_max_i = elpd_estimates(elpd_results[i_elpd_max]; pointwise=true).elpd
@@ -108,7 +108,7 @@ function compare(
     se_elpd_diff = map(last, se_elpd_diff_and)
     rank = _assimilar(elpd_results, (1:length(elpd_results))[perm])
     result = ModelComparisonResult(
-        model_names, rank, elpd_diff, se_elpd_diff, weights, elpd_results, weights_method
+        model_names, rank, elpd_diff, se_elpd_diff, weights, elpd_results, method
     )
     sort || return result
     return _permute(result, perm)
@@ -144,13 +144,13 @@ struct ModelComparisonResult{E,N,R,W,ER,M}
     elpd_diff::E
     "Standard error of the ELPD difference"
     se_elpd_diff::E
-    "Model weights computed with `weights_method`"
+    "Model weights computed with `method`"
     weight::W
     """`AbstactELPDResult`s for each model, which can be used to access useful stats like
     ELPD estimates, pointwise estimates, and Pareto shape values for PSIS-LOO"""
     elpd_result::ER
     "Method used to compute model weights"
-    weights_method::M
+    method::M
 end
 
 #### custom tabular show methods
@@ -167,7 +167,7 @@ function _show(io::IO, mime::MIME, r::ModelComparisonResult; kwargs...)
     cols = Tables.columnnames(r)[2:end]
     table = NamedTuple{cols}(Tables.columntable(r))
 
-    weights_method_name = _typename(r.weights_method)
+    method_name = _typename(r.method)
     weights = table.weight
     digits_weights = ceil(Int, -log10(maximum(weights))) + 1
     weight_formatter = PrettyTables.ft_printf(
@@ -177,7 +177,7 @@ function _show(io::IO, mime::MIME, r::ModelComparisonResult; kwargs...)
         io,
         mime,
         table;
-        title="ModelComparisonResult with $(weights_method_name) weights",
+        title="ModelComparisonResult with $(method_name) weights",
         row_labels,
         extra_formatters=(weight_formatter,),
         kwargs...,
@@ -187,7 +187,7 @@ end
 function _permute(r::ModelComparisonResult, perm)
     return ModelComparisonResult(
         (_permute(getfield(r, k), perm) for k in fieldnames(typeof(r))[1:(end - 1)])...,
-        r.weights_method,
+        r.method,
     )
 end
 
