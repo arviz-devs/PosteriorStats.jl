@@ -34,7 +34,7 @@ end
         @test mc1.elpd_result ==
             NamedTuple{(:non_centered, :centered)}(eight_schools_loo_results)
 
-        mc2 = compare(data; elpd_method=loo)
+        mc2 = compare(data)
         @test _isequal(mc2, mc1)
 
         @test_throws ArgumentError compare(eight_schools_loo_results; model_names=[:foo])
