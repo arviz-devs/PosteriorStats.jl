@@ -17,11 +17,11 @@ using Test
             x_reshape = length(sz) == 1 ? x' : reshape(x, 1, 1, :)
             y_pred = slope .* x_reshape .+ intercept .+ randn(T, sz..., n) .* σ
 
-            r2_val = @inferred r2_score(y, y_pred; ci_prob=T(0.89))
+            r2_val = @inferred r2_score(y, y_pred; ci_prob=PosteriorStats.DEFAULT_CI_PROB)
             @test r2_val isa @NamedTuple{r2::T, eti::ClosedInterval{T}}
             r2_draws = @inferred PosteriorStats._r2_samples(y, y_pred)
             @test r2_val.r2 == mean(r2_draws)
-            @test r2_val.eti == eti(r2_draws; prob=T(0.89))
+            @test r2_val.eti == eti(r2_draws; prob=PosteriorStats.DEFAULT_CI_PROB)
             @test r2_val == r2_score(y, y_pred)
 
             r2_val2 = r2_score(
