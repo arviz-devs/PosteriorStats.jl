@@ -6,7 +6,7 @@ function default_ci_fun()
 end
 
 function default_ci_prob((::Type{T})=Float32) where {T<:Real}
-    prob = T(Preferences.load_preference(PosteriorStats, "ci_prob", 0.94))
+    prob = T(Preferences.load_preference(PosteriorStats, "ci_prob", 0.89))
     0 < prob < 1 || throw(DomainError(prob, "ci_prob must be in the range (0, 1)."))
     return prob
 end

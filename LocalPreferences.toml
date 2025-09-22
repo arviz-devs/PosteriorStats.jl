@@ -3,7 +3,7 @@
 # ci_kind = "eti"
 
 ## the probability mass to be contained in the credible interval (options: any number in (0, 1))
-# ci_prob = 0.94
+# ci_prob = 0.89
 
 ## the default point estimate to use for summarizing distributions (options: "mean", "median", "mode")
 # point_estimate = "mean"
