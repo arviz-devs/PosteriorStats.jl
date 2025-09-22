@@ -35,6 +35,13 @@ end
 Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (PSIS-LOO).
 [Vehtari2017, LOOFAQ](@cite)
 
+!!! details Relationship to information criteria
+
+    PSIS-LOO estimates the expected log pointwise predictive density (ELPD) and effective
+    number of parameters (p). The ELPD can be converted to the "deviance" scale sometimes
+    used for information criteria by multiplying it by `-2`. See [LOOFAQ](@citet) for more
+    details.
+
 `log_likelihood` must be an array of log-likelihood values with shape
 `(chains, draws[, params...])`.
 
@@ -49,13 +56,6 @@ Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (
 # Returns
 
   - [`PSISLOOResult`](@ref): A container for the PSIS-LOO results.
-
-!!! note Relationship to information criteria
-
-    PSIS-LOO estimates the expected log pointwise predictive density (ELPD) and effective
-    number of parameters (p). The ELPD can be converted to the "deviance" scale sometimes
-    used for information criteria by multiplying it by `-2`. See [LOOFAQ](@citet) for more
-    details.
 
 # Examples
 
