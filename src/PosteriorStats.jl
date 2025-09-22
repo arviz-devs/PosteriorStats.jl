@@ -49,7 +49,6 @@ export eti, eti!, hdi, hdi!
 # Others
 export loo_pit, r2_score
 
-const DEFAULT_CI_PROB = 0.94
 const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)
 
 include("utils.jl")

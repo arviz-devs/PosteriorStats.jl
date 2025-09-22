@@ -2,3 +2,6 @@
 ## which credible interval to use (options: "eti", "hdi")
 # ci_kind = "eti"
 
+## the probability mass to be contained in the credible interval (options: any number in (0, 1))
+# ci_prob = 0.94
+
