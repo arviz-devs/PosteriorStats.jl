@@ -15,8 +15,15 @@ see [Spiegelhalter2002](@citet).
 
 # Keywords
 
-  - `weights_method::AbstractModelWeightsMethod=Stacking()`: the method to be used to weight
-    the models.
+  - `method=Stacking()`: the method to be used to weight the models
+    (see [Yao2018](@citet) for details):
+    + [`Stacking`](@ref): Stacking of predictive distributions. The default and recommended
+      approach, as it performs well even when the true data generating process is not
+      included among the candidate models.
+    + [`BootstrappedPseudoBMA`](@ref): pseudo-Bayesian Model averaging using Akaike-type
+      weighting, where the weights are stabilized using the Bayesian bootstrap.
+    + [`PseudoBMA`](@ref): pseudo-Bayesian Model averaging using Akaike-type weighting
+      (not recommended).
   - `elpd_method=loo`: a method that computes an `AbstractELPDResult` from an argument in
     `models`.
   - `sort::Bool=true`: Whether to sort models by decreasing ELPD.
@@ -74,6 +81,7 @@ ModelComparisonResult with BootstrappedPseudoBMA weights
 # References
 
 - [Spiegelhalter2002](@cite) Spiegelhalter et al. J. R. Stat. Soc. B 64 (2002)
+- [Yao2018](@cite) Yao et al. Bayesian Analysis 13, 3 (2018)
 """
 function compare(
     inputs;
