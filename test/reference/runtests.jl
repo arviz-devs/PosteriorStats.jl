@@ -29,22 +29,6 @@ function loo_r(log_likelihood; reff=nothing)
     return (; estimates, pointwise)
 end
 
-# R loo with our API
-function waic_r(log_likelihood)
-    R"require('loo')"
-    result = R"loo::waic($log_likelihood)"
-    estimates = rcopy(R"$(result)$estimates")
-    estimates = (
-        elpd=estimates[1, 1],
-        se_elpd=estimates[1, 2],
-        p=estimates[2, 1],
-        se_p=estimates[2, 2],
-    )
-    pointwise = rcopy(R"$(result)$pointwise")
-    pointwise = (elpd=pointwise[:, 1], p=pointwise[:, 2])
-    return (; estimates, pointwise)
-end
-
 function generate_log_likelihoods(proposal, target, ndraws, nchains, nparams)
     draws = rand(proposal, ndraws, nchains, nparams)
     log_likelihood = loglikelihood.(target, draws)
@@ -74,18 +58,5 @@ Random.seed!(24)
             @test result.pointwise.reff ≈ result_r.pointwise.reff
             @test result.pointwise.pareto_shape ≈ result_r.pointwise.pareto_shape
         end
-    end
-
-    @testset "waic" begin
-        log_likelihood = generate_log_likelihoods(proposal, target, 1000, 4, 10)
-        reff_rand = rand(size(log_likelihood, 3))
-        result_r = waic_r(log_likelihood)
-        result = waic(log_likelihood)
-        @test result.estimates.elpd ≈ result_r.estimates.elpd
-        @test result.estimates.se_elpd ≈ result_r.estimates.se_elpd
-        @test result.estimates.p ≈ result_r.estimates.p
-        @test result.estimates.se_p ≈ result_r.estimates.se_p
-        @test result.pointwise.elpd ≈ result_r.pointwise.elpd
-        @test result.pointwise.p ≈ result_r.pointwise.p
     end
 end

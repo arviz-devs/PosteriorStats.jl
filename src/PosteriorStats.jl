@@ -31,8 +31,8 @@ using IntervalSets
 export PSIS, PSISResult, psis, psis!
 
 # LOO-CV
-export AbstractELPDResult, PSISLOOResult, WAICResult
-export elpd_estimates, information_criterion, loo, waic
+export AbstractELPDResult, PSISLOOResult
+export elpd_estimates, information_criterion, loo
 
 # Model weighting and comparison
 export AbstractModelWeightsMethod, BootstrappedPseudoBMA, PseudoBMA, Stacking, model_weights
@@ -60,7 +60,6 @@ include("hdi.jl")
 include("elpdresult.jl")
 include("pointwise_loglikelihoods.jl")
 include("loo.jl")
-include("waic.jl")
 include("model_weights.jl")
 include("compare.jl")
 include("loo_pit.jl")

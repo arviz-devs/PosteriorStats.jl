@@ -21,16 +21,14 @@ eti
 eti!
 ```
 
-## LOO and WAIC
+## LOO
 
 ```@docs
 AbstractELPDResult
 PSISLOOResult
-WAICResult
 elpd_estimates
 information_criterion
 loo
-waic
 ```
 
 ## Model comparison
