@@ -28,7 +28,6 @@ AbstractELPDResult
 PSISLOOResult
 WAICResult
 elpd_estimates
-information_criterion
 loo
 waic
 ```

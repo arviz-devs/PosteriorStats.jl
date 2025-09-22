@@ -9,7 +9,6 @@ each, from which other relevant estimates can be computed.
 
 Subtypes implement the following functions:
 - [`elpd_estimates`](@ref)
-- [`information_criterion`](@ref)
 """
 abstract type AbstractELPDResult end
 
@@ -28,35 +27,6 @@ end
 Return the (E)LPD estimates from the `result`.
 """
 function elpd_estimates end
-
-"""
-    $(FUNCTIONNAME)(elpd, scale::Symbol)
-
-Compute the information criterion for the given `scale` from the `elpd` estimate.
-
-`scale` must be one of `$(keys(INFORMATION_CRITERION_SCALES))`.
-
-See also: [`loo`](@ref), [`waic`](@ref)
-"""
-function information_criterion(estimates, scale::Symbol)
-    scale_value = INFORMATION_CRITERION_SCALES[scale]
-    return scale_value * estimates.elpd
-end
-
-"""
-    $(FUNCTIONNAME)(result::AbstractELPDResult, scale::Symbol; pointwise=false)
-
-Compute information criterion for the given `scale` from the existing ELPD `result`.
-
-`scale` must be one of `$(keys(INFORMATION_CRITERION_SCALES))`.
-
-If `pointwise=true`, then pointwise estimates are returned.
-"""
-function information_criterion(
-    result::AbstractELPDResult, scale::Symbol; pointwise::Bool=false
-)
-    return information_criterion(elpd_estimates(result; pointwise), scale)
-end
 
 function _lpd_pointwise(log_likelihood, dims)
     ndraws = prod(Base.Fix1(size, log_likelihood), dims)

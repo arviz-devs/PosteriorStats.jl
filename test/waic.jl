@@ -29,17 +29,6 @@ using Test
                     @test eltype(pointwise) <: TA{T,length(sz) - 2}
                 end
             end
-            @testset "information criterion" begin
-                @test information_criterion(waic_result, :log) == estimates.elpd
-                @test information_criterion(waic_result, :negative_log) == -estimates.elpd
-                @test information_criterion(waic_result, :deviance) == -2 * estimates.elpd
-                @test information_criterion(waic_result, :log; pointwise=true) ==
-                    pointwise.elpd
-                @test information_criterion(waic_result, :negative_log; pointwise=true) ==
-                    -pointwise.elpd
-                @test information_criterion(waic_result, :deviance; pointwise=true) ==
-                    -2 * pointwise.elpd
-            end
         end
     end
     @testset "warnings" begin
