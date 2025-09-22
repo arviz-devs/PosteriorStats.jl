@@ -46,7 +46,7 @@ Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (
     [`MCMCDiagnosticTools.ess`](@extref).
   - `kwargs`: Remaining keywords are forwarded to [`PSIS.psis`](@extref).
 
-See also: [`PSISLOOResult`](@ref), [`waic`](@ref)
+See also: [`PSISLOOResult`](@ref)
 
 # Examples
 

@@ -55,8 +55,6 @@ end
         end
         mc3 = compare(eight_schools_loo_results; model_names=[:a, :b])
         @test mc3.name == [:b, :a]
-        mc4 = compare(eight_schools_loo_results; elpd_method=waic)
-        @test !_isequal(mc4, mc2)
     end
 
     @testset "ModelComparisonResult" begin

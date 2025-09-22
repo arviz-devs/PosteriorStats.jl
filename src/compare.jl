@@ -3,10 +3,9 @@
 
 Compare models based on their expected log pointwise predictive density (ELPD).
 
-The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
-cross-validation (LOO) or using the widely applicable information criterion (WAIC).
-[`loo`](@ref) is the default and recommended method for computing the ELPD. For more theory,
-see [Spiegelhalter2002](@citet).
+The ELPD is estimated by Pareto smoothed importance sampling leave-one-out cross-validation
+(PSIS-LOO), the same method used by [`loo`](@ref). For more theory, see
+[Spiegelhalter2002](@citet).
 
 # Arguments
 
