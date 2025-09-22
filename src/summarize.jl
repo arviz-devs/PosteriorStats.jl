@@ -197,23 +197,23 @@ julia> x = randn(1000, 4, 3) .+ reshape(0:10:20, 1, 1, :);
 
 julia> summarize(x)
 SummaryStats
-       mean   std  eti94          ess_tail  ess_bulk  rhat  mcse_mean  mcse_std
- 1   0.0003  0.99  -1.83 .. 1.89      3567      3663  1.00      0.016     0.012
- 2  10.02    0.99   8.17 .. 11.9      3841      3906  1.00      0.016     0.011
- 3  19.98    0.99   18.1 .. 21.9      3892      3749  1.00      0.016     0.012
+       mean   std  eti89          ess_tail  ess_bulk  rhat  mcse_mean  mcse_std
+ 1   0.0003  0.99  -1.57 .. 1.59      3567      3663  1.00      0.016     0.012
+ 2  10.02    0.99   8.47 .. 11.6      3841      3906  1.00      0.016     0.011
+ 3  19.98    0.99   18.4 .. 21.6      3892      3749  1.00      0.016     0.012
 ```
 
-Compute just the default statistics with an 89% [HDI](@ref hdi), and provide the parameter
+Compute just the default statistics with a 94% [HDI](@ref hdi), and provide the parameter
 names:
 ```jldoctest summarize
 julia> var_names=[:x, :y, :z];
 
-julia> summarize(x; var_names, kind=:stats, ci_fun=hdi, ci_prob=0.89)
+julia> summarize(x; var_names, kind=:stats, ci_fun=hdi, ci_prob=0.94)
 SummaryStats
-         mean    std  hdi89
- x   0.000275  0.989  -1.63 .. 1.52
- y  10.0       0.988   8.53 .. 11.6
- z  20.0       0.988   18.5 .. 21.6
+         mean    std  hdi94
+ x   0.000275  0.989  -1.92 .. 1.78
+ y  10.0       0.988   8.17 .. 11.9
+ z  20.0       0.988   18.1 .. 21.9
 ```
 
 Compute [`Statistics.mean`](@extref), [`Statistics.std`](@extref) and the Monte Carlo
@@ -307,7 +307,7 @@ function default_summary_stats(kind::Symbol=:all; kwargs...)
     return default_summary_stats(Val(kind); kwargs...)
 end
 function default_summary_stats(::Val{:all}; kwargs...)
-    return (_default_stats(kwargs...)..., _default_diagnostics(kwargs...)...)
+    return (_default_stats(; kwargs...)..., _default_diagnostics(; kwargs...)...)
 end
 default_summary_stats(::Val{:stats}; kwargs...) = _default_stats(; kwargs...)
 default_summary_stats(::Val{:diagnostics}; kwargs...) = _default_diagnostics(; kwargs...)

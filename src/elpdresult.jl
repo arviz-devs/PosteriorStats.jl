@@ -36,7 +36,7 @@ Compute the information criterion for the given `scale` from the `elpd` estimate
 
 `scale` must be one of `$(keys(INFORMATION_CRITERION_SCALES))`.
 
-See also: [`loo`](@ref), [`waic`](@ref)
+See also: [`loo`](@ref)
 """
 function information_criterion(estimates, scale::Symbol)
     scale_value = INFORMATION_CRITERION_SCALES[scale]

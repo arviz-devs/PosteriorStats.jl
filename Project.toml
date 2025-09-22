@@ -1,7 +1,7 @@
 name = "PosteriorStats"
 uuid = "7f36be82-ad55-44ba-a5c0-b8b5480d7aa5"
 authors = ["Seth Axen <seth@sethaxen.com> and contributors"]
-version = "0.3.0"
+version = "0.4.0-DEV"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
