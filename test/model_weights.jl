@@ -125,12 +125,6 @@ struct DummyOptimizer <: Optim.AbstractOptimizer end
             @test_throws ArgumentError Stacking(; optimizer=DummyOptimizer())
         end
 
-        @testset "stacking is default" begin
-            elpd_results = map(waic, [randn(1000, 4, 2, 3) for _ in 1:2])
-            @test PosteriorStats.model_weights(elpd_results) ==
-                PosteriorStats.model_weights(Stacking(), elpd_results)
-        end
-
         test_model_weights(Stacking)
 
         @testset "alternate optimizer options are used" begin

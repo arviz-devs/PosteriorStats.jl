@@ -29,7 +29,7 @@ end
         @test mc1.elpd_diff.non_centered == 0.0
         @test mc1.elpd_diff.centered > 0
         @test mc1.weight == NamedTuple{(:non_centered, :centered)}(
-            PosteriorStats.model_weights(eight_schools_loo_results)
+            PosteriorStats.model_weights(Stacking(),eight_schools_loo_results)
         )
         @test mc1.elpd_result ==
             NamedTuple{(:non_centered, :centered)}(eight_schools_loo_results)
