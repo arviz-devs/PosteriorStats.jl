@@ -303,7 +303,7 @@ function default_summary_stats(kind::Symbol=:all; kwargs...)
     return default_summary_stats(Val(kind); kwargs...)
 end
 function default_summary_stats(::Val{:all}; kwargs...)
-    return (_default_stats(kwargs...)..., _default_diagnostics(kwargs...)...)
+    return (_default_stats(; kwargs...)..., _default_diagnostics(; kwargs...)...)
 end
 default_summary_stats(::Val{:stats}; kwargs...) = _default_stats(; kwargs...)
 default_summary_stats(::Val{:diagnostics}; kwargs...) = _default_diagnostics(; kwargs...)

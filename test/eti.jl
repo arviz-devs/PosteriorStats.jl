@@ -7,15 +7,25 @@ using Test
 @testset "eti/eti!" begin
     @testset "AbstractVecOrMat" begin
         @testset for sz in (100, 1_000, (1_000, 2)),
-            prob in (0.7, 0.76, 0.8, 0.88),
-            T in (Float32, Float64, Int64)
+            FT in (Float32, Float64),
+            prob in FT.((0.7, 0.76, 0.8, 0.88)),
+            T in (Float32, Float64, Int64, Rational{Int}),
 
-            n = prod(sz)
-            S = Base.promote_eltype(one(T), prob)
-            x = T <: Integer ? rand(T(1):T(30), n) : randn(T, n)
+            n in prod(sz)
+
+            if T <: Integer
+                x = rand(T(1):T(30), n)
+                S = FT
+            elseif T <: Rational
+                x = T.(rand(1:30, n) .// 100)
+                S = FT
+            else
+                x = randn(T, n)
+                S = Base.promote_type(T, FT)
+            end
             r = @inferred eti(x; prob)
             @test r isa ClosedInterval{S}
-            if !(T <: Integer)
+            if !(T <: Union{Integer,Rational})
                 l, u = IntervalSets.endpoints(r)
                 frac_in_interval = mean(∈(r), x)
                 @test frac_in_interval ≈ prob
