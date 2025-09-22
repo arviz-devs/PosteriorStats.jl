@@ -11,3 +11,16 @@ function default_ci_prob((::Type{T})=Float64) where {T<:Real}
     return prob
 end
 
+function default_weights_method()
+    method = Preferences.load_preference(PosteriorStats, "weights_method", "Stacking")
+    method == "Stacking" && return Stacking
+    method == "PseudoBMA" && return PseudoBMA
+    method == "BootstrappedPseudoBMA" && return BootstrappedPseudoBMA
+    throw(
+        ArgumentError(
+            "Invalid weights_method: $method. Must be one of " *
+            "(Stacking, PseudoBMA, BootstrappedPseudoBMA).",
+        ),
+    )
+end
+

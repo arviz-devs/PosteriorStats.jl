@@ -5,3 +5,6 @@
 ## the probability mass to be contained in the credible interval (options: any number in (0, 1))
 # ci_prob = 0.94
 
+## which method to use to compare models (options: "Stacking", "BootstrappedPseudoBMA", "PseudoBMA")
+# weights_method = "Stacking"
+

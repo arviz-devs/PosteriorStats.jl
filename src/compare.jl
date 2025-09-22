@@ -15,8 +15,8 @@ see [Spiegelhalter2002](@citet).
 
 # Keywords
 
-  - `weights_method::AbstractModelWeightsMethod=Stacking()`: the method to be used to weight
-    the models. See [`model_weights`](@ref) for details
+  - `weights_method::AbstractModelWeightsMethod=$(default_weights_method())()`: the method
+    to be used to weight the models. See [`model_weights`](@ref) for details
   - `elpd_method=loo`: a method that computes an `AbstractELPDResult` from an argument in
     `models`.
   - `sort::Bool=true`: Whether to sort models by decreasing ELPD.
@@ -29,8 +29,8 @@ see [Spiegelhalter2002](@citet).
 # Examples
 
 Compare the centered and non centered models of the eight school problem using the defaults:
-[`loo`](@ref) and [`Stacking`](@ref) weights. A custom `myloo` method formates the inputs
-as expected by [`loo`](@ref).
+[`loo`](@ref) and [`$(default_weights_method())()`](@ref) weights. A custom `myloo` method
+formates the inputs as expected by [`loo`](@ref).
 
 ```jldoctest compare; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1"]
 julia> using ArviZExampleData
@@ -77,7 +77,7 @@ ModelComparisonResult with BootstrappedPseudoBMA weights
 """
 function compare(
     inputs;
-    weights_method::AbstractModelWeightsMethod=Stacking(),
+    weights_method::AbstractModelWeightsMethod=default_weights_method()(),
     elpd_method=loo,
     model_names=_indices(inputs),
     sort::Bool=true,
