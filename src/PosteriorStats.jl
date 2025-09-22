@@ -35,7 +35,7 @@ export AbstractELPDResult, PSISLOOResult, WAICResult
 export elpd_estimates, information_criterion, loo, waic
 
 # Model weighting and comparison
-export AbstractModelWeightsMethod, BootstrappedPseudoBMA, PseudoBMA, Stacking, model_weights
+export BootstrappedPseudoBMA, PseudoBMA, Stacking
 export ModelComparisonResult, compare
 
 # Summary statistics

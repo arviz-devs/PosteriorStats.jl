@@ -16,7 +16,7 @@ see [Spiegelhalter2002](@citet).
 # Keywords
 
   - `weights_method::AbstractModelWeightsMethod=Stacking()`: the method to be used to weight
-    the models. See [`model_weights`](@ref) for details
+    the models.
   - `elpd_method=loo`: a method that computes an `AbstractELPDResult` from an argument in
     `models`.
   - `sort::Bool=true`: Whether to sort models by decreasing ELPD.
@@ -141,7 +141,7 @@ struct ModelComparisonResult{E,N,R,W,ER,M}
     """`AbstactELPDResult`s for each model, which can be used to access useful stats like
     ELPD estimates, pointwise estimates, and Pareto shape values for PSIS-LOO"""
     elpd_result::ER
-    "Method used to compute model weights with [`model_weights`](@ref)"
+    "Method used to compute model weights"
     weights_method::M
 end
 

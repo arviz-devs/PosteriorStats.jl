@@ -38,12 +38,10 @@ waic
 ```@docs
 ModelComparisonResult
 compare
-model_weights
 ```
 
 The following model weighting methods are available
 ```@docs
-AbstractModelWeightsMethod
 BootstrappedPseudoBMA
 PseudoBMA
 Stacking
