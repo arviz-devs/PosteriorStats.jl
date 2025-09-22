@@ -22,6 +22,7 @@ using Test
             r2_draws = @inferred PosteriorStats._r2_samples(y, y_pred)
             @test r2_val.r2 == mean(r2_draws)
             @test r2_val.eti == eti(r2_draws; prob=T(0.89))
+            @test r2_val == r2_score(y, y_pred)
 
             r2_val2 = r2_score(
                 y, y_pred; point_estimate=median, ci_fun=hdi, ci_prob=T(0.95)
