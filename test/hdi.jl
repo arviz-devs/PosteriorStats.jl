@@ -163,6 +163,14 @@ end
     @testset "Method-specific behavior" begin
         @testset "UnimodalHDI" begin
             method = PosteriorStats.UnimodalHDI()
+
+            @testset "eltype not promoted" begin
+                @testset for T in (Float32, Float64, Int)
+                    x = T <: Integer ? rand(T(1):T(30), 100) : randn(T, 100)
+                    interval = hdi(x; method, prob=0.9)
+                    @test eltype(interval) === T
+                end
+            end
         end
 
         @testset "MultimodalHDI" begin
