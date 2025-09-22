@@ -1,0 +1,4 @@
+[PosteriorStats]
+## which credible interval to use (options: "eti", "hdi")
+# ci_kind = "eti"
+
