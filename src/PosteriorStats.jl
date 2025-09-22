@@ -48,7 +48,7 @@ export eti, eti!, hdi, hdi!
 # Others
 export loo_pit, r2_score
 
-const DEFAULT_CI_PROB = 0.89
+const DEFAULT_CI_PROB = 0.89f0
 
 include("utils.jl")
 include("show_prettytable.jl")
