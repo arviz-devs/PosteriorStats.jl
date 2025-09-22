@@ -5,10 +5,29 @@ function default_ci_fun()
     return ci_kind == :eti ? eti : hdi
 end
 
-function default_ci_prob(::Type{T}=Float32) where {T<:Real}
+function default_ci_prob((::Type{T})=Float32) where {T<:Real}
     prob = T(Preferences.load_preference(PosteriorStats, "ci_prob", 0.94))
     0 < prob < 1 || throw(DomainError(prob, "ci_prob must be in the range (0, 1)."))
     return prob
+end
+
+function default_point_estimate()
+    point_estimate = Symbol(
+        Preferences.load_preference(PosteriorStats, "point_estimate", "mean")
+    )
+    if point_estimate === :mean
+        return Statistics.mean
+    elseif point_estimate === :median
+        return Statistics.median
+    elseif point_estimate === :mode
+        return StatsBase.mode
+    else
+        throw(
+            ArgumentError(
+                "Invalid point_estimate: $point_estimate. Must be one of (mean, median, mode).",
+            ),
+        )
+    end
 end
 
 function default_weights_method()
