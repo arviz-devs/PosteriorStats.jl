@@ -46,7 +46,16 @@ Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (
     [`MCMCDiagnosticTools.ess`](@extref).
   - `kwargs`: Remaining keywords are forwarded to [`PSIS.psis`](@extref).
 
-See also: [`PSISLOOResult`](@ref)
+# Returns
+
+  - [`PSISLOOResult`](@ref): A container for the PSIS-LOO results.
+
+!!! note Relationship to information criteria
+
+    PSIS-LOO estimates the expected log pointwise predictive density (ELPD) and effective
+    number of parameters (p). The ELPD can be converted to the "deviance" scale sometimes
+    used for information criteria by multiplying it by `-2`. See [LOOFAQ](@citet) for more
+    details.
 
 # Examples
 
