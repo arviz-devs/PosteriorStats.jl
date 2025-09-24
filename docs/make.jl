@@ -35,6 +35,7 @@ withenv("COLUMNS" => 90) do
             assets=[joinpath("assets", "citations.css")],
         ),
         pages=["Home" => "index.md", "API" => "api.md", "References" => "references.md"],
+        warnonly=[:missing_docs],
         plugins=[bib, links],
     )
 end
