@@ -21,14 +21,14 @@ credible interval (CI).
   - `summary::Bool=true`: Whether to return a summary or an array of ``R²`` scores. The
     summary is a named tuple with the point estimate `:r2` and the credible interval
     `:<ci_fun>`.
-  - `point_estimate=Statistics.mean`: The function used to compute the point estimate of the
-    ``R²`` scores if `summary` is `true`. Supported options are:
-    + [`Statistics.mean`](@extref) (default)
+  - `point_estimate=$(default_point_estimate())`: The function used to compute the point
+    estimate of the ``R²`` scores if `summary` is `true`. Supported options are:
+    + [`Statistics.mean`](@extref)
     + [`Statistics.median`](@extref)
     + [`StatsBase.mode`](@extref)
   - `ci_fun=eti`: The function used to compute the credible interval if `summary` is
     `true`. Supported options are [`eti`](@ref) and [`hdi`](@ref).
-  - `ci_prob=$(DEFAULT_CI_PROB)`: The probability mass to be contained in the credible
+  - `ci_prob=$(default_ci_prob())`: The probability mass to be contained in the credible
     interval.
 
 # Examples
@@ -54,9 +54,9 @@ function r2_score(
     y_true,
     y_pred;
     summary=true,
-    point_estimate=Statistics.mean,
-    ci_fun=eti,
-    ci_prob=DEFAULT_CI_PROB,
+    point_estimate=default_point_estimate(),
+    ci_fun=default_ci_fun(),
+    ci_prob=default_ci_prob(float(Base.promote_eltype(y_true, y_pred))),
 )
     r_squared = _r2_samples(y_true, y_pred)
     summary || return r_squared

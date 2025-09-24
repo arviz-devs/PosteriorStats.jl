@@ -10,10 +10,10 @@ const _DEFAULT_SUMMARY_STATS_KIND_DOCSTRING = """
     + `:diagnostics_median`: `ess_median`, `ess_tail`, `rhat`, `mcse_median`
 """
 const _DEFAULT_SUMMARY_STATS_CI_DOCSTRING = """
-- `ci_fun=eti`: The function to compute the credible interval `<ci>`, if any. Supported
-    options are [`eti`](@ref) and [`hdi`](@ref). CI column name is
+- `ci_fun=$(default_ci_fun())`: The function to compute the credible interval `<ci>`, if
+    any. Supported options are [`eti`](@ref) and [`hdi`](@ref). CI column name is
     `<ci_fun><100*ci_prob>`.
-- `ci_prob=$(DEFAULT_CI_PROB)`: The probability mass to be contained in the credible
+- `ci_prob=$(default_ci_prob())`: The probability mass to be contained in the credible
     interval `<ci>`.
 """
 
@@ -118,8 +118,12 @@ end
 function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
     nt = parent(stats)
     data = nt[keys(nt)[2:end]]
-    rhat_formatter = _prettytables_rhat_formatter(data)
-    extra_formatters = rhat_formatter === nothing ? () : (rhat_formatter,)
+    if isempty(default_precision_settings().show_printf)
+        rhat_formatter = _prettytables_rhat_formatter(data)
+        extra_formatters = rhat_formatter === nothing ? () : (rhat_formatter,)
+    else
+        extra_formatters = ()
+    end
     return _show_prettytable(
         io,
         mime,
@@ -340,7 +344,7 @@ function _default_stats(::typeof(Statistics.median); kwargs...)
     )
 end
 
-function _interval_stat(; ci_fun=eti, ci_prob=DEFAULT_CI_PROB, kwargs...)
+function _interval_stat(; ci_fun=default_ci_fun(), ci_prob=default_ci_prob(), kwargs...)
     ci_name = Symbol(_fname(ci_fun), _prob_to_string(ci_prob))
     return ci_name => FixKeywords(ci_fun; prob=ci_prob) ∘ _cskipmissing
 end

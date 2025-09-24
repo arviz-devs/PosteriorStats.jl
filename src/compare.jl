@@ -14,8 +14,8 @@ The ELPD is estimated by Pareto smoothed importance sampling leave-one-out cross
 
 # Keywords
 
-  - `weights_method::AbstractModelWeightsMethod=Stacking()`: the method to be used to weight
-    the models. See [`model_weights`](@ref) for details
+  - `weights_method::AbstractModelWeightsMethod=$(default_weights_method())()`: the method
+    to be used to weight the models. See [`model_weights`](@ref) for details
   - `sort::Bool=true`: Whether to sort models by decreasing ELPD.
 
 # Returns
@@ -67,7 +67,7 @@ ModelComparisonResult with BootstrappedPseudoBMA weights
 """
 function compare(
     inputs;
-    weights_method::AbstractModelWeightsMethod=Stacking(),
+    weights_method::AbstractModelWeightsMethod=default_weights_method()(),
     model_names=_indices(inputs),
     sort::Bool=true,
 )
