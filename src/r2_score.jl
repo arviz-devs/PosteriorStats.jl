@@ -43,7 +43,7 @@ julia> y_true = idata.observed_data.y;
 julia> y_pred = PermutedDimsArray(idata.posterior_predictive.y, (:draw, :chain, :y_dim_0));
 
 julia> r2_score(y_true, y_pred)
-(r2 = 0.683196996216511, eti = 0.6082075654135802 .. 0.7462891653797559)
+(r2 = 0.683196996216511, eti = 0.6230680117869596 .. 0.7384123771046265)
 ```
 
 # References
