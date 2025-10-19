@@ -31,60 +31,64 @@ this will be used for the row labels or will be replaced with the `labels` if pr
     display. If not provided, then the column `$(LABEL_COLUMN_NAME)` in `data` will be
     used if it exists. Otherwise, the parameter names will be numeric indices.
 """
-struct SummaryStats{D,N<:AbstractString}
+struct SummaryStats{D,L<:Union{Nothing,AbstractVector},N<:AbstractString}
     data::D
+    labels::L
     name::N
-    function SummaryStats(data, name::N) where {N<:AbstractString}
-        _coltable = Tables.columntable(data)
-        # define default parameter names if not present, and set as first column
-        if !haskey(_coltable, LABEL_COLUMN_NAME)
-            data_cols = _coltable
-            labels = Base.OneTo(Tables.rowcount(data))
-        else
-            data_colnames = filter(k -> k !== LABEL_COLUMN_NAME, keys(_coltable))
-            data_cols = NamedTuple{data_colnames}(_coltable)
-            labels = _coltable[LABEL_COLUMN_NAME]
-        end
-        coltable = merge((; LABEL_COLUMN_NAME => labels), data_cols)
-        return new{typeof(coltable),N}(coltable, name)
-    end
 end
 
 function SummaryStats(
     data; labels::Union{AbstractVector,Nothing}=nothing, name::AbstractString="SummaryStats"
 )
+    _coltable = Tables.columntable(data)
     if labels !== nothing
         length(labels) == Tables.rowcount(data) || throw(
             DimensionMismatch(
                 "length $(length(labels)) of `labels` does not match number of rows $(Tables.rowcount(data)) in `data`.",
             ),
         )
-        data_with_varnames = merge(
-            Tables.columntable(data), (; LABEL_COLUMN_NAME => labels)
-        )
-    else
-        data_with_varnames = data
     end
-    return SummaryStats(data_with_varnames, name)
+    if haskey(_coltable, LABEL_COLUMN_NAME)
+        labels === nothing || throw(
+            ArgumentError(
+                "Either `labels` or a column named `$(LABEL_COLUMN_NAME)` may be provided, but not both.",
+            ),
+        )
+        data_colnames = filter(k -> k !== LABEL_COLUMN_NAME, keys(_coltable))
+        data_cols = NamedTuple{data_colnames}(_coltable)
+        _labels = _coltable[LABEL_COLUMN_NAME]
+        return SummaryStats(data_cols, _labels, name)
+    end
+    return SummaryStats(_coltable, labels, name)
 end
 
 # forward key interfaces from its parent
 Base.parent(stats::SummaryStats) = getfield(stats, :data)
-Base.keys(stats::SummaryStats) = map(Symbol, Tables.columnnames(stats))
+Base.keys(stats::SummaryStats) = Tables.columnnames(stats)
 Base.haskey(stats::SummaryStats, nm::Symbol) = nm ∈ keys(stats)
-Base.length(stats::SummaryStats) = length(parent(stats))
+Base.length(stats::SummaryStats) = length(parent(stats)) + 1
 Base.getindex(stats::SummaryStats, i::Union{Int,Symbol}) = Tables.getcolumn(stats, i)
-Base.iterate(stats::SummaryStats, rest...) = iterate(parent(stats), rest...)
+Base.iterate(stats::SummaryStats) = (_labels(stats), 2)
+function Base.iterate(stats::SummaryStats, i::Int)
+    state = iterate(parent(stats), i - 1)
+    state === nothing && return nothing
+    return (state[1], state[2] + 1)
+end
 function Base.merge(stats::SummaryStats, other_stats::SummaryStats...)
     isempty(other_stats) && return stats
     stats_all = (stats, other_stats...)
     stats_last = last(stats_all)
-    return SummaryStats(merge(map(parent, stats_all)...), stats_last.name)
+    return SummaryStats(
+        merge(map(parent, stats_all)...),
+        getfield(stats_last, :labels),
+        getfield(stats_last, :name),
+    )
 end
 for f in (:(==), :isequal)
     @eval begin
         function Base.$(f)(stats::SummaryStats, other_stats::SummaryStats)
-            return $(f)(parent(stats), parent(other_stats))
+            return $(f)(_labels(stats), _labels(other_stats)) &&
+                   $(f)(parent(stats), parent(other_stats))
         end
     end
 end
@@ -99,8 +103,7 @@ function Base.show(io::IO, mime::MIME"text/html", stats::SummaryStats; kwargs...
 end
 
 function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
-    nt = parent(stats)
-    data = nt[keys(nt)[2:end]]
+    data = parent(stats)
     rhat_formatter = _prettytables_rhat_formatter(data)
     extra_formatters = rhat_formatter === nothing ? () : (rhat_formatter,)
     return _show_prettytable(
@@ -108,7 +111,7 @@ function _show(io::IO, mime::MIME, stats::SummaryStats; kwargs...)
         mime,
         data;
         title=stats.name,
-        row_labels=Tables.getcolumn(stats, LABEL_COLUMN_NAME),
+        row_labels=_labels(stats),
         extra_formatters,
         kwargs...,
     )
@@ -116,13 +119,26 @@ end
 
 #### Tables interface as column table
 
+_labels(s::SummaryStats) = getfield(s, :labels)
+_labels(s::SummaryStats{<:Any,Nothing}) = eachindex(values(parent(s))...)
+
 Tables.istable(::Type{<:SummaryStats}) = true
 Tables.columnaccess(::Type{<:SummaryStats}) = true
 Tables.columns(s::SummaryStats) = s
-Tables.columnnames(s::SummaryStats) = Tables.columnnames(parent(s))
-Tables.getcolumn(stats::SummaryStats, i::Int) = Tables.getcolumn(parent(stats), i)
-Tables.getcolumn(stats::SummaryStats, nm::Symbol) = Tables.getcolumn(parent(stats), nm)
-Tables.schema(s::SummaryStats) = Tables.schema(parent(s))
+Tables.columnnames(s::SummaryStats) = (LABEL_COLUMN_NAME, Tables.columnnames(parent(s))...)
+function Tables.getcolumn(stats::SummaryStats, i::Int)
+    i == 1 && return _labels(stats)
+    return Tables.getcolumn(parent(stats), i - 1)
+end
+function Tables.getcolumn(stats::SummaryStats, nm::Symbol)
+    nm === LABEL_COLUMN_NAME && return _labels(stats)
+    return Tables.getcolumn(parent(stats), nm)
+end
+function Tables.schema(s::SummaryStats)
+    labels = _labels(s)
+    sch = Tables.schema(parent(s))
+    return Tables.Schema((LABEL_COLUMN_NAME, sch.names...), (eltype(labels), sch.types...))
+end
 
 IteratorInterfaceExtensions.isiterable(::SummaryStats) = true
 function IteratorInterfaceExtensions.getiterator(s::SummaryStats)
