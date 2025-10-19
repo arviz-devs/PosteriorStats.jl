@@ -117,14 +117,16 @@ Base.@constprop :aggressive function summarize(
     stats_funs_and_names...;
     kind::Union{Symbol,Val}=:all,
     name::String="SummaryStats",
-    var_names=axes(data, 3),
+    var_names=nothing,
     kwargs...,
 )
-    length(var_names) == size(data, 3) || throw(
-        DimensionMismatch(
-            "length $(length(var_names)) of `var_names` does not match number of parameters $(size(data, 3)) in `data`.",
-        ),
-    )
+    var_names === nothing ||
+        length(var_names) == size(data, 3) ||
+        throw(
+            DimensionMismatch(
+                "length $(length(var_names)) of `var_names` does not match number of parameters $(size(data, 3)) in `data`.",
+            ),
+        )
     if isempty(stats_funs_and_names)
         return _summarize(data, default_summary_stats(kind; kwargs...), name, var_names)
     else
