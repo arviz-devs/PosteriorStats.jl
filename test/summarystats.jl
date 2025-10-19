@@ -13,27 +13,36 @@ using Test
 
     @testset "constructors" begin
         stats1 = SummaryStats(data)
-        @test stats1.data == data_with_default_labels
+        @test stats1.data == data
+        @test isnothing(stats1.labels)
         @test stats1.name == "SummaryStats"
 
         stats2 = SummaryStats(data; name="Stats")
-        @test stats2.data == data_with_default_labels
+        @test stats2.data == data
+        @test isnothing(stats2.labels)
         @test stats2.name == "Stats"
 
         stats3 = SummaryStats(data; labels)
-        @test stats3.data == data_with_labels
+        @test stats3.data == data
+        @test stats3.labels == labels
         @test stats3.name == "SummaryStats"
 
         stats4 = SummaryStats(data; labels, name="Stats")
-        @test stats4.data == data_with_labels
+        @test stats4.data == data
+        @test stats4.labels == labels
         @test stats4.name == "Stats"
 
         stats5 = SummaryStats(data_with_labels)
-        @test stats5.data == data_with_labels
+        @test stats5.data == data
+        @test stats5.labels == labels
 
         stats6 = SummaryStats(merge(data, (; label=labels)))
-        @test stats6.data == data_with_labels
+        @test stats6.data == data
+        @test stats6.labels == labels
         @test stats6.name == "SummaryStats"
+
+        @test_throws ArgumentError SummaryStats(data_with_labels; labels)
+        @test_throws DimensionMismatch SummaryStats(data; labels=labels[1:(end - 1)])
     end
 
     @inferred SummaryStats(data; name="Stats")
@@ -41,7 +50,7 @@ using Test
     stats = @inferred stats_with_names(data, "Stats", labels)
 
     @testset "basic interfaces" begin
-        @test parent(stats) == data_with_labels
+        @test parent(stats) == data
         @test stats.name == "Stats"
         @test SummaryStats(data; name="MoreStats").name == "MoreStats"
         @test keys(stats) == (:label, keys(data)...)
