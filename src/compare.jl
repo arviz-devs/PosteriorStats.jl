@@ -144,7 +144,7 @@ function _show(io::IO, mime::MIME, r::ModelComparisonResult; kwargs...)
     weights = table.weight
     digits_weights = ceil(Int, -log10(maximum(weights))) + 1
     weight_formatter = PrettyTables.ft_printf(
-        "%.$(digits_weights)f", findfirst(==(:weight), cols)
+        "%.$(digits_weights)f", [findfirst(==(:weight), cols)]
     )
     return _show_prettytable(
         io,
