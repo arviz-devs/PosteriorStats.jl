@@ -23,8 +23,8 @@ consider the following points:
 ## Checklist
 <!-- Feel free to remove check-list items aren't relevant to your change -->
 
-- [ ] Does the PR follow [official](https://github.com/arviz-devs/ArviZ.jl/blob/main/CONTRIBUTING.md#pull-request-checklist) PR format?
-- [ ] Does the PR include new or updated tests to prevent issue recurrence?
-- [ ] Is the code style correct (formatted using JuliaFormatter with BlueStyle)?
-- [ ] Is the fix listed in the [Fixes](https://github.com/arviz-devs/PosteriorStats/blob/main/CHANGELOG.md#Fixes) section of the changelog?
-- [ ] Has the patch version number been incremented?
+- [ ] PR follows [official](https://github.com/arviz-devs/ArviZ.jl/blob/main/CONTRIBUTING.md#pull-request-checklist) PR format.
+- [ ] The PR includes new or updated tests to prevent issue recurrence.
+- [ ] Code style is correct (formatted using JuliaFormatter with BlueStyle).
+- [ ] The fix is listed in the [Fixes](https://github.com/arviz-devs/PosteriorStats/blob/main/CHANGELOG.md#Fixes) section of the changelog.
+- [ ] The patch version number has been incremented.

@@ -23,9 +23,9 @@ consider the following points:
 ## Checklist
 <!-- Feel free to remove check-list items aren't relevant to your change -->
 
-- [ ] Does the PR follow [official](https://github.com/arviz-devs/ArviZ.jl/blob/main/CONTRIBUTING.md#pull-request-checklist) PR format?
-- [ ] Is the new feature properly documented with an example?
-- [ ] Does the PR include new or updated tests to cover the new feature?
-- [ ] Is the code style correct (formatted using JuliaFormatter with BlueStyle)?
-- [ ] Is the new feature listed in the [Features](https://github.com/arviz-devs/PosteriorStats.jl/blob/main/CHANGELOG.md#Features) section of the changelog if the change is non-breaking or the [BREAKING CHANGES](https://github.com/arviz-devs/PosteriorStats.jl/blob/main/CHANGELOG.md#BREAKING-CHANGES) section if it is breaking?
-- [ ] Has the patch version number been incremented if the change is non-breaking or the minor version number been incremented if the change is breaking?
+- [ ] PR follows [official](https://github.com/arviz-devs/ArviZ.jl/blob/main/CONTRIBUTING.md#pull-request-checklist) PR format
+- [ ] The new feature is properly documented with an example.
+- [ ] New or updated tests cover the new feature.
+- [ ] Code style is correct (formatted using JuliaFormatter with BlueStyle).
+- [ ] The new feature is listed in the [Features](https://github.com/arviz-devs/PosteriorStats.jl/blob/main/CHANGELOG.md#Features) section of the changelog if the change is non-breaking or the [BREAKING CHANGES](https://github.com/arviz-devs/PosteriorStats.jl/blob/main/CHANGELOG.md#BREAKING-CHANGES) section if it is breaking.
+- [ ] The patch version number been incremented if the change is non-breaking or the minor version number been incremented if the change is breaking.

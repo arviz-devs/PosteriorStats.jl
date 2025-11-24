@@ -23,6 +23,5 @@ consider the following points:
 ## Checklist
 <!-- Feel free to remove check-list items aren't relevant to your change -->
 
-- [ ] Does the PR follow [official](https://github.com/arviz-devs/arviz/blob/main/CONTRIBUTING.md#pull-request-checklist)
-      PR format?
-- [ ] Is the new feature listed in the [Documentation](https://github.com/arviz-devs/PosteriorStats.jl/blob/main/CHANGELOG.md#Documentation) section of the changelog?
+- [ ] PR follows [official](https://github.com/arviz-devs/arviz/blob/main/CONTRIBUTING.md#pull-request-checklist) PR format.
+- [ ] The docs change is listed in the [Documentation](https://github.com/arviz-devs/PosteriorStats.jl/blob/main/CHANGELOG.md#Documentation) section of the changelog.
