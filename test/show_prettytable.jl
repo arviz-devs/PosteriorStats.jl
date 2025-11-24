@@ -2,10 +2,10 @@ using PosteriorStats
 using Test
 
 @testset "utilities for showing tables" begin
-    @testset "ft_printf_sigdigits" begin
+    @testset "_prettytables_sigdigits_formatter" begin
         @testset "all columns" begin
             @testset for sigdigits in 1:5
-                ft1 = PosteriorStats.ft_printf_sigdigits(sigdigits)
+                ft1 = PosteriorStats._prettytables_sigdigits_formatter(sigdigits)
                 for i in 1:10, j in 1:5
                     v = randn()
                     @test ft1(v, i, j) ==
@@ -16,7 +16,7 @@ using Test
         end
         @testset "subset of columns" begin
             @testset for sigdigits in 1:5
-                ft = PosteriorStats.ft_printf_sigdigits(sigdigits, [2, 3])
+                ft = PosteriorStats._prettytables_sigdigits_formatter(sigdigits, [2, 3])
                 for i in 1:10, j in 1:5
                     v = randn()
                     if j ∈ [2, 3]
@@ -31,10 +31,10 @@ using Test
         end
     end
 
-    @testset "ft_printf_sigdigits_matching_se" begin
+    @testset "_prettytables_sigdigits_from_se_formatter" begin
         data = (x=randn(10), x_se=rand(10), y=randn(10), y_se=rand(10))
         @testset for scale in 1:3, (col, se_col) in ((1, 2), (3, 4))
-            ft = PosteriorStats.ft_printf_sigdigits_matching_se(data, 1, 2; scale)
+            ft = PosteriorStats._prettytables_sigdigits_from_se_formatter(data, 1, 2; scale)
             for i in eachindex(values(data)...), j in eachindex(data)
                 v = data[j][i]
                 if j == col
