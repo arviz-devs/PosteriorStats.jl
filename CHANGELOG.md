@@ -10,11 +10,19 @@
 
 ### Maintenance
 
+### Documentation
+
+## v0.4.3 (2025-11-24)
+
+### Features
+
+- Support PrettyTables v3 (v2 temporarily still supported) ([#83](https://github.com/arviz-devs/PosteriorStats.jl/pull/83))
+
+### Maintenance
+
 - Store SummaryStats labels separately from data ([#81](https://github.com/arviz-devs/PosteriorStats.jl/pull/81))
 - Add historical changelog ([#82](https://github.com/arviz-devs/PosteriorStats.jl/pull/82))
 - Add pull request templates ([#82](https://github.com/arviz-devs/PosteriorStats.jl/pull/82))
-
-### Documentation
 
 ## v0.4.2 (2025-10-13)
 
