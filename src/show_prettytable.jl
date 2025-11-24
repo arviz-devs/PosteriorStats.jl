@@ -1,9 +1,24 @@
 # Utilities for displaying tables using PrettyTables.jl
 
+@static if pkgversion(PrettyTables).major == 2
+    # temporarily support PrettyTables v2 until v3 is more broadly established in the ecosystem
+    const IS_PRETTYTABLES_V2 = true
+    const PRETTYTABLES_TEXT_FORMAT = (; hlines=:none, vlines=:none)
+    const PRETTYTABLES_TEXT_STYLE = (; title_crayon=PrettyTables.Crayon())
+    _prettytables_printf_formatter(fmt::String, cols) = PrettyTables.ft_printf(fmt, cols)
+else
+    const IS_PRETTYTABLES_V2 = false
+    const PRETTYTABLES_TEXT_FORMAT = PrettyTables.TextTableFormat(;
+        PrettyTables.@text__no_vertical_lines, PrettyTables.@text__no_horizontal_lines
+    )
+    const PRETTYTABLES_TEXT_STYLE = PrettyTables.TextTableStyle(;
+        title=PrettyTables.Crayon()
+    )
+    _prettytables_printf_formatter(fmt::String, cols) = PrettyTables.fmt__printf(fmt, cols)
+end
+
 # formatting functions for special columns
 # see https://ronisbr.github.io/PrettyTables.jl/stable/man/usage/#Formatters
-
-_prettytables_printf_formatter(fmt::String, cols) = PrettyTables.ft_printf(fmt, cols)
 
 # Use Printf to format real elements to the number of `sigdigits`.
 function _prettytables_sigdigits_formatter(sigdigits::Int)
@@ -130,23 +145,37 @@ function _show_prettytable(
     sigdigits_default=3,
     extra_formatters=(),
     alignment=_text_alignment(data),
-    show_subheader=false,
-    vcrop_mode=:middle,
-    row_label_alignment=:l,
+    show_first_column_label_only=true,
+    vertical_crop_mode=:middle,
+    row_label_column_alignment=:l,
     kwargs...,
 )
-    formatters = (
+    formatters = [
         extra_formatters...,
-        _default_prettytables_formatters(data; sigdigits_se, sigdigits_default)...,
+        _prettytables_default_formatters(data; sigdigits_se, sigdigits_default)...,
+    ]
+    IS_PRETTYTABLES_V2 && return PrettyTables.pretty_table(
+        io,
+        data;
+        alignment,
+        formatters=Tuple(formatters),
+        merge(
+            (;
+                show_subheader=(!show_first_column_label_only),
+                vcrop_mode=vertical_crop_mode,
+                row_label_alignment=row_label_column_alignment,
+            ),
+            kwargs,
+        )...,
     )
     PrettyTables.pretty_table(
         io,
         data;
-        show_subheader,
-        vcrop_mode,
-        row_label_alignment,
-        formatters,
+        show_first_column_label_only,
+        vertical_crop_mode,
+        row_label_column_alignment,
         alignment,
+        formatters,
         kwargs...,
     )
     return nothing
@@ -156,32 +185,56 @@ function _show_prettytable(
     io::IO,
     ::MIME"text/plain",
     data;
-    title_crayon=PrettyTables.Crayon(),
-    hlines=:none,
-    vlines=:none,
-    newline_at_end=false,
+    style=PRETTYTABLES_TEXT_STYLE,
+    table_format=PRETTYTABLES_TEXT_FORMAT,
+    new_line_at_end=false,
+    title_alignment=:l,
     alignment_anchor_regex=_text_alignment_anchor_regex(data),
     alignment_anchor_fallback=:r,
     kwargs...,
 )
-    return _show_prettytable(
+    IS_PRETTYTABLES_V2 && return _show_prettytable(
         io,
         data;
         backend=Val(:text),
-        title_crayon,
-        hlines,
-        vlines,
-        newline_at_end,
+        title_alignment,
         alignment_anchor_regex=Dict(alignment_anchor_regex),
+        alignment_anchor_fallback,
+        merge(
+            (;
+                style...,
+                table_format...,
+                newline_at_end=new_line_at_end,
+            ),
+            kwargs,
+        )...,
+    )
+    return _show_prettytable(
+        io,
+        data;
+        backend=:text,
+        style,
+        table_format,
+        new_line_at_end,
+        title_alignment,
+        alignment_anchor_regex,
         alignment_anchor_fallback,
         kwargs...,
     )
 end
+
 function _show_prettytable(
-    io::IO, ::MIME"text/html", data; minify=true, max_num_of_rows=25, kwargs...
+    io::IO, ::MIME"text/html", data; minify=true, maximum_number_of_rows=25, kwargs...
 )
+    IS_PRETTYTABLES_V2 && return _show_prettytable(
+        io,
+        data;
+        backend=Val(:html),
+        minify,
+        merge((; max_num_of_rows=maximum_number_of_rows), kwargs)...,
+    )
     return _show_prettytable(
-        io, data; backend=Val(:html), minify, max_num_of_rows, kwargs...
+        io, data; backend=:html, minify, maximum_number_of_rows, kwargs...
     )
 end
 
