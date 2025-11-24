@@ -200,14 +200,7 @@ function _show_prettytable(
         title_alignment,
         alignment_anchor_regex=Dict(alignment_anchor_regex),
         alignment_anchor_fallback,
-        merge(
-            (;
-                style...,
-                table_format...,
-                newline_at_end=new_line_at_end,
-            ),
-            kwargs,
-        )...,
+        merge((; style..., table_format..., newline_at_end=new_line_at_end), kwargs)...,
     )
     return _show_prettytable(
         io,
