@@ -127,7 +127,6 @@ function _show_prettytable(
     alignment=_text_alignment(data),
     show_subheader=false,
     vcrop_mode=:middle,
-    show_omitted_cell_summary=true,
     row_label_alignment=:l,
     kwargs...,
 )
@@ -140,7 +139,6 @@ function _show_prettytable(
         data;
         show_subheader,
         vcrop_mode,
-        show_omitted_cell_summary,
         row_label_alignment,
         formatters,
         alignment,
