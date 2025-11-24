@@ -106,14 +106,17 @@ function _text_alignment(data)
 end
 
 function _text_alignment_anchor_regex(data)
-    alignment_anchor_regex = Dict{Int,Vector{Regex}}()
+    alignment_anchor_regex = Pair{Int,Vector{Regex}}[]
     for (i, k) in enumerate(Tables.columnnames(data))
         v = Tables.getcolumn(data, k)
-        if eltype(v) <: Real && !(eltype(v) <: Integer) && !_is_ess_label(k)
-            alignment_anchor_regex[i] = [r"\.", r"e", r"^NaN$", r"Inf$"]
+        patterns = if eltype(v) <: Real && !(eltype(v) <: Integer) && !_is_ess_label(k)
+            [r"\.", r"e", r"^NaN$", r"Inf$"]
         elseif eltype(v) <: IntervalSets.AbstractInterval
-            alignment_anchor_regex[i] = [r"\.\."]
+            [r"\.\."]
+        else
+            continue
         end
+        push!(alignment_anchor_regex, i => patterns)
     end
     return alignment_anchor_regex
 end
@@ -169,7 +172,7 @@ function _show_prettytable(
         hlines,
         vlines,
         newline_at_end,
-        alignment_anchor_regex,
+        alignment_anchor_regex=Dict(alignment_anchor_regex),
         alignment_anchor_fallback,
         kwargs...,
     )
