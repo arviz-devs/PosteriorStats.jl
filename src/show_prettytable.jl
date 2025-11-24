@@ -64,6 +64,8 @@ function _prettytables_se_formatters(data; sigdigits_se=2)
         idx_col = Tables.columnindex(data, col)
         idx_col == 0 && continue
         push!(
+            formatters, _prettytables_sigdigits_from_se_formatter(data, idx_col, idx_se_col)
+        )
     end
     if !isempty(se_cols_inds)
         push!(formatters, _prettytables_sigdigits_formatter(sigdigits_se, se_cols_inds))
