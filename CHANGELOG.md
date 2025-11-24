@@ -11,6 +11,8 @@
 ### Maintenance
 
 - Store SummaryStats labels separately from data ([#81](https://github.com/arviz-devs/PosteriorStats.jl/pull/81))
+- Add historical changelog ([#82](https://github.com/arviz-devs/PosteriorStats.jl/pull/82))
+- Add pull request templates ([#82](https://github.com/arviz-devs/PosteriorStats.jl/pull/82))
 
 ### Documentation
 
