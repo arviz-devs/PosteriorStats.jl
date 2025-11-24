@@ -143,7 +143,7 @@ function _show(io::IO, mime::MIME, r::ModelComparisonResult; kwargs...)
     weights_method_name = _typename(r.weights_method)
     weights = table.weight
     digits_weights = ceil(Int, -log10(maximum(weights))) + 1
-    weight_formatter = PrettyTables.ft_printf(
+    weight_formatter = _prettytables_printf_formatter(
         "%.$(digits_weights)f", [findfirst(==(:weight), cols)]
     )
     return _show_prettytable(
