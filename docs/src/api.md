@@ -27,7 +27,6 @@ eti!
 AbstractELPDResult
 PSISLOOResult
 elpd_estimates
-information_criterion
 loo
 ```
 
@@ -36,12 +35,10 @@ loo
 ```@docs
 ModelComparisonResult
 compare
-model_weights
 ```
 
 The following model weighting methods are available
 ```@docs
-AbstractModelWeightsMethod
 BootstrappedPseudoBMA
 PseudoBMA
 Stacking

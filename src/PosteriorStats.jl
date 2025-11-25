@@ -32,10 +32,10 @@ export PSIS, PSISResult, psis, psis!
 
 # LOO-CV
 export AbstractELPDResult, PSISLOOResult
-export elpd_estimates, information_criterion, loo
+export elpd_estimates, loo
 
 # Model weighting and comparison
-export AbstractModelWeightsMethod, BootstrappedPseudoBMA, PseudoBMA, Stacking, model_weights
+export BootstrappedPseudoBMA, PseudoBMA, Stacking
 export ModelComparisonResult, compare
 
 # Summary statistics
@@ -49,7 +49,6 @@ export eti, eti!, hdi, hdi!
 export loo_pit, r2_score
 
 const DEFAULT_CI_PROB = 0.89f0
-const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)
 
 include("utils.jl")
 include("show_prettytable.jl")
