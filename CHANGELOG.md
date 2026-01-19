@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.4 (2026-01-19)
+
+### Documentation
+
+- Build docs with ArviZExampleData v0.3 ([#86](https://github.com/arviz-devs/PosteriorStats.jl/pull/86))
+
 ## v0.4.3 (2025-11-24)
 
 ### Features
