@@ -36,14 +36,14 @@ credible interval (CI).
 ```jldoctest
 julia> using ArviZExampleData
 
-julia> idata = load_example_data("regression1d");
+julia> idata = load_example_data("anes");
 
-julia> y_true = idata.observed_data.y;
+julia> y_true = idata.observed_data.vote;
 
-julia> y_pred = PermutedDimsArray(idata.posterior_predictive.y, (:draw, :chain, :y_dim_0));
+julia> y_pred = PermutedDimsArray(idata.posterior_predictive.vote, (:draw, :chain, :__obs__));
 
 julia> r2_score(y_true, y_pred)
-(r2 = 0.683196996216511, eti = 0.6230680117869596 .. 0.7384123771046265)
+(r2 = 0.4944850210319484, eti = 0.46184359652436546 .. 0.528018251711097)
 ```
 
 # References
