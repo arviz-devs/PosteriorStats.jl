@@ -1,5 +1,5 @@
 """
-    r2_score(y_true::AbstractVector, y_pred::AbstractArray; kwargs...) -> (; r2, r2_std)
+    r2_score(y_true::AbstractVector, y_pred::AbstractArray; kwargs...) -> (; r2, <ci_fun>)
 
 ``R²`` for linear Bayesian regression models.[Gelman2019](@citep)
 
