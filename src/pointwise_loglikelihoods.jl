@@ -1,22 +1,3 @@
-"""
-    pointwise_loglikelihoods
-
-Compute pointwise conditional log-likelihoods for ELPD-based model comparison/validation.
-
-Given model parameters ``\\theta`` and observations ``y``, the pointwise conditional
-log-likelihood of ``y_i`` given ``y_{-i}`` (the elements of ``y`` excluding ``y_i``) and
-``\\theta`` is defined as
-```math
-\\log p(y_i \\mid y_{-i}, \\theta)
-```
-
-This method is a utility function that dependant packages can override to provide pointwise
-conditional log-likelihoods for their own models/distributions.
-
-See also: [`loo`](@ref)
-"""
-pointwise_loglikelihoods
-
 @doc """
     pointwise_loglikelihoods(y, dists)
 
