@@ -1,5 +1,7 @@
+@deprecate pointwise_loglikelihoods(y, dists) pointwise_conditional_loglikelihoods(y, dists)
+
 @doc """
-    pointwise_loglikelihoods(y, dists)
+    pointwise_conditional_loglikelihoods(y, dists)
 
 Compute pointwise conditional log-likelihoods of `y` for non-factorized distributions.
 
@@ -33,7 +35,7 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
 - [LOOFactorized](@cite) Vehtari et al. Leave-one-out cross-validation for non-factorized
     models
 """
-function pointwise_loglikelihoods(
+function pointwise_conditional_loglikelihoods(
     y::AbstractArray{<:Real,N},
     dists::AbstractArray{
         <:Distributions.Distribution{<:Distributions.ArrayLikeVariate{N}},M
@@ -43,13 +45,13 @@ function pointwise_loglikelihoods(
     sample_dims = ntuple(identity, M)
     log_like = similar(y, T, (axes(dists)..., axes(y)...))
     for (dist, ll) in zip(dists, eachslice(log_like; dims=sample_dims))
-        pointwise_loglikelihoods!(ll, y, dist)
+        pointwise_conditional_loglikelihoods!(ll, y, dist)
     end
     return log_like
 end
 
 # Array-variate normal distribution
-function pointwise_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
     dist::Distributions.MvNormal,
@@ -59,7 +61,7 @@ function pointwise_loglikelihoods!(
     g = Σ \ (y - μ)
     return @. log_like = (log(λ) - g^2 / λ - log2π) / 2
 end
-function pointwise_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
     dist::Distributions.MvNormalCanon,
@@ -69,7 +71,7 @@ function pointwise_loglikelihoods!(
     cov_inv_y = _pdmul(J, y)
     return @. log_like = (log(λ) - (cov_inv_y - h)^2 / λ - log2π) / 2
 end
-function pointwise_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!(
     log_like::AbstractMatrix{<:Real},
     y::AbstractMatrix{<:Real},
     dist::Distributions.MatrixNormal,
@@ -82,19 +84,19 @@ function pointwise_loglikelihoods!(
 end
 
 # Multivariate log-normal distribution
-function pointwise_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
     dist::Distributions.MvLogNormal,
 )
     logy = log.(y)
-    pointwise_loglikelihoods!(log_like, logy, dist.normal)
+    pointwise_conditional_loglikelihoods!(log_like, logy, dist.normal)
     log_like .-= logy
     return log_like
 end
 
 # Array-variate t-distribution
-function pointwise_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!(
     log_like::AbstractVector{T},
     y::AbstractVector{<:Real},
     dist::Distributions.GenericMvTDist,

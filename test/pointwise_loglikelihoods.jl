@@ -155,14 +155,14 @@ end
 
         test_factorized = !(dist_type <: Distributions.GenericMvTDist)
 
-        @testset "pointwise_loglikelihoods!" begin
+        @testset "pointwise_conditional_loglikelihoods!" begin
             @testset "consistent with conditional distributions" begin
                 dist = rand_dist(dist_type, T, sz)
                 y = convert(Array{T}, rand(dist))
                 @assert eltype(y) == T
                 log_like = similar(y)
                 y_inds = ndims(y) > 1 ? CartesianIndices(y) : eachindex(y)
-                PosteriorStats.pointwise_loglikelihoods!(log_like, y, dist)
+                PosteriorStats.pointwise_conditional_loglikelihoods!(log_like, y, dist)
                 conditional_dists = conditional_distribution.(Ref(dist), Ref(y), y_inds)
                 log_like_ref = loglikelihood.(conditional_dists, y)
                 @test log_like ≈ log_like_ref
@@ -173,14 +173,14 @@ end
                 y = convert(Array{T}, rand(dist))
                 @assert eltype(y) == T
                 log_like = similar(y)
-                PosteriorStats.pointwise_loglikelihoods!(log_like, y, dist)
+                PosteriorStats.pointwise_conditional_loglikelihoods!(log_like, y, dist)
                 factorized_dists = factorized_distributions(dist)
                 log_like_ref = loglikelihood.(factorized_dists, y)
                 @test log_like ≈ log_like_ref
             end
         end
 
-        @testset "pointwise_loglikelihoods" begin
+        @testset "pointwise_conditional_loglikelihoods" begin
             ndraws, nchains = 7, 3
             @testset for dim_type in (UnitRange, DimensionalData.Dim)
                 if dim_type <: UnitRange
@@ -207,7 +207,9 @@ end
                 @assert size(dists) == (ndraws, nchains)
                 y = zeros(T, y_dims...)
                 rand!(first(dists), y)
-                log_like = @inferred PosteriorStats.pointwise_loglikelihoods(y, dists)
+                log_like = @inferred PosteriorStats.pointwise_conditional_loglikelihoods(
+                    y, dists
+                )
                 @test size(log_like) == (ndraws, nchains, sz...)
                 @test eltype(log_like) == T
                 @test all(isfinite, log_like)
