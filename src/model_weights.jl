@@ -229,7 +229,7 @@ function _model_weights_stacking(exp_ic_mat, optimizer, options)
     x0 = _initial_point(objective, w0)
 
     # optimize
-    sol = Optim.optimize(Optim.only_fg!(objective), x0, optimizer, options)
+    sol = Optim.optimize(NLSolversBase.only_fg!(objective), x0, optimizer, options)
 
     # check convergence
     Optim.converged(sol) ||
