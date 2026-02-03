@@ -23,13 +23,13 @@ rand_pdmat(D::Int; kwargs...) = rand_pdmat(Float64, D; kwargs...)
 
 Randomly generate a distribution.
 """
-function rand_dist(::Type{<:MvNormal}, T::Type{<:Real}, D::Int; factorized::Bool=false)
+function rand_dist(::Type{<:MvNormal}, T::Type{<:Real}, (D,); factorized::Bool=false)
     μ = randn(T, D)
     Σ = factorized ? Diagonal(rand(T, D)) : rand_pdmat(T, D)
     dist = MvNormal(μ, Σ)
     return dist
 end
-function rand_dist(::Type{<:MvNormalCanon}, T::Type{<:Real}, D::Int; factorized::Bool=false)
+function rand_dist(::Type{<:MvNormalCanon}, T::Type{<:Real}, (D,); factorized::Bool=false)
     h = randn(T, D)
     J = factorized ? Diagonal(rand(T, D)) : rand_pdmat(T, D)
     dist = MvNormalCanon(h, J)
@@ -47,12 +47,12 @@ function rand_dist(::Type{<:MatrixNormal}, T::Type{<:Real}, (D, K); factorized::
     dist = MatrixNormal(M, U, V)
     return convert(MatrixNormal{T}, dist)
 end
-function rand_dist(::Type{<:MvLogNormal}, T::Type{<:Real}, D::Int; factorized::Bool=false)
+function rand_dist(::Type{<:MvLogNormal}, T::Type{<:Real}, (D,); factorized::Bool=false)
     norm = rand_dist(MvNormal, T, D; factorized)
     return MvLogNormal(norm)
 end
 function rand_dist(
-    ::Type{<:Distributions.GenericMvTDist}, T::Type{<:Real}, D::Int; factorized::Bool=false
+    ::Type{<:Distributions.GenericMvTDist}, T::Type{<:Real}, (D,); factorized::Bool=false
 )
     @assert !factorized "factorized=true not supported for GenericMvTDist"
     μ = randn(T, D)
