@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.5 (2026-02-03)
+
+### Maintenance
+
+- Support Optim v2 ([#85](https://github.com/arviz-devs/PosteriorStats.jl/pull/85))
+
 ## v0.4.4 (2026-01-19)
 
 ### Documentation
