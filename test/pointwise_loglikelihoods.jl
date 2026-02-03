@@ -60,6 +60,20 @@ function rand_dist(
     ν = rand(T) * 8 + 2
     return Distributions.GenericMvTDist(ν, μ, Σ)
 end
+rand_dist(::Type{Normal}, T::Type{<:Real}, (); kwargs...) = Normal(randn(T), rand(T))
+function rand_dist(
+    ::Type{<:Distributions.MixtureModel{ArrayLikeVariate{N}}},
+    T::Type{<:Real},
+    sz;
+    factorized::Bool=false,
+) where {N}
+    num_components = 5
+    probs = rand(T, num_components)
+    probs ./= sum(probs)
+    dist_type = (Normal, MvNormal, MatrixNormal)[N + 1]
+    dists = [rand_dist(dist_type, T, sz; factorized) for _ in 1:num_components]
+    return MixtureModel(dists, probs)
+end
 
 """
     conditional_distribution(dist, y, i) -> ContinuousUnivariateDistribution
@@ -114,6 +128,11 @@ function conditional_distribution(
     σ_cond = sqrt(Σ_cond * (ν + d) / ν_cond)
     return TDist(ν_cond) * σ_cond + μ_cond
 end
+function conditional_distribution(dist::Distributions.MixtureModel, y::AbstractArray, i)
+    return MixtureModel(
+        conditional_distribution.(Distributions.components(dist), Ref(y), Ref(i)),
+        Distributions.probs(dist),
+    )
 
 """
     factorized_distributions(dist) -> Array{<:ContinuousUnivariateDistribution}
@@ -133,6 +152,12 @@ end
 function factorized_distributions(dist::MvLogNormal)
     dnorms = factorized_distributions(dist.normal)
     return map(d -> LogNormal(d.μ, d.σ), dnorms)
+end
+function factorized_distributions(dist::Distributions.MixtureModel)
+    return MixtureModel.(
+        factorized_distributions.(Distributions.components(dist)),
+        Ref(Distributions.probs(dist)),
+    )
 end
 
 @testset "pointwise loglikelihoods" begin

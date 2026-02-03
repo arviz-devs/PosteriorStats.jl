@@ -117,6 +117,24 @@ function pointwise_conditional_loglikelihoods!(
     end
 end
 
+# Mixtures of array-variate distributions
+function pointwise_conditional_loglikelihoods!(
+    log_like::AbstractArray{<:Real,N},
+    y::AbstractArray{<:Real,N},
+    dist::Distributions.AbstractMixtureModel{Distributions.ArrayLikeVariate{N}},
+) where {N}
+    log_like_component = similar(log_like)
+    probs = Distributions.probs(dist)
+    components = Distributions.components(dist)
+    pointwise_conditional_loglikelihoods!(log_like, y, first(components))
+    log_like .+= log.(first(probs))
+    for (component, prob) in Iterators.drop(zip(components, probs), 1)
+        pointwise_conditional_loglikelihoods!(log_like_component, y, component)
+        log_like .= LogExpFunctions.logaddexp.(log_like, log.(prob) .+ log_like_component)
+    end
+    return log_like
+end
+
 # Helper functions
 
 function _pd_diag_inv(A::PDMats.AbstractPDMat)
