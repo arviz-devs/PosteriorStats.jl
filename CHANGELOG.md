@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.6 (2026-02-03)
+
+### Features
+
+- Add `pointwise_conditional_loglikelihoods`. Deprecate `pointwise_loglikelihoods`. ([#88](https://github.com/arviz-devs/PosteriorStats.jl/pull/88))
+
 ## v0.4.5 (2026-02-03)
 
 ### Maintenance
