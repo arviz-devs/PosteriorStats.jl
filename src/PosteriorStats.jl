@@ -10,6 +10,7 @@ using LinearAlgebra: LinearAlgebra, mul!, norm, normalize
 using LogExpFunctions: LogExpFunctions
 using Markdown: @doc_str
 using MCMCDiagnosticTools: MCMCDiagnosticTools
+using NLSolversBase: NLSolversBase
 using Optim: Optim
 using OrderedCollections: OrderedCollections
 using PrettyTables: PrettyTables
