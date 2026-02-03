@@ -74,6 +74,27 @@ function rand_dist(
     dists = [rand_dist(dist_type, T, sz; factorized) for _ in 1:num_components]
     return MixtureModel(dists, probs)
 end
+function rand_dist(
+    ::Type{<:Distributions.ProductDistribution{N,M}},
+    T::Type{<:Real},
+    sz;
+    factorized::Bool=false,
+) where {N,M}
+    dist_type = (Normal, MvNormal, MatrixNormal)[M + 1]
+    sz_dist = sz[(M + 1):N]
+    dists = map(Iterators.product(Base.OneTo.(sz_dist)...)) do _
+        rand_dist(dist_type, T, sz_dist; factorized)
+    end
+    return ProductDistribution(dists)
+end
+if isdefined(Distributions, :Product)
+    function rand_dist(
+        ::Type{<:Distributions.Product}, T::Type{<:Real}, (D,); factorized::Bool=false
+    )
+        dists = [rand_dist(Normal, T, (); factorized) for _ in 1:D]
+        return Distributions.Product(dists)
+    end
+end
 
 """
     conditional_distribution(dist, y, i) -> ContinuousUnivariateDistribution
@@ -133,6 +154,30 @@ function conditional_distribution(dist::Distributions.MixtureModel, y::AbstractA
         conditional_distribution.(Distributions.components(dist), Ref(y), Ref(i)),
         Distributions.probs(dist),
     )
+end
+function conditional_distribution(
+    dist::Distributions.ProductDistribution{N,M},
+    y::AbstractArray{<:Real,N},
+    i::CartesianIndex{N},
+) where {N,M}
+    inds = Tuple(i)
+    ind_in_component = inds[1:M]
+    ind_component = inds[(M + 1):N]
+    dist_i = dist.dists[inds[(M + 1):N]...]
+    M == 0 && return dist_i
+    y_i = y[fill(Colon(), M)..., ind_component...]
+    return conditional_distribution(dist_i, y_i, ind_in_component)
+end
+function conditional_distribution(
+    dist::Distributions.ProductDistribution{1,0}, ::AbstractVector, i::Int
+)
+    return dist.dists[i]
+end
+if isdefined(Distributions, :Product)
+    function conditional_distribution(dist::Distributions.Product, ::AbstractVector, i::Int)
+        return dist.v[i]
+    end
+end
 
 """
     factorized_distributions(dist) -> Array{<:ContinuousUnivariateDistribution}
@@ -158,6 +203,17 @@ function factorized_distributions(dist::Distributions.MixtureModel)
         factorized_distributions.(Distributions.components(dist)),
         Ref(Distributions.probs(dist)),
     )
+end
+function factorized_distributions(dist::Distributions.ProductDistribution{N,0}) where {N}
+    return dist.dists
+end
+function factorized_distributions(
+    dist::Distributions.ProductDistribution{N,1,<:AbstractArray{D}}
+) where {N,D<:Union{AbstractMvNormal,MvLogNormal}}
+    return stack(map(factorized_distributions, dist.dists))
+end
+if isdefined(Distributions, :Product)
+    factorized_distributions(dist::Distributions.Product) = dist.v
 end
 
 @testset "pointwise loglikelihoods" begin

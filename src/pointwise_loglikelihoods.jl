@@ -135,6 +135,34 @@ function pointwise_conditional_loglikelihoods!(
     return log_like
 end
 
+# Product of array-variate distributions
+function pointwise_conditional_loglikelihoods!(
+    log_like::AbstractArray{<:Real,N},
+    y::AbstractArray{<:Real,N},
+    dist::Distributions.ProductDistribution{N,M},
+) where {N,M}
+    if M == 0
+        log_like .= Distributions.loglikelihood.(dist.dists, y)
+    else
+        dims = ntuple(i -> i + M, Val(N - M))  # product dimensions
+        for (y_i, log_like_i, dist_i) in
+            zip(eachslice(y; dims), eachslice(log_like; dims), dist.dists)
+            pointwise_conditional_loglikelihoods!(log_like_i, y_i, dist_i)
+        end
+    end
+    return log_like
+end
+if isdefined(Distributions, :Product)
+    function pointwise_conditional_loglikelihoods!(
+        log_like::AbstractVector{<:Real},
+        y::AbstractVector{<:Real},
+        dist::Distributions.Product,
+    )
+        log_like .= Distributions.loglikelihood.(dist.v, y)
+        return log_like
+    end
+end
+
 # Helper functions
 
 function _pd_diag_inv(A::PDMats.AbstractPDMat)
