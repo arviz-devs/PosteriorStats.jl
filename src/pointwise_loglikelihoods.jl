@@ -24,6 +24,9 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
     + [`Distributions.MatrixNormal`](@extref)
     + [`Distributions.MvLogNormal`](@extref)
     + `Distributions.GenericMvTDist` [Burkner2021; but uses a more efficient implementation](@citep)
+    + [`Distributions.ProductDistribution`](@extref) for products of univariate distributions and
+        any of the above array-variate distributions
+    + [`Distributions.AbstractMixtureModel`](@extref) for mixtures of the above distributions
 
 # Returns
 
