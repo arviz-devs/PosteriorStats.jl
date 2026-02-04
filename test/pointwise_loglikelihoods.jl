@@ -8,6 +8,7 @@ using Test
 
 # Utility functions. To add a new distribution, overload:
 # - rand_dist
+# - marginal_distribution
 # - conditional_distribution
 # - factorized_distributions (optional)
 
@@ -99,6 +100,52 @@ if isdefined(Distributions, :Product)
         dists = [rand_dist(Normal, T, (); factorized) for _ in 1:D]
         return Distributions.Product(dists)
     end
+end
+
+function marginal_loglikelihoods(dist, y::AbstractArray)
+    return map(CartesianIndices(y)) do i
+        if i isa CartesianIndex{1}
+            return marginal_loglikelihood(dist, y, LinearIndices(y)[i])
+        else
+            return marginal_loglikelihood(dist, y, i)
+        end
+    end
+end
+function marginal_loglikelihoods(dist::MatrixNormal, y::AbstractMatrix)
+    log_like_vec = marginal_loglikelihoods(_mvnormal(dist), vec(y))
+    return reshape(log_like_vec, size(y))
+end
+
+function marginal_loglikelihood(dist::MultivariateDistribution, y::AbstractVector, i::Int)
+    ic = setdiff(eachindex(y), i)
+    return @views loglikelihood(marginal_distribution(dist, ic), y[ic])
+end
+
+"""
+    marginal_distribution(dist::MultivariateDistribution, i)
+
+Compute the marginal distribution of `dist` at the indices `i`.
+"""
+function marginal_distribution(dist::MvNormal, i)
+    μ = mean(dist)
+    Σ = cov(dist)
+    Σ_i = @views Symmetric(Σ[i, i])
+    return MvNormal(μ[i], Σ_i)
+end
+function marginal_distribution(dist::MvNormalCanon, i)
+    μ = mean(dist)
+    Σ = cov(dist)
+    J_i = @views Symmetric(inv(Symmetric(Σ[i, i])) + I * eps(eltype(μ)))
+    h_i = @views J_i * μ[i]
+    return MvNormalCanon(h_i, J_i)
+end
+function marginal_distribution(dist::MvLogNormal, i)
+    return MvLogNormal(marginal_distribution(dist.normal, i))
+end
+function marginal_distribution(dist::Distributions.GenericMvTDist, i)
+    μ_i = dist.μ[i]
+    Σ_i = @views Symmetric(dist.Σ[i, i])
+    return Distributions.GenericMvTDist(dist.df, μ_i, PDMat(Σ_i))
 end
 
 """
@@ -263,6 +310,16 @@ end
                 factorized_dists = factorized_distributions(dist)
                 log_like_ref = loglikelihood.(factorized_dists, y)
                 @test log_like ≈ log_like_ref
+            end
+
+            @testset "consistent with marginal distributions" begin
+                dist = rand_dist(dist_type, T, sz)
+                y = convert(Array{T}, rand(dist))
+                log_like_cond = similar(y)
+                PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_cond, y, dist)
+                log_like_marginal = marginal_loglikelihoods(dist, y)
+                log_like_full = loglikelihood(dist, y)
+                @test log_like_cond ≈ log_like_full .- log_like_marginal  # check that p(y_i | y_{-i}) == p(y) / p(y_{-i})
             end
         end
 
