@@ -11,6 +11,11 @@ using Test
 # - conditional_distribution
 # - factorized_distributions (optional)
 
+function _mvnormal(dist::MatrixNormal)
+    (; M, U, V) = dist
+    return MvNormal(vec(M), kron(V, U))
+end
+
 function rand_pdmat(T::Type{<:Real}, D::Int; jitter::Real=T(1e-3))
     A = randn(T, D, D)
     S = PDMat(A * A' + T(jitter) * I)
@@ -120,9 +125,8 @@ function conditional_distribution(dist::MvNormalCanon, y::AbstractVector, i::Int
     return conditional_distribution(MvNormal(mean(dist), cov(dist)), y, i)
 end
 function conditional_distribution(dist::MatrixNormal, y::AbstractMatrix, i::CartesianIndex)
-    (; M, U, V) = dist
     vec_y = vec(y)
-    vec_dist = MvNormal(vec(M), kron(V, U))
+    vec_dist = _mvnormal(dist)
     vec_i = LinearIndices(y)[i]
     return conditional_distribution(vec_dist, vec_y, vec_i)
 end
@@ -191,7 +195,8 @@ end
 function factorized_distributions(dist::MatrixNormal)
     (; M, U, V) = dist
     @assert isdiag(U) && isdiag(V)
-    σ = reshape(sqrt.(diag(kron(Diagonal(V), Diagonal(U)))), size(M))
+    vec_dist = _mvnormal(dist)
+    σ = reshape(std(vec_dist), size(M))
     return Normal.(M, σ)
 end
 function factorized_distributions(dist::MvLogNormal)
