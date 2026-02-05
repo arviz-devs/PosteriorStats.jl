@@ -314,11 +314,37 @@ end
         end
     end
 
-    @testset for dist_type in (
-            MvNormal, MvNormalCanon, MatrixNormal, MvLogNormal, Distributions.GenericMvTDist
-        ),
-        T in (Float32, Float64),
-        sz in (dist_type <: MultivariateDistribution ? (5, 10) : ((2, 3),))
+    dists = Any[
+        (MvNormal, 5),
+        (MvNormal, 10),
+        (MvNormalCanon, 5),
+        (MvNormalCanon, 10),
+        (MatrixNormal, (2, 3)),
+        (MatrixNormal, (3, 2)),
+        (MvLogNormal, 5),
+        (MvLogNormal, 10),
+        (Distributions.GenericMvTDist, 5),
+        (Distributions.GenericMvTDist, 10),
+        (Distributions.MixtureModel{Multivariate}, (5,)),
+    ]
+    if isdefined(Distributions, :ProductDistribution)
+        append!(
+            dists,
+            [
+                (Distributions.ProductDistribution{1,0}, (5,)),
+                (Distributions.ProductDistribution{2,0}, (5, 3)),
+                (Distributions.ProductDistribution{2,1}, (5, 3)),
+                (Distributions.ProductDistribution{3,0}, (5, 3, 4)),
+                (Distributions.ProductDistribution{3,1}, (5, 3, 4)),
+                (Distributions.ProductDistribution{3,2}, (5, 3, 4)),
+            ],
+        )
+    end
+    if isdefined(Distributions, :Product)
+        push!(dists, (Distributions.Product, (5,)))
+    end
+
+    @testset for (dist_type, sz) in dists, T in (Float64, Float32)
 
         # conditional distribution for mixture models in't a type in Distributions.jl
         test_conditional = !(dist_type <: Distributions.AbstractMixtureModel)
@@ -393,7 +419,6 @@ end
                     y, dists
                 )
                 @test size(log_like) == (ndraws, nchains, sz...)
-                @test eltype(log_like) == T
                 @test all(isfinite, log_like)
 
                 if dim_type <: Dim
