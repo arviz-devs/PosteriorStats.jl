@@ -44,13 +44,18 @@ function pointwise_conditional_loglikelihoods(
         <:Distributions.Distribution{<:Distributions.ArrayLikeVariate{N}},M
     },
 ) where {M,N}
-    T = typeof(log(one(promote_type(eltype(y), Distributions.partype(first(dists))))))
+    T = _loglikelihood_eltype(first(dists), y)
     sample_dims = ntuple(identity, M)
     log_like = similar(y, T, (axes(dists)..., axes(y)...))
     for (dist, ll) in zip(dists, eachslice(log_like; dims=sample_dims))
         pointwise_conditional_loglikelihoods!(ll, y, dist)
     end
     return log_like
+end
+
+# compute likelihood once to determine eltype of result
+function _loglikelihood_eltype(dist::Distributions.Distribution, y::AbstractArray)
+    return typeof(log(one(promote_type(eltype(y), Distributions.partype(dist)))))
 end
 
 # Array-variate normal distribution
@@ -136,6 +141,21 @@ function pointwise_conditional_loglikelihoods!(
         log_like .= LogExpFunctions.logaddexp.(log_like, log.(prob) .+ log_like_component)
     end
     return log_like
+end
+# work around type instability in partype(::AbstractMixtureModel)
+# https://github.com/JuliaStats/Distributions.jl/blob/3d304c26f1cffd6a5bcd24fac2318be92877f4d5/src/mixtures/mixturemodel.jl#L170C41-L170C48
+function _loglikelihood_eltype(dist::Distributions.AbstractMixtureModel, y::AbstractArray)
+    prob_type = eltype(Distributions.probs(dist))
+    if isconcretetype(eltype(Distributions.components(dist)))  # all components are the same type
+        component_type = _loglikelihood_eltype(Distributions.component(dist, 1), y)
+    else
+        component_type = mapfoldl(
+            Base.Fix2(_loglikelihood_eltype, y) ∘ Base.Fix1(Distributions.component, dist),
+            promote_type,
+            1:Distributions.ncomponents(dist),
+        )
+    end
+    return promote_type(component_type, typeof(log(oneunit(prob_type))))
 end
 
 # Product of array-variate distributions
