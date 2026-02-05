@@ -446,7 +446,9 @@ end
         log_like_vec = similar(y_vec)
         log_like_reshaped = similar(y_reshaped)
         PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_vec, y_vec, dist)
-        PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_reshaped, y_reshaped, dist_reshaped)
+        PosteriorStats.pointwise_conditional_loglikelihoods!(
+            log_like_reshaped, y_reshaped, dist_reshaped
+        )
         @test log_like_reshaped ≈ reshape(log_like_vec, sz)
     end
 end

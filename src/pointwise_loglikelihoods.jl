@@ -212,7 +212,7 @@ end
 function pointwise_conditional_loglikelihoods!(
     log_like::AbstractArray{<:Real,N},
     y::AbstractArray{<:Real,N},
-    dist::Distributions.ReshapedDistribution{N}
+    dist::Distributions.ReshapedDistribution{N},
 ) where {N}
     y_reshape = reshape(y, size(dist.dist))
     log_like_reshape = reshape(log_like, size(dist.dist))
