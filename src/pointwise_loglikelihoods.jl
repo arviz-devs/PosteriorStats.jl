@@ -128,23 +128,39 @@ function pointwise_conditional_loglikelihoods!(
     end
 end
 
-# Mixtures of array-variate distributions
+# Mixtures of multivariate distributions
+# NOTE: rand and loglikelihood for mixture fails on matrix-variate and higher-dimensional distributions
 function pointwise_conditional_loglikelihoods!(
-    log_like::AbstractArray{<:Real,N},
-    y::AbstractArray{<:Real,N},
-    dist::Distributions.AbstractMixtureModel{Distributions.ArrayLikeVariate{N}},
-) where {N}
-    log_like_component = similar(log_like)
-    probs = Distributions.probs(dist)
-    components = Distributions.components(dist)
-    pointwise_conditional_loglikelihoods!(log_like, y, first(components))
-    log_like .+= log.(first(probs))
-    for (component, prob) in Iterators.drop(zip(components, probs), 1)
-        pointwise_conditional_loglikelihoods!(log_like_component, y, component)
-        log_like .= LogExpFunctions.logaddexp.(log_like, log.(prob) .+ log_like_component)
+    log_like::AbstractVector{<:Real},
+    y::AbstractVector{<:Real},
+    dist::Distributions.AbstractMixtureModel{Distributions.Multivariate};
+    log_like_k::AbstractVector{<:Real}=similar(log_like),
+)
+    fill!(log_like, -Inf)
+    logp_y = first(log_like)
+
+    K = Distributions.ncomponents(dist)
+    for (k, w_k) in zip(1:K, Distributions.probs(dist))
+        dist_k = Distributions.component(dist, k)
+        logp_y_k = log(w_k) + Distributions.loglikelihood(dist_k, y)
+        logp_y = LogExpFunctions.logaddexp(logp_y, logp_y_k)
+        pointwise_conditional_loglikelihoods!(log_like_k, y, dist_k)
+        log_like .= LogExpFunctions.logaddexp.(log_like, logp_y_k .- log_like_k)
     end
+
+    log_like .= logp_y .- log_like
+
     return log_like
 end
+function _build_loglikelihood_cache(
+    ::AbstractArray{<:Distributions.AbstractMixtureModel{Distributions.Multivariate}},
+    log_like::AbstractArray{<:Real},
+)
+    sample_dims = ntuple(identity, ndims(log_like) - 1)
+    log_like_draw = first(eachslice(log_like; dims=sample_dims))
+    return (; log_like_k=similar(log_like_draw))
+end
+
 # work around type instability in partype(::AbstractMixtureModel)
 # https://github.com/JuliaStats/Distributions.jl/blob/3d304c26f1cffd6a5bcd24fac2318be92877f4d5/src/mixtures/mixturemodel.jl#L170C41-L170C48
 function _loglikelihood_eltype(dist::Distributions.AbstractMixtureModel, y::AbstractArray)

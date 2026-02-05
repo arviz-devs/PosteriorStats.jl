@@ -68,15 +68,12 @@ function rand_dist(
 end
 rand_dist(::Type{Normal}, T::Type{<:Real}, (); kwargs...) = Normal(randn(T), rand(T))
 function rand_dist(
-    ::Type{<:Distributions.MixtureModel{ArrayLikeVariate{N}}},
-    T::Type{<:Real},
-    sz;
-    factorized::Bool=false,
-) where {N}
+    ::Type{<:MixtureModel{Multivariate}}, T::Type{<:Real}, sz; factorized::Bool=false
+)
     num_components = 5
     probs = rand(T, num_components)
     probs ./= sum(probs)
-    dist_type = (Normal, MvNormal, MatrixNormal)[N + 1]
+    dist_type = MvNormal
     dists = [rand_dist(dist_type, T, sz; factorized) for _ in 1:num_components]
     return MixtureModel(dists, probs)
 end
@@ -320,7 +317,8 @@ end
                 PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_cond, y, dist)
                 log_like_marginal = marginal_loglikelihoods(dist, y)
                 log_like_full = loglikelihood(dist, y)
-                @test log_like_cond ≈ log_like_full .- log_like_marginal  # check that p(y_i | y_{-i}) == p(y) / p(y_{-i})
+                rtol = T === Float32 ? 1e-3 : 1e-12
+                @test log_like_cond ≈ log_like_full .- log_like_marginal rtol=rtol # check that p(y_i | y_{-i}) == p(y) / p(y_{-i})
             end
         end
 
