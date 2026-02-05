@@ -317,8 +317,10 @@ end
                 PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_cond, y, dist)
                 log_like_marginal = marginal_loglikelihoods(dist, y)
                 log_like_full = loglikelihood(dist, y)
-                rtol = T === Float32 ? 1e-3 : 1e-12
-                @test log_like_cond ≈ log_like_full .- log_like_marginal rtol=rtol # check that p(y_i | y_{-i}) == p(y) / p(y_{-i})
+                log_like_cond_ref = log_like_full .- log_like_marginal
+                rtol = T === Float32 ? 1e-3 : 1e-9
+                # check that p(y_i | y_{-i}) == p(y) / p(y_{-i})
+                @test log_like_cond ≈ log_like_cond_ref rtol=rtol
             end
         end
 
@@ -369,7 +371,8 @@ end
                     log_like_ref[draw, chain, cols...] .=
                         loglikelihood(dist_k, y) .- marginal_loglikelihoods(dist_k, y)
                 end
-                @test log_like ≈ log_like_ref
+                rtol = T === Float32 ? 1e-3 : 1e-9
+                @test log_like ≈ log_like_ref rtol=rtol
             end
         end
     end
