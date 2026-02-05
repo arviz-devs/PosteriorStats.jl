@@ -77,24 +77,26 @@ function rand_dist(
     dists = [rand_dist(dist_type, T, sz; factorized) for _ in 1:num_components]
     return MixtureModel(dists, probs)
 end
-function rand_dist(
-    ::Type{<:Distributions.ProductDistribution{N,M}},
-    T::Type{<:Real},
-    sz;
-    factorized::Bool=false,
-) where {N,M}
-    dist_type = (Normal, MvNormal, MatrixNormal)[M + 1]
-    sz_dist = sz[(M + 1):N]
-    dists = map(Iterators.product(Base.OneTo.(sz_dist)...)) do _
-        rand_dist(dist_type, T, sz_dist; factorized)
+if isdefined(Distributions, :ProductDistribution)
+    function rand_dist(
+        ::Type{<:Distributions.ProductDistribution{N,M}},
+        T::Type{<:Real},
+        sz;
+        factorized::Bool=false,
+    ) where {N,M}
+        dist_type = (Normal, MvNormal, MatrixNormal)[M + 1]
+        sz_dist = sz[(M + 1):N]
+        dists = map(Iterators.product(Base.OneTo.(sz_dist)...)) do _
+            rand_dist(dist_type, T, sz[1:M]; factorized)
+        end
+        dist = Distributions.ProductDistribution(dists)
+        @assert size(dist) == sz
+        return dist
     end
-    return ProductDistribution(dists)
 end
 if isdefined(Distributions, :Product)
-    function rand_dist(
-        ::Type{<:Distributions.Product}, T::Type{<:Real}, (D,); factorized::Bool=false
-    )
-        dists = [rand_dist(Normal, T, (); factorized) for _ in 1:D]
+    function rand_dist(::Type{<:Distributions.Product}, T::Type{<:Real}, (D,); kwargs...)
+        dists = [rand_dist(Normal, T, ()) for _ in 1:D]
         return Distributions.Product(dists)
     end
 end
@@ -116,6 +118,30 @@ end
 function marginal_loglikelihood(dist::MultivariateDistribution, y::AbstractVector, i::Int)
     ic = setdiff(eachindex(y), i)
     return @views loglikelihood(marginal_distribution(dist, ic), y[ic])
+end
+
+if isdefined(Distributions, :ProductDistribution)
+    function marginal_loglikelihood(
+        dist::Distributions.ProductDistribution{1,0}, y::AbstractVector, i::Int
+    )
+        return loglikelihood(dist, y) - loglikelihood(dist.dists[i], y[i])
+    end
+    function marginal_loglikelihood(
+        dist::Distributions.ProductDistribution{N,M},
+        y::AbstractArray{<:Real,N},
+        i::CartesianIndex{N},
+    ) where {N,M}
+        M == 0 && return loglikelihood(dist, y) - loglikelihood(dist.dists[i], y[i])
+        i_tuple = Tuple(i)
+        i_param = i_tuple[1:M]
+        i_param = length(i_param) == 1 ? i_param[1] : CartesianIndex(i_param)
+        i_dist = i_tuple[(M + 1):N]
+        y_dist = @views y[fill(Colon(), M)..., i_dist...]
+        logp = loglikelihood(dist, y)
+        logp -= loglikelihood(dist.dists[i_dist...], y_dist)
+        logp += marginal_loglikelihood(dist.dists[i_dist...], y_dist, i_param)
+        return logp
+    end
 end
 
 """
@@ -150,6 +176,11 @@ function marginal_distribution(dist::MixtureModel, i)
         Distributions.probs(dist),
     )
 end
+if isdefined(Distributions, :Product)
+    function marginal_distribution(dist::Distributions.Product, i)
+        return Distributions.Product(dist.v[i])
+    end
+end
 
 """
     conditional_distribution(dist, y, i) -> ContinuousUnivariateDistribution
@@ -159,7 +190,7 @@ Compute a conditional univariate distribution.
 Given an array-variate distribution `dist` and an array `y` in its support,
 return the univariate distribution of `y[i]` given the other elements of `y`.
 """
-function conditional_distribution(dist::MvNormal, y::AbstractVector, i::Int)
+function conditional_distribution(dist::MvNormal, y::AbstractVector, (i,))
     # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
     μ = mean(dist)
     Σ = cov(dist)
@@ -171,7 +202,7 @@ function conditional_distribution(dist::MvNormal, y::AbstractVector, i::Int)
     μ_cond = μ[i] + inv_Σ_ic_Σ_ic_i' * @views(y[ic] - μ[ic])
     return Normal(μ_cond, sqrt(Σ_cond))
 end
-function conditional_distribution(dist::MvNormalCanon, y::AbstractVector, i::Int)
+function conditional_distribution(dist::MvNormalCanon, y::AbstractVector, (i,))
     return conditional_distribution(MvNormal(mean(dist), cov(dist)), y, i)
 end
 function conditional_distribution(dist::MatrixNormal, y::AbstractMatrix, i::CartesianIndex)
@@ -180,7 +211,7 @@ function conditional_distribution(dist::MatrixNormal, y::AbstractMatrix, i::Cart
     vec_i = LinearIndices(y)[i]
     return conditional_distribution(vec_dist, vec_y, vec_i)
 end
-function conditional_distribution(dist::MvLogNormal, y::AbstractVector, i::Int)
+function conditional_distribution(dist::MvLogNormal, y::AbstractVector, (i,))
     (; μ, σ) = conditional_distribution(dist.normal, log.(y), i)
     return LogNormal(μ, σ)
 end
@@ -203,23 +234,30 @@ function conditional_distribution(
     σ_cond = sqrt(Σ_cond * (ν + d) / ν_cond)
     return TDist(ν_cond) * σ_cond + μ_cond
 end
-function conditional_distribution(
-    dist::Distributions.ProductDistribution{N,M},
-    y::AbstractArray{<:Real,N},
-    i::CartesianIndex{N},
-) where {N,M}
-    inds = Tuple(i)
-    ind_in_component = inds[1:M]
-    ind_component = inds[(M + 1):N]
-    dist_i = dist.dists[inds[(M + 1):N]...]
-    M == 0 && return dist_i
-    y_i = y[fill(Colon(), M)..., ind_component...]
-    return conditional_distribution(dist_i, y_i, ind_in_component)
-end
-function conditional_distribution(
-    dist::Distributions.ProductDistribution{1,0}, ::AbstractVector, (i,)
-)
-    return dist.dists[i]
+if isdefined(Distributions, :ProductDistribution)
+    function conditional_distribution(
+        dist::Distributions.ProductDistribution{N,M},
+        y::AbstractArray{<:Real,N},
+        i::CartesianIndex{N},
+    ) where {N,M}
+        inds = Tuple(i)
+        ind_in_component = inds[1:M]
+        ind_component = inds[(M + 1):N]
+        dist_i = dist.dists[inds[(M + 1):N]...]
+        M == 0 && return dist_i
+        y_i = y[fill(Colon(), M)..., ind_component...]
+        ind_in_component = if length(ind_in_component) == 1
+            ind_in_component[1]
+        else
+            CartesianIndex(ind_in_component)
+        end
+        return conditional_distribution(dist_i, y_i, ind_in_component)
+    end
+    function conditional_distribution(
+        dist::Distributions.ProductDistribution{1,0}, ::AbstractVector, (i,)
+    )
+        return dist.dists[i]
+    end
 end
 if isdefined(Distributions, :Product)
     function conditional_distribution(dist::Distributions.Product, ::AbstractVector, (i,))
@@ -253,13 +291,11 @@ function factorized_distributions(dist::Distributions.MixtureModel)
         Ref(Distributions.probs(dist)),
     )
 end
-function factorized_distributions(dist::Distributions.ProductDistribution{N,0}) where {N}
-    return dist.dists
-end
-function factorized_distributions(
-    dist::Distributions.ProductDistribution{N,1,<:AbstractArray{D}}
-) where {N,D<:Union{AbstractMvNormal,MvLogNormal}}
-    return stack(map(factorized_distributions, dist.dists))
+if isdefined(Distributions, :ProductDistribution)
+    factorized_distributions(dist::Distributions.ProductDistribution{<:Any,0}) = dist.dists
+    function factorized_distributions(dist::Distributions.ProductDistribution)
+        return stack(map(factorized_distributions, dist.dists))
+    end
 end
 if isdefined(Distributions, :Product)
     factorized_distributions(dist::Distributions.Product) = dist.v
