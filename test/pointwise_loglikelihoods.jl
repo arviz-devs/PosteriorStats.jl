@@ -9,7 +9,7 @@ using Test
 # Utility functions. To add a new distribution, overload:
 # - rand_dist
 # - marginal_distribution
-# - conditional_distribution
+# - conditional_distribution (optional)
 # - factorized_distributions (optional)
 
 function _mvnormal(dist::MatrixNormal)
@@ -147,6 +147,12 @@ function marginal_distribution(dist::Distributions.GenericMvTDist, i)
     Σ_i = @views Symmetric(dist.Σ[i, i])
     return Distributions.GenericMvTDist(dist.df, μ_i, PDMat(Σ_i))
 end
+function marginal_distribution(dist::MixtureModel, i)
+    return MixtureModel(
+        marginal_distribution.(Distributions.components(dist), Ref(i)),
+        Distributions.probs(dist),
+    )
+end
 
 """
     conditional_distribution(dist, y, i) -> ContinuousUnivariateDistribution
@@ -182,7 +188,7 @@ function conditional_distribution(dist::MvLogNormal, y::AbstractVector, i::Int)
     return LogNormal(μ, σ)
 end
 function conditional_distribution(
-    dist::Distributions.GenericMvTDist, y::AbstractVector, i::Int
+    dist::Distributions.GenericMvTDist, y::AbstractVector, (i,)
 )
     # https://en.wikipedia.org/wiki/Multivariate_t-distribution#Conditional_Distribution
     (; μ, Σ) = dist
@@ -200,12 +206,6 @@ function conditional_distribution(
     σ_cond = sqrt(Σ_cond * (ν + d) / ν_cond)
     return TDist(ν_cond) * σ_cond + μ_cond
 end
-function conditional_distribution(dist::Distributions.MixtureModel, y::AbstractArray, i)
-    return MixtureModel(
-        conditional_distribution.(Distributions.components(dist), Ref(y), Ref(i)),
-        Distributions.probs(dist),
-    )
-end
 function conditional_distribution(
     dist::Distributions.ProductDistribution{N,M},
     y::AbstractArray{<:Real,N},
@@ -220,12 +220,12 @@ function conditional_distribution(
     return conditional_distribution(dist_i, y_i, ind_in_component)
 end
 function conditional_distribution(
-    dist::Distributions.ProductDistribution{1,0}, ::AbstractVector, i::Int
+    dist::Distributions.ProductDistribution{1,0}, ::AbstractVector, (i,)
 )
     return dist.dists[i]
 end
 if isdefined(Distributions, :Product)
-    function conditional_distribution(dist::Distributions.Product, ::AbstractVector, i::Int)
+    function conditional_distribution(dist::Distributions.Product, ::AbstractVector, (i,))
         return dist.v[i]
     end
 end
@@ -286,9 +286,10 @@ end
         T in (Float32, Float64),
         sz in (dist_type <: MultivariateDistribution ? (5, 10) : ((2, 3),))
 
+        test_conditional = !(dist_type <: Distributions.AbstractMixtureModel)
         test_factorized = !(dist_type <: Distributions.GenericMvTDist)
 
-        @testset "pointwise_conditional_loglikelihoods!" begin
+        test_conditional && @testset "pointwise_conditional_loglikelihoods!" begin
             @testset "consistent with conditional distributions" begin
                 dist = rand_dist(dist_type, T, sz)
                 y = convert(Array{T}, rand(dist))
@@ -366,12 +367,9 @@ end
                 for draw in 1:ndraws, chain in 1:nchains
                     y_inds = ndims(y) > 1 ? CartesianIndices(y) : eachindex(y)
                     cols = ntuple(_ -> Colon(), ndims(y))
-                    conditional_dists = conditional_distribution.(
-                        Ref(dists[draw, chain]), Ref(y), y_inds
-                    )
-                    log_like_ref[draw, chain, cols...] .= loglikelihood.(
-                        conditional_dists, y
-                    )
+                    dist_k = dists[draw, chain]
+                    log_like_ref[draw, chain, cols...] .=
+                        loglikelihood(dist_k, y) .- marginal_loglikelihoods(dist_k, y)
                 end
                 @test log_like ≈ log_like_ref
             end
