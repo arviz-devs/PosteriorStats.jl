@@ -47,11 +47,14 @@ function pointwise_conditional_loglikelihoods(
     T = _loglikelihood_eltype(first(dists), y)
     sample_dims = ntuple(identity, M)
     log_like = similar(y, T, (axes(dists)..., axes(y)...))
+    cache = _build_loglikelihood_cache(dists, log_like)
     for (dist, ll) in zip(dists, eachslice(log_like; dims=sample_dims))
-        pointwise_conditional_loglikelihoods!(ll, y, dist)
+        pointwise_conditional_loglikelihoods!(ll, y, dist; cache...)
     end
     return log_like
 end
+
+_build_loglikelihood_cache(dists, log_like) = ()
 
 # compute likelihood once to determine eltype of result
 function _loglikelihood_eltype(dist::Distributions.Distribution, y::AbstractArray)
