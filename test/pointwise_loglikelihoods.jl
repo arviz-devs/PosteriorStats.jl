@@ -283,9 +283,10 @@ end
         T in (Float32, Float64),
         sz in (dist_type <: MultivariateDistribution ? (5, 10) : ((2, 3),))
 
+        # conditional distribution for mixture models in't a type in Distributions.jl
         test_conditional = !(dist_type <: Distributions.AbstractMixtureModel)
+        # multivariate t-distribution is not factorizable
         test_factorized = !(dist_type <: Distributions.GenericMvTDist)
-
         test_conditional && @testset "pointwise_conditional_loglikelihoods!" begin
             @testset "consistent with conditional distributions" begin
                 dist = rand_dist(dist_type, T, sz)
