@@ -110,14 +110,15 @@ function marginal_loglikelihoods(dist, y::AbstractArray)
         end
     end
 end
-function marginal_loglikelihoods(dist::MatrixNormal, y::AbstractMatrix)
-    log_like_vec = marginal_loglikelihoods(_mvnormal(dist), vec(y))
-    return reshape(log_like_vec, size(y))
-end
 
 function marginal_loglikelihood(dist::MultivariateDistribution, y::AbstractVector, i::Int)
     ic = setdiff(eachindex(y), i)
     return @views loglikelihood(marginal_distribution(dist, ic), y[ic])
+end
+
+function marginal_loglikelihood(dist::MatrixNormal, y::AbstractMatrix, i::CartesianIndex)
+    i_vec = LinearIndices(y)[i]
+    return marginal_loglikelihood(_mvnormal(dist), vec(y), i_vec)
 end
 
 if isdefined(Distributions, :ProductDistribution)
