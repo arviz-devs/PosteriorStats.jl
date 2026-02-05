@@ -12,11 +12,6 @@ using Test
 # - conditional_distribution (optional)
 # - factorized_distributions (optional)
 
-function _mvnormal(dist::MatrixNormal)
-    (; M, U, V) = dist
-    return MvNormal(vec(M), kron(V, U))
-end
-
 function rand_pdmat(T::Type{<:Real}, D::Int; jitter::Real=T(1e-3))
     A = randn(T, D, D)
     S = PDMat(A * A' + T(jitter) * I)
@@ -118,7 +113,7 @@ end
 
 function marginal_loglikelihood(dist::MatrixNormal, y::AbstractMatrix, i::CartesianIndex)
     i_vec = LinearIndices(y)[i]
-    return marginal_loglikelihood(_mvnormal(dist), vec(y), i_vec)
+    return marginal_loglikelihood(vec(dist), vec(y), i_vec)
 end
 
 if isdefined(Distributions, :ProductDistribution)
@@ -208,7 +203,7 @@ function conditional_distribution(dist::MvNormalCanon, y::AbstractVector, (i,))
 end
 function conditional_distribution(dist::MatrixNormal, y::AbstractMatrix, i::CartesianIndex)
     vec_y = vec(y)
-    vec_dist = _mvnormal(dist)
+    vec_dist = vec(dist)
     vec_i = LinearIndices(y)[i]
     return conditional_distribution(vec_dist, vec_y, vec_i)
 end
@@ -279,7 +274,7 @@ end
 function factorized_distributions(dist::MatrixNormal)
     (; M, U, V) = dist
     @assert isdiag(U) && isdiag(V)
-    vec_dist = _mvnormal(dist)
+    vec_dist = vec(dist)
     σ = reshape(sqrt.(diag(cov(vec_dist))), size(M))
     return Normal.(M, σ)
 end
