@@ -346,14 +346,14 @@ end
         test_conditional = !(dist_type <: Distributions.AbstractMixtureModel)
         # multivariate t-distribution is not factorizable
         test_factorized = !(dist_type <: Distributions.GenericMvTDist)
-        test_conditional && @testset "pointwise_conditional_loglikelihoods!" begin
+        test_conditional && @testset "pointwise_conditional_loglikelihoods!!" begin
             @testset "consistent with conditional distributions" begin
                 dist = rand_dist(dist_type, T, sz)
                 y = convert(Array{T}, rand(dist))
                 @assert eltype(y) == T
                 log_like = similar(y)
                 y_inds = ndims(y) > 1 ? CartesianIndices(y) : eachindex(y)
-                PosteriorStats.pointwise_conditional_loglikelihoods!(log_like, y, dist)
+                PosteriorStats.pointwise_conditional_loglikelihoods!!(log_like, y, dist)
                 conditional_dists = conditional_distribution.(Ref(dist), Ref(y), y_inds)
                 log_like_ref = loglikelihood.(conditional_dists, y)
                 @test log_like ≈ log_like_ref
@@ -364,7 +364,7 @@ end
                 y = convert(Array{T}, rand(dist))
                 @assert eltype(y) == T
                 log_like = similar(y)
-                PosteriorStats.pointwise_conditional_loglikelihoods!(log_like, y, dist)
+                PosteriorStats.pointwise_conditional_loglikelihoods!!(log_like, y, dist)
                 factorized_dists = factorized_distributions(dist)
                 log_like_ref = loglikelihood.(factorized_dists, y)
                 @test log_like ≈ log_like_ref
@@ -374,7 +374,9 @@ end
                 dist = rand_dist(dist_type, T, sz)
                 y = convert(Array{T}, rand(dist))
                 log_like_cond = similar(y)
-                PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_cond, y, dist)
+                PosteriorStats.pointwise_conditional_loglikelihoods!!(
+                    log_like_cond, y, dist
+                )
                 log_like_marginal = marginal_loglikelihoods(dist, y)
                 log_like_full = loglikelihood(dist, y)
                 log_like_cond_ref = log_like_full .- log_like_marginal
@@ -436,7 +438,7 @@ end
         end
     end
 
-    @testset "pointwise_conditional_loglikelihoods! consistency with ReshapedDistribution" begin
+    @testset "pointwise_conditional_loglikelihoods!! consistency with ReshapedDistribution" begin
         n = 12
         sz = (3, 4)
         dist = rand_dist(MvNormal, Float64, (n,))
@@ -445,8 +447,8 @@ end
         y_reshaped = reshape(y_vec, sz)
         log_like_vec = similar(y_vec)
         log_like_reshaped = similar(y_reshaped)
-        PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_vec, y_vec, dist)
-        PosteriorStats.pointwise_conditional_loglikelihoods!(
+        PosteriorStats.pointwise_conditional_loglikelihoods!!(log_like_vec, y_vec, dist)
+        PosteriorStats.pointwise_conditional_loglikelihoods!!(
             log_like_reshaped, y_reshaped, dist_reshaped
         )
         @test log_like_reshaped ≈ reshape(log_like_vec, sz)

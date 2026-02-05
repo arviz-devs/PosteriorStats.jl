@@ -51,7 +51,7 @@ function pointwise_conditional_loglikelihoods(
     log_like = similar(y, T, (axes(dists)..., axes(y)...))
     cache = _build_loglikelihood_cache(dists, log_like)
     for (dist, ll) in zip(dists, eachslice(log_like; dims=sample_dims))
-        pointwise_conditional_loglikelihoods!(ll, y, dist; cache...)
+        pointwise_conditional_loglikelihoods!!(ll, y, dist; cache...)
     end
     return log_like
 end
@@ -64,7 +64,7 @@ function _loglikelihood_eltype(dist::Distributions.Distribution, y::AbstractArra
 end
 
 # Array-variate normal distribution
-function pointwise_conditional_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
     dist::Distributions.MvNormal,
@@ -74,7 +74,7 @@ function pointwise_conditional_loglikelihoods!(
     g = Σ \ (y - μ)
     return @. log_like = (log(λ) - g^2 / λ - log2π) / 2
 end
-function pointwise_conditional_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
     dist::Distributions.MvNormalCanon,
@@ -84,7 +84,7 @@ function pointwise_conditional_loglikelihoods!(
     cov_inv_y = _pdmul(J, y)
     return @. log_like = (log(λ) - (cov_inv_y - h)^2 / λ - log2π) / 2
 end
-function pointwise_conditional_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!!(
     log_like::AbstractMatrix{<:Real},
     y::AbstractMatrix{<:Real},
     dist::Distributions.MatrixNormal,
@@ -97,19 +97,19 @@ function pointwise_conditional_loglikelihoods!(
 end
 
 # Multivariate log-normal distribution
-function pointwise_conditional_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
     dist::Distributions.MvLogNormal,
 )
     logy = log.(y)
-    pointwise_conditional_loglikelihoods!(log_like, logy, dist.normal)
+    pointwise_conditional_loglikelihoods!!(log_like, logy, dist.normal)
     log_like .-= logy
     return log_like
 end
 
 # Array-variate t-distribution
-function pointwise_conditional_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!!(
     log_like::AbstractVector{T},
     y::AbstractVector{<:Real},
     dist::Distributions.GenericMvTDist,
@@ -132,7 +132,7 @@ end
 
 # Mixtures of multivariate distributions
 # NOTE: rand and loglikelihood for mixture fails on matrix-variate and higher-dimensional distributions
-function pointwise_conditional_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!!(
     log_like::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
     dist::Distributions.AbstractMixtureModel{Distributions.Multivariate};
@@ -146,7 +146,7 @@ function pointwise_conditional_loglikelihoods!(
         dist_k = Distributions.component(dist, k)
         logp_y_k = log(w_k) + Distributions.loglikelihood(dist_k, y)
         logp_y = LogExpFunctions.logaddexp(logp_y, logp_y_k)
-        pointwise_conditional_loglikelihoods!(log_like_k, y, dist_k)
+        pointwise_conditional_loglikelihoods!!(log_like_k, y, dist_k)
         log_like .= LogExpFunctions.logaddexp.(log_like, logp_y_k .- log_like_k)
     end
 
@@ -181,7 +181,7 @@ end
 
 # Product of array-variate distributions
 if isdefined(Distributions, :ProductDistribution)
-    function pointwise_conditional_loglikelihoods!(
+    function pointwise_conditional_loglikelihoods!!(
         log_like::AbstractArray{<:Real,N},
         y::AbstractArray{<:Real,N},
         dist::Distributions.ProductDistribution{N,M},
@@ -192,14 +192,14 @@ if isdefined(Distributions, :ProductDistribution)
             dims = ntuple(i -> i + M, Val(N - M))  # product dimensions
             for (y_i, log_like_i, dist_i) in
                 zip(eachslice(y; dims), eachslice(log_like; dims), dist.dists)
-                pointwise_conditional_loglikelihoods!(log_like_i, y_i, dist_i)
+                pointwise_conditional_loglikelihoods!!(log_like_i, y_i, dist_i)
             end
         end
         return log_like
     end
 end
 if isdefined(Distributions, :Product)
-    function pointwise_conditional_loglikelihoods!(
+    function pointwise_conditional_loglikelihoods!!(
         log_like::AbstractVector{<:Real},
         y::AbstractVector{<:Real},
         dist::Distributions.Product,
@@ -209,14 +209,14 @@ if isdefined(Distributions, :Product)
     end
 end
 
-function pointwise_conditional_loglikelihoods!(
+function pointwise_conditional_loglikelihoods!!(
     log_like::AbstractArray{<:Real,N},
     y::AbstractArray{<:Real,N},
     dist::Distributions.ReshapedDistribution{N},
 ) where {N}
     y_reshape = reshape(y, size(dist.dist))
     log_like_reshape = reshape(log_like, size(dist.dist))
-    pointwise_conditional_loglikelihoods!(log_like_reshape, y_reshape, dist.dist)
+    pointwise_conditional_loglikelihoods!!(log_like_reshape, y_reshape, dist.dist)
     return log_like
 end
 
