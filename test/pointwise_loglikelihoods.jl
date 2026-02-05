@@ -272,14 +272,15 @@ end
 Factorize a factorizable array-variate distribution into univariate distributions.
 """
 function factorized_distributions(dist::AbstractMvNormal)
-    @assert isdiag(cov(dist))
-    return Normal.(mean(dist), sqrt.(var(dist)))
+    Σ = cov(dist)
+    @assert isdiag(Σ)
+    return Normal.(mean(dist), sqrt.(diag(Σ)))
 end
 function factorized_distributions(dist::MatrixNormal)
     (; M, U, V) = dist
     @assert isdiag(U) && isdiag(V)
     vec_dist = _mvnormal(dist)
-    σ = reshape(std(vec_dist), size(M))
+    σ = reshape(sqrt.(diag(cov(vec_dist))), size(M))
     return Normal.(M, σ)
 end
 function factorized_distributions(dist::MvLogNormal)
