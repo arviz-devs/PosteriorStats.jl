@@ -28,6 +28,7 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
         any of the above array-variate distributions
     + [`Distributions.AbstractMixtureModel`](@extref) for mixtures of any of the above multivariate
         distributions
+    + `Distributions.ReshapedDistribution` for any of the above distributions reshaped
 
 # Returns
 
@@ -206,6 +207,17 @@ if isdefined(Distributions, :Product)
         log_like .= Distributions.loglikelihood.(dist.v, y)
         return log_like
     end
+end
+
+function pointwise_conditional_loglikelihoods!(
+    log_like::AbstractArray{<:Real,N},
+    y::AbstractArray{<:Real,N},
+    dist::Distributions.ReshapedDistribution{N}
+) where {N}
+    y_reshape = reshape(y, size(dist.dist))
+    log_like_reshape = reshape(log_like, size(dist.dist))
+    pointwise_conditional_loglikelihoods!(log_like_reshape, y_reshape, dist.dist)
+    return log_like
 end
 
 # Helper functions

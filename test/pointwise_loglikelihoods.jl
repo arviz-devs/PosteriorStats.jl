@@ -435,4 +435,18 @@ end
             end
         end
     end
+
+    @testset "pointwise_conditional_loglikelihoods! consistency with ReshapedDistribution" begin
+        n = 12
+        sz = (3, 4)
+        dist = rand_dist(MvNormal, Float64, (n,))
+        dist_reshaped = Distributions.ReshapedDistribution(dist, sz)
+        y_vec = rand(dist)
+        y_reshaped = reshape(y_vec, sz)
+        log_like_vec = similar(y_vec)
+        log_like_reshaped = similar(y_reshaped)
+        PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_vec, y_vec, dist)
+        PosteriorStats.pointwise_conditional_loglikelihoods!(log_like_reshaped, y_reshaped, dist_reshaped)
+        @test log_like_reshaped ≈ reshape(log_like_vec, sz)
+    end
 end
