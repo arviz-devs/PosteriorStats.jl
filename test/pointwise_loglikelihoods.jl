@@ -387,12 +387,19 @@ end
         (Distributions.MixtureModel{Multivariate}, (1,), :uniform),
         (Distributions.MixtureModel{Multivariate}, (5,), :uniform),
         (Distributions.MixtureModel{Multivariate}, (5,), :nonuniform),
-        (Distributions.JointOrderStatistics, (5,), (5, 1:5)),
-        (Distributions.JointOrderStatistics, (3,), (5, [1, 3, 5])),
-        (Distributions.JointOrderStatistics, (1,), (5, [1])),
-        (Distributions.JointOrderStatistics, (1,), (5, [3])),
-        (Distributions.JointOrderStatistics, (1,), (5, [5])),
     ]
+    if isdefined(Distributions, :JointOrderStatistics)
+        append!(
+            dists,
+            [
+                (Distributions.JointOrderStatistics, (5,), (5, 1:5)),
+                (Distributions.JointOrderStatistics, (3,), (5, [1, 3, 5])),
+                (Distributions.JointOrderStatistics, (1,), (5, [1])),
+                (Distributions.JointOrderStatistics, (1,), (5, [3])),
+                (Distributions.JointOrderStatistics, (1,), (5, [5])),
+            ],
+        )
+    end
     if isdefined(Distributions, :ProductDistribution)
         append!(
             dists,
