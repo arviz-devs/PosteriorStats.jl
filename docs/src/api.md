@@ -54,7 +54,7 @@ loo_pit
 r2_score
 ```
 
-### Utilities
+## Utilities
 
 ```@docs
 PosteriorStats.kde_reflected
