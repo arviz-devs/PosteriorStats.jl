@@ -5,8 +5,8 @@
 
 Compute pointwise conditional log-likelihoods of `y` for non-factorized distributions.
 
-A non-factorized observation model ``p(y \\mid \\theta)``, where ``y`` is an array of
-observations and ``\\theta`` are model parameters, can be factorized as
+A non-factorized observation model ``p(y \\mid \\theta)``, where ``y`` is an observation
+in its support and ``\\theta`` are model parameters, can be factorized as
 ``p(y_i \\mid y_{-i}, \\theta) p(y_{-i} \\mid \\theta)``. However, completely factorizing
 into individual likelihood terms can be tedious, expensive, and poorly supported by a given
 PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms for all
@@ -15,7 +15,8 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
 
 # Arguments
 
-  - `y`: array of observations with shape `(params...,)`
+  - `y`: observed value in the support of the distributions in `dists`.
+    If the distribution is array-variate, `y` is an array with shape `(params...,)`.
   - `dists`: array of shape `(draws[, chains])` containing parametrized
     `Distributions.Distribution`s representing a non-factorized observation
     model, one for each posterior draw. The following distributions are currently supported:
@@ -29,10 +30,14 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
     + [`Distributions.AbstractMixtureModel`](@extref) for mixtures of any of the above multivariate
         distributions
     + `Distributions.ReshapedDistribution` for any of the above distributions reshaped
+    + [`Distributions.ProductNamedTupleDistribution`](@extref) for `NamedTuple`-variate distributions
+        comprised of univariate distributions and any of the above distributions.
 
 # Returns
 
-  - `log_like`: log-likelihood values with shape `(draws[, chains], params...)`
+  - `log_like`: Array with pointwise conditional log-likelihood values. If the distributions are array-variate,
+      then the shape is `(draws[, chains], params...)` with real values. Otherwise, the shape is `(draws[, chains])`, 
+      with values of a similar eltype to `y`.
 
 # References
 
@@ -58,8 +63,7 @@ end
 
 _build_loglikelihood_cache(dists, log_like) = ()
 
-# compute likelihood once to determine eltype of result
-function _loglikelihood_eltype(dist::Distributions.Distribution, y::AbstractArray)
+function _loglikelihood_eltype(dist::Distributions.Distribution, y)
     return typeof(log(one(promote_type(eltype(y), Distributions.partype(dist)))))
 end
 
@@ -208,6 +212,40 @@ if isdefined(Distributions, :Product)
         return log_like
     end
 end
+if isdefined(Distributions, :ProductNamedTupleDistribution)
+    function _similar_loglikelihood(
+        dist::Distributions.ProductNamedTupleDistribution, y::NamedTuple
+    )
+        return map(_similar_loglikelihood, dist.dists, y)
+    end
+    function pointwise_conditional_loglikelihoods(
+        y::NamedTuple,
+        dists::AbstractArray{<:Distributions.ProductNamedTupleDistribution{K,V}},
+    ) where {K,V}
+        _y = NamedTuple{K}(y)
+        return map(dists) do dist
+            log_like = _similar_loglikelihood(dist, _y)
+            return pointwise_conditional_loglikelihoods!!(log_like, _y, dist)
+        end
+    end
+
+    function pointwise_conditional_loglikelihoods!!(
+        log_like::NamedTuple,
+        y::NamedTuple,
+        dist::Distributions.ProductNamedTupleDistribution,
+    )
+        dists = dist.dists
+        _log_like = NamedTuple{keys(log_like)}(log_like)
+        _y = NamedTuple{keys(y)}(y)
+        return map(dists, _log_like, _y) do dist_k, log_like_k, y_k
+            if dist_k isa Distributions.UnivariateDistribution
+                return Distributions.loglikelihood(dist_k, y_k)
+            else
+                return pointwise_conditional_loglikelihoods!!(log_like_k, y_k, dist_k)
+            end
+        end
+    end
+end
 
 function pointwise_conditional_loglikelihoods!!(
     log_like::AbstractArray{<:Real,N},
@@ -235,4 +273,13 @@ function _pdmul(A::PDMats.AbstractPDMat, b::AbstractVector)
     y = similar(b, T)
     mul!(y, A, b)
     return y
+end
+
+function _similar_loglikelihood(dist::Distributions.UnivariateDistribution, y)
+    zero(_loglikelihood_eltype(dist, y))
+end
+function _similar_loglikelihood(
+    dist::Distributions.Distribution{<:Distributions.ArrayLikeVariate}, y
+)
+    similar(y, _loglikelihood_eltype(dist, y))
 end

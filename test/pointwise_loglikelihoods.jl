@@ -12,6 +12,14 @@ using Test
 # - conditional_distribution (optional)
 # - factorized_distributions (optional)
 
+map_recursive(f, x...) = map(f, x...)
+map_recursive(f, x::NamedTuple...) = map(Base.Fix1(map_recursive, f), x...)
+
+mapreduce_recursive(f, op, x...) = op(map(f, x...))
+function mapreduce_recursive(f, op, x::NamedTuple...)
+    op(map((x...,) -> mapreduce_recursive(f, op, x...), x...))
+end
+
 function rand_pdmat(T::Type{<:Real}, D::Int; jitter::Real=T(1e-3))
     A = randn(T, D, D)
     S = PDMat(A * A' + T(jitter) * I)
@@ -95,6 +103,20 @@ if isdefined(Distributions, :Product)
         return Distributions.Product(dists)
     end
 end
+if isdefined(Distributions, :ProductNamedTupleDistribution)
+    function rand_dist(
+        ::Type{<:Distributions.ProductNamedTupleDistribution{K,V}},
+        T::Type{<:Real},
+        sz;
+        kwargs...,
+    ) where {K,V}
+        sz = NamedTuple{K}(sz)
+        dists = map(V.types, sz) do dist_type_k, sz_k
+            rand_dist(dist_type_k, T, sz_k; kwargs...)
+        end
+        return Distributions.product_distribution(NamedTuple{K}(dists))
+    end
+end
 
 function marginal_loglikelihoods(dist, y::AbstractArray)
     return map(CartesianIndices(y)) do i
@@ -102,6 +124,20 @@ function marginal_loglikelihoods(dist, y::AbstractArray)
             return marginal_loglikelihood(dist, y, LinearIndices(y)[i])
         else
             return marginal_loglikelihood(dist, y, i)
+        end
+    end
+end
+marginal_loglikelihoods(dist::UnivariateDistribution, y) = zero(loglikelihood(dist, y))
+if isdefined(Distributions, :ProductNamedTupleDistribution)
+    function marginal_loglikelihoods(
+        dist::Distributions.ProductNamedTupleDistribution, y::NamedTuple
+    )
+        log_like_full = loglikelihood(dist, y)
+        return map(dist.dists, y) do dist_k, y_k
+            log_like_k = loglikelihood(dist_k, y_k)
+            return map_recursive(marginal_loglikelihoods(dist_k, y_k)) do ll
+                return ll .+ (log_like_full - log_like_k)
+            end
         end
     end
 end
@@ -453,4 +489,64 @@ end
         )
         @test log_like_reshaped ≈ reshape(log_like_vec, sz)
     end
+
+    isdefined(Distributions, :ProductNamedTupleDistribution) &&
+        @testset "ProductNamedTupleDistribution" begin
+            _similar(x::AbstractArray) = similar(x)
+            _similar(x::Number) = oftype(x, NaN)
+            @testset "pointwise_conditional_loglikelihoods!!" begin
+                @testset for T in (Float64, Float32)
+                    dist = rand_dist(
+                        Distributions.ProductNamedTupleDistribution{
+                            (:x, :y),Tuple{Normal,MvNormal}
+                        },
+                        T,
+                        (x=(), y=(3,)),
+                    )
+                    @testset for dist in
+                                 [dist, product_distribution((; w=dist, z=Normal()))]
+                        y = rand(dist)
+                        log_like = map_recursive(_similar, y)
+                        log_like = PosteriorStats.pointwise_conditional_loglikelihoods!!(
+                            log_like, y, dist
+                        )
+                        log_like_full = loglikelihood(dist, y)
+                        log_like_ref = map_recursive(
+                            x -> log_like_full .- x, marginal_loglikelihoods(dist, y)
+                        )
+                        @test mapreduce_recursive(isapprox, all, log_like, log_like_ref)
+                    end
+                end
+            end
+
+            @testset "pointwise_conditional_loglikelihoods" begin
+                @testset for T in (Float64, Float32), sz in [(10,), (10, 3)]
+                    dists = map(Iterators.product(Base.OneTo.(sz)...)) do _
+                        rand_dist(
+                            Distributions.ProductNamedTupleDistribution{
+                                (:x, :y),Tuple{Normal,MvNormal}
+                            },
+                            T,
+                            (x=(), y=(3,)),
+                        )
+                    end
+                    y = rand(dists[1])
+                    log_like = PosteriorStats.pointwise_conditional_loglikelihoods(y, dists)
+                    @test size(log_like) == sz
+                    @test eltype(log_like) == typeof(y)
+                    @test all(
+                        map(dists, log_like) do dist, log_like_i
+                            log_like_full_i = loglikelihood(dist, y)
+                            log_like_marginal_i = marginal_loglikelihoods(dist, y)
+                            log_like_ref_i = map_recursive(
+                                x -> log_like_full_i .- x, log_like_marginal_i
+                            )
+                            return mapreduce_recursive(
+                                isapprox, all, log_like_i, log_like_ref_i
+                            )
+                        end,
+                    )
+                end
+            end
+        end
 end
