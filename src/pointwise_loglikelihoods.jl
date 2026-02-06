@@ -40,6 +40,26 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
       then the shape is `(draws[, chains], params...)` with real values. Otherwise, the shape is `(draws[, chains])`, 
       with values of a similar eltype to `y`.
 
+# Examples
+
+```jldoctest
+julia> using Distributions
+
+julia> dists = [
+    MvNormal([ 0.8, -0.9], [1.3  0.7;  0.7 0.5])
+    MvNormal([-0.9,  0.6], [2.7 -1.4; -1.4 1.5])
+    MvNormal([-0.6,  0.4], [1.0  0.2;  0.2 0.2])
+];
+
+julia> y = [2.9, 0.4];
+
+julia> PosteriorStats.pointwise_conditional_loglikelihoods(y, dists)
+3×2 Matrix{Float64}:
+ -0.471721   0.0121882
+ -5.77002   -2.81539
+ -8.46362   -1.5339
+```
+
 # References
 
 - [Burkner2021](@cite) Bürkner et al. Comput. Stat. 36 (2021).
