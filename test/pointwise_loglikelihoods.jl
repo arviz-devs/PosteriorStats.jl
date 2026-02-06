@@ -85,6 +85,20 @@ function rand_dist(
     dists = [rand_dist(dist_types[mod1(i, 2)], T, sz; factorized) for i in 1:num_components]
     return MixtureModel(dists, probs)
 end
+if isdefined(Distributions, :JointOrderStatistics)
+    function rand_dist(
+        ::Type{<:Distributions.JointOrderStatistics},
+        T::Type{<:Real},
+        sz,
+        (n, ranks);
+        factorized::Bool=false,
+    )
+        @assert !factorized "factorized=true not supported for JointOrderStatistics"
+        @assert only(sz) == length(ranks)
+        dist = rand_dist(Normal, T, ())
+        return Distributions.JointOrderStatistics(dist, n, ranks)
+    end
+end
 if isdefined(Distributions, :ProductDistribution)
     function rand_dist(
         ::Type{<:Distributions.ProductDistribution{N,M}},
@@ -149,6 +163,7 @@ end
 
 function marginal_loglikelihood(dist::MultivariateDistribution, y::AbstractVector, i::Int)
     ic = setdiff(eachindex(y), i)
+    isempty(ic) && return zero(loglikelihood(dist, y))
     return @views loglikelihood(marginal_distribution(dist, ic), y[ic])
 end
 
@@ -212,6 +227,11 @@ function marginal_distribution(dist::MixtureModel, i)
         marginal_distribution.(Distributions.components(dist), Ref(i)),
         Distributions.probs(dist),
     )
+end
+if isdefined(Distributions, :JointOrderStatistics)
+    function marginal_distribution(dist::Distributions.JointOrderStatistics, i)
+        return Distributions.JointOrderStatistics(dist.dist, dist.n, dist.ranks[i])
+    end
 end
 if isdefined(Distributions, :Product)
     function marginal_distribution(dist::Distributions.Product, i)
@@ -364,6 +384,11 @@ end
         (Distributions.GenericMvTDist, 10),
         (Distributions.MixtureModel{Multivariate}, (5,), :uniform),
         (Distributions.MixtureModel{Multivariate}, (5,), :nonuniform),
+        (Distributions.JointOrderStatistics, (5,), (5, 1:5)),
+        (Distributions.JointOrderStatistics, (3,), (5, [1, 3, 5])),
+        (Distributions.JointOrderStatistics, (1,), (5, [1])),
+        (Distributions.JointOrderStatistics, (1,), (5, [3])),
+        (Distributions.JointOrderStatistics, (1,), (5, [5])),
     ]
     if isdefined(Distributions, :ProductDistribution)
         append!(
@@ -383,11 +408,19 @@ end
     end
 
     @testset for (dist_type, sz, config...) in dists, T in (Float64, Float32)
+        test_factorized = test_conditional = true
+        if dist_type <: Distributions.GenericMvTDist
+            # multivariate t-distribution is not factorizable
+            test_factorized = false
+        elseif dist_type <: Distributions.AbstractMixtureModel
+            # conditional distribution for mixture models in't a type in Distributions.jl
+            test_conditional = false
+        elseif isdefined(Distributions, :JointOrderStatistics) &&
+            dist_type <: Distributions.JointOrderStatistics
+            # joint order statistics is not factorizable, and conditional distribution is not a type in Distributions.jl
+            test_factorized = test_conditional = false
+        end
 
-        # conditional distribution for mixture models in't a type in Distributions.jl
-        test_conditional = !(dist_type <: Distributions.AbstractMixtureModel)
-        # multivariate t-distribution is not factorizable
-        test_factorized = !(dist_type <: Distributions.GenericMvTDist)
         test_conditional && @testset "pointwise_conditional_loglikelihoods!!" begin
             @testset "consistent with conditional distributions" begin
                 dist = rand_dist(dist_type, T, sz, config...)

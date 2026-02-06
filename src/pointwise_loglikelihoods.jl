@@ -25,10 +25,11 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
     + [`Distributions.MatrixNormal`](@extref)
     + [`Distributions.MvLogNormal`](@extref)
     + `Distributions.GenericMvTDist` [Burkner2021; but uses a more efficient implementation](@citep)
-    + [`Distributions.ProductDistribution`](@extref) for products of univariate distributions and
-        any of the above array-variate distributions
     + [`Distributions.AbstractMixtureModel`](@extref) for mixtures of any of the above multivariate
         distributions
+    + [`Distributions.JointOrderStatistics`](@extref) for joint distributions of order statistics
+    + [`Distributions.ProductDistribution`](@extref) for products of univariate distributions and
+        any of the above array-variate distributions
     + `Distributions.ReshapedDistribution` for any of the above distributions reshaped
     + [`Distributions.ProductNamedTupleDistribution`](@extref) for `NamedTuple`-variate distributions
         comprised of univariate distributions and any of the above distributions.
@@ -178,6 +179,44 @@ function _loglikelihood_eltype(dist::Distributions.AbstractMixtureModel, y::Abst
         mapreduce(Base.Fix2(_loglikelihood_eltype, y), promote_type, components)
     end
     return promote_type(component_type, typeof(log(oneunit(prob_type))))
+end
+
+if isdefined(Distributions, :JointOrderStatistics)
+    function pointwise_conditional_loglikelihoods!!(
+        log_like::AbstractVector{<:Real},
+        y::AbstractVector{<:Real},
+        dist::Distributions.JointOrderStatistics,
+    )
+        (; n, ranks) = dist
+
+        if length(ranks) == 1
+            log_like[begin] = Distributions.loglikelihood(dist, y)
+            return log_like
+        end
+
+        udist = dist.dist
+        r_ext = Iterators.flatten((0, ranks, n + 1))
+        r_iter = Iterators.zip(r_ext, ranks, Iterators.drop(r_ext, 2))
+        y_ext = Iterators.flatten((minimum(udist), y, maximum(udist)))
+        y_iter = Iterators.zip(y_ext, y, Iterators.drop(y_ext, 2))
+
+        for (i, (r_minus, r_cur, r_plus), (y_minus, y_cur, y_plus)) in
+            zip(eachindex(log_like), r_iter, y_iter)
+            udist_trunc = if r_minus == 0
+                Distributions.truncated(udist; upper=y_plus)
+            elseif r_plus == n + 1
+                Distributions.truncated(udist; lower=y_minus)
+            else
+                Distributions.truncated(udist; lower=y_minus, upper=y_plus)
+            end
+            n_gap = r_plus - r_minus - 1
+            r_in_gap = r_cur - r_minus
+            dist_ostat = Distributions.OrderStatistic(udist_trunc, n_gap, r_in_gap)
+            log_like[i] = Distributions.loglikelihood(dist_ostat, y_cur)
+        end
+
+        return log_like
+    end
 end
 
 # Product of array-variate distributions
