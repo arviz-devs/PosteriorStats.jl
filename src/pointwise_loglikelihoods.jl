@@ -1,4 +1,4 @@
-@deprecate pointwise_loglikelihoods(y, dists) pointwise_conditional_loglikelihoods(y, dists)
+@deprecate pointwise_loglikelihoods(y, dists) pointwise_conditional_loglikelihoods(y, dists) false
 
 @doc """
     pointwise_conditional_loglikelihoods(y, dists)

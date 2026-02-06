@@ -1,5 +1,6 @@
 module PosteriorStats
 
+using Compat: Compat
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
 using FFTW: FFTW
@@ -48,6 +49,7 @@ export eti, eti!, hdi, hdi!
 
 # Others
 export loo_pit, r2_score
+Compat.@compat public kde_reflected, pointwise_conditional_loglikelihoods
 
 const DEFAULT_CI_PROB = 0.89f0
 const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)
