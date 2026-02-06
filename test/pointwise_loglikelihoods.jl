@@ -372,16 +372,19 @@ end
     end
 
     dists = Any[
+        (MvNormal, 1),
         (MvNormal, 5),
-        (MvNormal, 10),
+        (MvNormalCanon, 1),
         (MvNormalCanon, 5),
-        (MvNormalCanon, 10),
         (MatrixNormal, (2, 3)),
         (MatrixNormal, (3, 2)),
+        (MatrixNormal, (1, 2)),
+        (MatrixNormal, (2, 1)),
+        (MvLogNormal, 1),
         (MvLogNormal, 5),
-        (MvLogNormal, 10),
+        (Distributions.GenericMvTDist, 1),
         (Distributions.GenericMvTDist, 5),
-        (Distributions.GenericMvTDist, 10),
+        (Distributions.MixtureModel{Multivariate}, (1,), :uniform),
         (Distributions.MixtureModel{Multivariate}, (5,), :uniform),
         (Distributions.MixtureModel{Multivariate}, (5,), :nonuniform),
         (Distributions.JointOrderStatistics, (5,), (5, 1:5)),
