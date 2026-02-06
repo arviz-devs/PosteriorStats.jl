@@ -46,10 +46,10 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
 julia> using Distributions
 
 julia> dists = [
-    MvNormal([ 0.8, -0.9], [1.3  0.7;  0.7 0.5])
-    MvNormal([-0.9,  0.6], [2.7 -1.4; -1.4 1.5])
-    MvNormal([-0.6,  0.4], [1.0  0.2;  0.2 0.2])
-];
+           MvNormal([ 0.8, -0.9], [1.3  0.7;  0.7 0.5])
+           MvNormal([-0.9,  0.6], [2.7 -1.4; -1.4 1.5])
+           MvNormal([-0.6,  0.4], [1.0  0.2;  0.2 0.2])
+       ];
 
 julia> y = [2.9, 0.4];
 
