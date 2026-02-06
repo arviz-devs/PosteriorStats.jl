@@ -12,7 +12,7 @@
 
 ### Documentation
 
-## v0.4.7 (Unreleased)
+## v0.4.7 (2026-02-06)
 
 ### Features
 
