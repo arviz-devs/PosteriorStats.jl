@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.7 (Unreleased)
+
+### Features
+
+- Add `pointwise_conditional_loglikelihoods` for more distributions. ([#89](https://github.com/arviz-devs/PosteriorStats.jl/pull/89))
+
 ## v0.4.6 (2026-02-03)
 
 ### Features
