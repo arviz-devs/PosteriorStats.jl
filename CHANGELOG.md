@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.7 (Unreleased)
+
+### Features
+
+- Mark utilities in API as `public`. ([#90](https://github.com/arviz-devs/PosteriorStats.jl/pull/90))
+
 ## v0.4.6 (2026-02-03)
 
 ### Features
