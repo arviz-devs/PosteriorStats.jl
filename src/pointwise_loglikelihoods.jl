@@ -171,14 +171,12 @@ end
 # https://github.com/JuliaStats/Distributions.jl/blob/3d304c26f1cffd6a5bcd24fac2318be92877f4d5/src/mixtures/mixturemodel.jl#L170C41-L170C48
 function _loglikelihood_eltype(dist::Distributions.AbstractMixtureModel, y::AbstractArray)
     prob_type = eltype(Distributions.probs(dist))
-    if isconcretetype(eltype(Distributions.components(dist)))  # all components are the same type
-        component_type = _loglikelihood_eltype(Distributions.component(dist, 1), y)
+    components = Distributions.components(dist)
+    return _loglikelihood_eltype(first(components), y)
+    component_type = if isconcretetype(eltype(components))  # all components are the same type
+        _loglikelihood_eltype(first(components), y)
     else
-        component_type = mapfoldl(
-            Base.Fix2(_loglikelihood_eltype, y) ∘ Base.Fix1(Distributions.component, dist),
-            promote_type,
-            1:Distributions.ncomponents(dist),
-        )
+        mapreduce(Base.Fix2(_loglikelihood_eltype, y), promote_type, components)
     end
     return promote_type(component_type, typeof(log(oneunit(prob_type))))
 end

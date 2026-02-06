@@ -71,13 +71,18 @@ function rand_dist(
 end
 rand_dist(::Type{Normal}, T::Type{<:Real}, (); kwargs...) = Normal(randn(T), rand(T))
 function rand_dist(
-    ::Type{<:MixtureModel{Multivariate}}, T::Type{<:Real}, sz; factorized::Bool=false
+    ::Type{<:MixtureModel{Multivariate}},
+    T::Type{<:Real},
+    sz,
+    config::Symbol;
+    factorized::Bool=false,
 )
     num_components = 5
     probs = rand(T, num_components)
     probs ./= sum(probs)
-    dist_type = MvNormal
-    dists = [rand_dist(dist_type, T, sz; factorized) for _ in 1:num_components]
+    dist_types =
+        config === :uniform ? fill(MvNormal, 2) : [MvNormal, Distributions.GenericMvTDist]
+    dists = [rand_dist(dist_types[mod1(i, 2)], T, sz; factorized) for i in 1:num_components]
     return MixtureModel(dists, probs)
 end
 if isdefined(Distributions, :ProductDistribution)
@@ -357,7 +362,8 @@ end
         (MvLogNormal, 10),
         (Distributions.GenericMvTDist, 5),
         (Distributions.GenericMvTDist, 10),
-        (Distributions.MixtureModel{Multivariate}, (5,)),
+        (Distributions.MixtureModel{Multivariate}, (5,), :uniform),
+        (Distributions.MixtureModel{Multivariate}, (5,), :nonuniform),
     ]
     if isdefined(Distributions, :ProductDistribution)
         append!(
@@ -376,7 +382,7 @@ end
         push!(dists, (Distributions.Product, (5,)))
     end
 
-    @testset for (dist_type, sz) in dists, T in (Float64, Float32)
+    @testset for (dist_type, sz, config...) in dists, T in (Float64, Float32)
 
         # conditional distribution for mixture models in't a type in Distributions.jl
         test_conditional = !(dist_type <: Distributions.AbstractMixtureModel)
@@ -384,7 +390,7 @@ end
         test_factorized = !(dist_type <: Distributions.GenericMvTDist)
         test_conditional && @testset "pointwise_conditional_loglikelihoods!!" begin
             @testset "consistent with conditional distributions" begin
-                dist = rand_dist(dist_type, T, sz)
+                dist = rand_dist(dist_type, T, sz, config...)
                 y = convert(Array{T}, rand(dist))
                 @assert eltype(y) == T
                 log_like = similar(y)
@@ -396,7 +402,7 @@ end
             end
 
             test_factorized && @testset "consistent with factorized distributions" begin
-                dist = rand_dist(dist_type, T, sz; factorized=true)
+                dist = rand_dist(dist_type, T, sz, config...; factorized=true)
                 y = convert(Array{T}, rand(dist))
                 @assert eltype(y) == T
                 log_like = similar(y)
@@ -407,7 +413,7 @@ end
             end
 
             @testset "consistent with marginal distributions" begin
-                dist = rand_dist(dist_type, T, sz)
+                dist = rand_dist(dist_type, T, sz, config...)
                 y = convert(Array{T}, rand(dist))
                 log_like_cond = similar(y)
                 PosteriorStats.pointwise_conditional_loglikelihoods!!(
@@ -430,14 +436,18 @@ end
                     draws_dim = Base.OneTo(ndraws)
                     chains_dim = Base.OneTo(nchains)
                     dists = [
-                        rand_dist(dist_type, T, sz) for _ in draws_dim, _ in chains_dim
+                        rand_dist(dist_type, T, sz, config...) for
+                        _ in draws_dim, _ in chains_dim
                     ]
                     y_dims = map(Base.OneTo, size(first(dists)))
                 elseif dim_type <: Dim
                     draws_dim = Dim{:draws}(0:(ndraws - 1))
                     chains_dim = Dim{:chains}(2:(nchains + 1))
                     dists = DimArray(
-                        [rand_dist(dist_type, T, sz) for _ in draws_dim, _ in chains_dim],
+                        [
+                            rand_dist(dist_type, T, sz, config...) for
+                            _ in draws_dim, _ in chains_dim
+                        ],
                         (draws_dim, chains_dim),
                     )
                     y_dims = ntuple(length(sz)) do i
@@ -449,9 +459,15 @@ end
                 @assert size(dists) == (ndraws, nchains)
                 y = zeros(T, y_dims...)
                 rand!(first(dists), y)
-                log_like = @inferred PosteriorStats.pointwise_conditional_loglikelihoods(
-                    y, dists
-                )
+                log_like =
+                    if dist_type <: Distributions.AbstractMixtureModel &&
+                        only(config) === :nonuniform
+                        PosteriorStats.pointwise_conditional_loglikelihoods(y, dists)
+                    else
+                        @inferred PosteriorStats.pointwise_conditional_loglikelihoods(
+                            y, dists
+                        )
+                    end
                 @test size(log_like) == (ndraws, nchains, sz...)
                 @test all(isfinite, log_like)
 
