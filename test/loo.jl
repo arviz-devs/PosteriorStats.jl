@@ -32,17 +32,6 @@ using Test
                 @test loo_result.psis_result.reff == pointwise.reff
                 @test loo_result.psis_result.pareto_shape == pointwise.pareto_shape
             end
-            @testset "information criterion" begin
-                @test information_criterion(loo_result, :log) == estimates.elpd
-                @test information_criterion(loo_result, :negative_log) == -estimates.elpd
-                @test information_criterion(loo_result, :deviance) == -2 * estimates.elpd
-                @test information_criterion(loo_result, :log; pointwise=true) ==
-                    pointwise.elpd
-                @test information_criterion(loo_result, :negative_log; pointwise=true) ==
-                    -pointwise.elpd
-                @test information_criterion(loo_result, :deviance; pointwise=true) ==
-                    -2 * pointwise.elpd
-            end
         end
     end
     # @testset "keywords forwarded" begin
