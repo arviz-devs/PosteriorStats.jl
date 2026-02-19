@@ -10,6 +10,8 @@
 
 ### Maintenance
 
+- Update DimensionalData compat to v0.30 for tests ([#91](https://github.com/arviz-devs/PosteriorStats.jl/pull/91))
+
 ### Documentation
 
 ## v0.4.7 (2026-02-06)
