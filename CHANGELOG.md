@@ -10,9 +10,17 @@
 
 ### Maintenance
 
-- Update DimensionalData compat to v0.30 for tests ([#91](https://github.com/arviz-devs/PosteriorStats.jl/pull/91))
-
 ### Documentation
+
+## v0.4.8 (2026-03-07)
+
+### Features
+
+- refactor: Refactor pointwise log-likelihoods for `JointOrderStatistics` to be more efficient ([#92](https://github.com/arviz-devs/PosteriorStats.jl/pull/92))
+
+### Maintenance
+
+- Update DimensionalData compat to v0.30 for tests ([#91](https://github.com/arviz-devs/PosteriorStats.jl/pull/91))
 
 ## v0.4.7 (2026-02-06)
 

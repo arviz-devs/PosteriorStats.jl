@@ -203,38 +203,51 @@ end
 
 if isdefined(Distributions, :JointOrderStatistics)
     function pointwise_conditional_loglikelihoods!!(
-        log_like::AbstractVector{<:Real},
+        log_like::AbstractVector{T},
         y::AbstractVector{<:Real},
         dist::Distributions.JointOrderStatistics,
-    )
+    ) where {T<:Real}
         (; n, ranks) = dist
+        m = length(y)
 
-        if length(ranks) == 1
+        if m == 1
             log_like[begin] = Distributions.loglikelihood(dist, y)
             return log_like
         end
 
+        y_ext = Iterators.flatten((y, last(y)))
+        ranks_ext = Iterators.flatten((ranks, n + 1))
+
         udist = dist.dist
-        r_ext = Iterators.flatten((0, ranks, n + 1))
-        r_iter = Iterators.zip(r_ext, ranks, Iterators.drop(r_ext, 2))
-        y_ext = Iterators.flatten((minimum(udist), y, maximum(udist)))
-        y_iter = Iterators.zip(y_ext, y, Iterators.drop(y_ext, 2))
-
-        for (i, (r_minus, r_cur, r_plus), (y_minus, y_cur, y_plus)) in
-            zip(eachindex(log_like), r_iter, y_iter)
-            udist_trunc = if r_minus == 0
-                Distributions.truncated(udist; upper=y_plus)
-            elseif r_plus == n + 1
-                Distributions.truncated(udist; lower=y_minus)
+        yi = first(y)
+        ri = si = first(ranks)
+        loggi = SpecialFunctions.loggamma(T(si))
+        logdi = Distributions.logcdf(udist, yi)
+        for (i, (yi_plus, ri_plus)) in enumerate(Iterators.drop(zip(y_ext, ranks_ext), 1))
+            si_plus = ri_plus - ri
+            si_gap = si + si_plus
+            logdi_plus = if i == m
+                Distributions.logccdf(udist, yi_plus)
             else
-                Distributions.truncated(udist; lower=y_minus, upper=y_plus)
+                Distributions.logdiffcdf(udist, yi_plus, yi)
             end
-            n_gap = r_plus - r_minus - 1
-            r_in_gap = r_cur - r_minus
-            dist_ostat = Distributions.OrderStatistic(udist_trunc, n_gap, r_in_gap)
-            log_like[i] = Distributions.loglikelihood(dist_ostat, y_cur)
-        end
+            logdi_gap = LogExpFunctions.logaddexp(logdi, logdi_plus)
 
+            loggi_plus = SpecialFunctions.loggamma(T(si_plus))
+            loggi_gap = SpecialFunctions.loggamma(T(si_gap))
+            log_beta = loggi + loggi_plus - loggi_gap
+
+            logpi = Distributions.logpdf(udist, yi)
+
+            # likelihood is basically a change-of-variables times a ratio of Dirichlets,
+            # where all terms cancel except for the ones that change depending on whether
+            # ranks[i] is observed or not.
+            log_like[i] =
+                logpi + (si - 1) * logdi + (si_plus - 1) * logdi_plus -
+                (si_gap - 1) * logdi_gap - log_beta
+
+            (yi, ri, si, logdi, loggi) = (yi_plus, ri_plus, si_plus, logdi_plus, loggi_plus)
+        end
         return log_like
     end
 end
