@@ -29,7 +29,7 @@ end
         @test mc1.elpd_diff.non_centered == 0.0
         @test mc1.elpd_diff.centered > 0
         @test mc1.weight == NamedTuple{(:non_centered, :centered)}(
-            model_weights(eight_schools_loo_results)
+            PosteriorStats.model_weights(Stacking(), eight_schools_loo_results)
         )
         @test mc1.elpd_result ==
             NamedTuple{(:non_centered, :centered)}(eight_schools_loo_results)
@@ -41,11 +41,11 @@ end
     end
 
     @testset "keywords are forwarded" begin
-        mc2 = compare(eight_schools_loo_results; weights_method=PseudoBMA())
+        mc2 = compare(eight_schools_loo_results; method=PseudoBMA())
         @test !_isequal(mc2, compare(eight_schools_loo_results))
-        @test mc2.weights_method === PseudoBMA()
+        @test mc2.method === PseudoBMA()
         mc3 = compare(eight_schools_loo_results; sort=false)
-        for k in filter(!=(:weights_method), propertynames(mc1))
+        for k in filter(!=(:method), propertynames(mc1))
             if k === :name
                 @test getproperty(mc3, k) == reverse(getproperty(mc1, k))
             else
@@ -98,7 +98,7 @@ end
         end
 
         @testset "show" begin
-            mc5 = compare(eight_schools_loo_results; weights_method=PseudoBMA())
+            mc5 = compare(eight_schools_loo_results; method=PseudoBMA())
             @test sprint(show, "text/plain", mc1) == """
                 ModelComparisonResult with Stacking weights
                                rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p
