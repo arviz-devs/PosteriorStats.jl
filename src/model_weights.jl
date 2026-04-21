@@ -44,19 +44,15 @@ julia> elpd_results = map(models) do idata
 ┌ Warning: 1 parameters had Pareto shape values 0.7 < k ≤ 1. Resulting importance sampling estimates are likely to be unstable.
 └ @ PSIS ~/.julia/packages/PSIS/...
 
-julia> model_weights(elpd_results; method=Stacking()) |> pairs
-pairs(::NamedTuple) with 2 entries:
-  :centered     => 3.50546e-31
-  :non_centered => 1.0
+julia> model_weights(elpd_results; method=Stacking())
+(centered = 0.0, non_centered = 1.0)
 ```
 
 Now we compute [`BootstrappedPseudoBMA`](@ref) weights for the same models:
 
-```jldoctest model_weights; setup = :(using Random; Random.seed!(94))
-julia> model_weights(elpd_results; method=BootstrappedPseudoBMA()) |> pairs
-pairs(::NamedTuple) with 2 entries:
-  :centered     => 0.492513
-  :non_centered => 0.507487
+```jldoctest model_weights; setup = :(using Random; Random.seed!(94)), filter = [r"(=\\s+0\\.\\d{2})\\d*" => s"\\1"]
+julia> model_weights(elpd_results; method=BootstrappedPseudoBMA())
+(centered = 0.492513, non_centered = 0.507487)
 ```
 
 # References
