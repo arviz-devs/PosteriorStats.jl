@@ -36,7 +36,7 @@ Compute the Pareto-smoothed importance sampling leave-one-out cross-validation (
 [Vehtari2017, LOOFAQ](@cite)
 
 `log_likelihood` must be an array of log-likelihood values with shape
-`(chains, draws[, params...])`.
+`(draws, chains[, params...])`.
 
 # Keywords
 
