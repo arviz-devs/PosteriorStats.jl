@@ -27,7 +27,7 @@ The ELPD is estimated by Pareto smoothed importance sampling leave-one-out cross
 
 Compare the centered and non centered models of the eight school problem:
 
-```jldoctest compare; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1"]
+```jldoctest compare; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1", r"(centered\\s*=\\s*)(?:0\\.0|[-+]?\\d+(?:\\.\\d+)?e-(?:1[5-9]|[2-9]\\d|1\\d{2,}))" => s"\\g<1>0.0"]
 julia> using ArviZExampleData
 
 julia> models = (
