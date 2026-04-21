@@ -29,7 +29,7 @@ See also: [`AbstractModelWeightsMethod`](@ref), [`compare`](@ref)
 
 Compute [`Stacking`](@ref) weights for two models:
 
-```jldoctest model_weights; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1"]
+```jldoctest model_weights; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1", r"(centered\\s*=\\s*)(?:0\\.0|[-+]?\\d+(?:\\.\\d+)?e-(?:1[5-9]|[2-9]\\d|1\\d{2,}))" => s"\\g<1>0.0"]
 julia> using ArviZExampleData
 
 julia> models = (
@@ -44,19 +44,15 @@ julia> elpd_results = map(models) do idata
 ┌ Warning: 1 parameters had Pareto shape values 0.7 < k ≤ 1. Resulting importance sampling estimates are likely to be unstable.
 └ @ PSIS ~/.julia/packages/PSIS/...
 
-julia> model_weights(elpd_results; method=Stacking()) |> pairs
-pairs(::NamedTuple) with 2 entries:
-  :centered     => 3.50546e-31
-  :non_centered => 1.0
+julia> model_weights(elpd_results; method=Stacking())
+(centered = 0.0, non_centered = 1.0)
 ```
 
 Now we compute [`BootstrappedPseudoBMA`](@ref) weights for the same models:
 
-```jldoctest model_weights; setup = :(using Random; Random.seed!(94))
-julia> model_weights(elpd_results; method=BootstrappedPseudoBMA()) |> pairs
-pairs(::NamedTuple) with 2 entries:
-  :centered     => 0.492513
-  :non_centered => 0.507487
+```jldoctest model_weights; setup = :(using Random; Random.seed!(94)), filter = [r"(=\\s+0\\.\\d{2})\\d*" => s"\\1"]
+julia> model_weights(elpd_results; method=BootstrappedPseudoBMA())
+(centered = 0.492513, non_centered = 0.507487)
 ```
 
 # References

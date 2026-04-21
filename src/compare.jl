@@ -27,7 +27,7 @@ The ELPD is estimated by Pareto smoothed importance sampling leave-one-out cross
 
 Compare the centered and non centered models of the eight school problem:
 
-```jldoctest compare; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1"]
+```jldoctest compare; filter = [r"└.*", r"(\\d+\\.\\d{3})\\d*" => s"\\1", r"(centered\\s*=\\s*)(?:0\\.0|[-+]?\\d+(?:\\.\\d+)?e-(?:1[5-9]|[2-9]\\d|1\\d{2,}))" => s"\\g<1>0.0"]
 julia> using ArviZExampleData
 
 julia> models = (
@@ -42,10 +42,8 @@ ModelComparisonResult with Stacking weights
                rank  elpd  se_elpd  elpd_diff  se_elpd_diff  weight    p  se_p
  non_centered     1   -31      1.5       0            0.0       1.0  0.9  0.32
  centered         2   -31      1.4       0.03         0.061     0.0  0.9  0.33
-julia> mc.weight |> pairs
-pairs(::NamedTuple) with 2 entries:
-  :non_centered => 1.0
-  :centered     => 3.50546e-31
+julia> mc.weight
+(non_centered = 1.0, centered = 0.0)
 ```
 
 Compare the same models from pre-computed PSIS-LOO results and computing

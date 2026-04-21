@@ -21,6 +21,7 @@
 ### Documentation
 
 - Fix shape of expected array in LOO docs ([#96](https://github.com/arviz-devs/PosteriorStats.jl/pull/96))
+- Fix failing doctest for almost-zero model weights ([#97](https://github.com/arviz-devs/PosteriorStats.jl/pull/97))
 
 ## v0.4.8 (2026-03-07)
 
