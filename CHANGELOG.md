@@ -12,6 +12,16 @@
 
 ### Documentation
 
+## v0.4.9 (2026-04-21)
+
+### Maintenance
+
+- Bump compat for Roots to v0.3  ([#95](https://github.com/arviz-devs/PosteriorStats.jl/pull/95))
+
+### Documentation
+
+- Fix shape of expected array in LOO docs ([#96](https://github.com/arviz-devs/PosteriorStats.jl/pull/96))
+
 ## v0.4.8 (2026-03-07)
 
 ### Features
