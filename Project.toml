@@ -1,6 +1,6 @@
 name = "PosteriorStats"
 uuid = "7f36be82-ad55-44ba-a5c0-b8b5480d7aa5"
-version = "0.4.8"
+version = "0.4.9"
 authors = ["Seth Axen <seth@sethaxen.com> and contributors"]
 
 [deps]
