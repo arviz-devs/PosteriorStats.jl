@@ -1,6 +1,6 @@
 name = "PosteriorStats"
 uuid = "7f36be82-ad55-44ba-a5c0-b8b5480d7aa5"
-version = "0.4.9"
+version = "0.4.10"
 authors = ["Seth Axen <seth@sethaxen.com> and contributors"]
 
 [deps]
@@ -46,7 +46,7 @@ IrrationalConstants = "0.1, 0.2"
 IteratorInterfaceExtensions = "1"
 KernelDensity = "0.6.3"
 LinearAlgebra = "1"
-LogExpFunctions = "0.3.3"
+LogExpFunctions = "0.3.3, 1"
 MCMCDiagnosticTools = "0.3.4"
 Markdown = "1"
 NLSolversBase = "7.8.0, 8"

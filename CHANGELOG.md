@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.10 (2026-06-18)
+
+### Maintenance
+
+- Bump compat for LogExpFunctions to v1 ([#101](https://github.com/arviz-devs/PosteriorStats.jl/pull/101))
+
 ## v0.4.9 (2026-04-21)
 
 ### Maintenance
