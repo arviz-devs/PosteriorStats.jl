@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - 'min-patch'
+          - 'min'
           - 'lts'
           - '1'
           - 'pre'
@@ -31,7 +31,7 @@ jobs:
         downgrade:
           - false
         include:
-          - version: 'min-patch'
+          - version: 'min'
             os: ubuntu-latest
             arch: x64
             downgrade: true
