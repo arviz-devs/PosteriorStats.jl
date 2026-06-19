@@ -182,6 +182,14 @@ Base.@constprop :aggressive function hdi!(
     ndims(x) > 0 ||
         throw(ArgumentError("HDI cannot be computed for a 0-dimensional array."))
     isempty(x) && throw(ArgumentError("HDI cannot be computed for an empty array."))
+    if method isa Symbol && !hasproperty(HDI_ESTIMATION_METHODS, method)
+        throw(
+            ArgumentError(
+                "method `$method` not recognized;" *
+                " available HDI methods are $(keys(HDI_ESTIMATION_METHODS))."
+            )
+        )
+    end
     _method = _hdi_method(method, x, is_discrete; kwargs...)
     S = _hdi_eltype(_method, x)
     if ndims(x) < 3

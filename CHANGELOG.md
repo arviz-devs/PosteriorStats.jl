@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.11 (2026-06-19)
+
+### Features
+
+- Improved error message when calling `hdi` with an invalid method ([#100](https://github.com/arviz-devs/PosteriorStats.jl/pull/100))
+
 ## v0.4.10 (2026-06-18)
 
 ### Maintenance
