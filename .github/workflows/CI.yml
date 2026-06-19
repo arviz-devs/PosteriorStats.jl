@@ -31,7 +31,7 @@ jobs:
         downgrade:
           - false
         include:
-          - version: 'min'
+          - version: 'min-patch'
             os: ubuntu-latest
             arch: x64
             downgrade: true
