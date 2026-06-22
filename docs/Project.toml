@@ -15,6 +15,12 @@ PosteriorStats = {path = ".."}
 
 [compat]
 ArviZExampleData = "0.3"
+Distributions = "0.25.127"
 Documenter = "1"
 DocumenterCitations = "1.2"
 DocumenterInterLinks = "1"
+LogExpFunctions = "1.0.1"
+MCMCDiagnosticTools = "0.3.19"
+PosteriorStats = "0.4.11"
+Statistics = "1.11.1"
+StatsBase = "0.34.12"
