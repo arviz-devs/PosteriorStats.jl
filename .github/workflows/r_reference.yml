@@ -44,5 +44,6 @@ jobs:
         run: |
           using Pkg
           Pkg.instantiate()
+          Pkg.build("RCall")
           include(joinpath(pwd(), "test", "reference", "runtests.jl"))
         shell: julia --color=yes --project=test/reference/ {0}
