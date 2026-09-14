@@ -12,6 +12,8 @@
 
 ### Documentation
 
+- Make numerical doctests robust to floating-point differences across Julia versions ([#117](https://github.com/arviz-devs/PosteriorStats.jl/pull/117))
+
 ## v0.4.11 (2026-06-19)
 
 ### Features

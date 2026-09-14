@@ -33,7 +33,7 @@ credible interval (CI).
 
 # Examples
 
-```jldoctest
+```jldoctest; filter = r"(r2 = \\d\\.\\d{3})\\d+" => s"\\1"
 julia> using ArviZExampleData
 
 julia> idata = load_example_data("anes");

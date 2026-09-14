@@ -33,7 +33,7 @@ See also: [`eti!`](@ref), [`hdi`](@ref), [`hdi!`](@ref).
 
 Here we calculate the 83% ETI for a normal random variable:
 
-```jldoctest eti; setup = :(using Random; Random.seed!(78))
+```jldoctest eti; setup = :(using Random; Random.seed!(78)), filter = r"(-?\\d+\\.\\d{3})\\d+" => s"\\1"
 julia> x = randn(2_000);
 
 julia> eti(x; prob=0.83)
@@ -42,7 +42,7 @@ julia> eti(x; prob=0.83)
 
 We can also calculate the ETI for a 3-dimensional array of samples:
 
-```jldoctest eti; setup = :(using Random; Random.seed!(67))
+```jldoctest eti; setup = :(using Random; Random.seed!(67)), filter = r"(-?\\d+\\.\\d{3})\\d+" => s"\\1"
 julia> x = randn(1_000, 1, 1) .+ reshape(0:5:10, 1, 1, :);
 
 julia> eti(x)
