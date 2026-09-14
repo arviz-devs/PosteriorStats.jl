@@ -33,7 +33,7 @@ credible interval (CI).
 
 # Examples
 
-```jldoctest
+```jldoctest; filter = r"(r2 = \\d\\.\\d{3})\\d+" => s"\\1"
 julia> using ArviZExampleData
 
 julia> idata = load_example_data("anes");
@@ -42,8 +42,8 @@ julia> y_true = idata.observed_data.vote;
 
 julia> y_pred = PermutedDimsArray(idata.posterior_predictive.vote, (:draw, :chain, :__obs__));
 
-julia> round(r2_score(y_true, y_pred).r2; digits=3)
-0.494
+julia> r2_score(y_true, y_pred)
+(r2 = 0.4944850210319484, eti = 0.46184359652436546 .. 0.528018251711097)
 ```
 
 # References

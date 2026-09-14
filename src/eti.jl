@@ -33,23 +33,23 @@ See also: [`eti!`](@ref), [`hdi`](@ref), [`hdi!`](@ref).
 
 Here we calculate the 83% ETI for a normal random variable:
 
-```jldoctest eti; setup = :(using Random; Random.seed!(78))
+```jldoctest eti; setup = :(using Random; Random.seed!(78)), filter = r"(-?\\d+\\.\\d{3})\\d+" => s"\\1"
 julia> x = randn(2_000);
 
-julia> round.(extrema(eti(x; prob=0.83)); digits=3)
-(-1.374, 1.286)
+julia> eti(x; prob=0.83)
+-1.3740585250299766 .. 1.2860771129421198
 ```
 
 We can also calculate the ETI for a 3-dimensional array of samples:
 
-```jldoctest eti; setup = :(using Random; Random.seed!(67))
+```jldoctest eti; setup = :(using Random; Random.seed!(67)), filter = r"(-?\\d+\\.\\d{3})\\d+" => s"\\1"
 julia> x = randn(1_000, 1, 1) .+ reshape(0:5:10, 1, 1, :);
 
-julia> map(interval -> round.(extrema(interval); digits=3), eti(x))
-3-element Vector{Tuple{Float64, Float64}}:
- (-1.61, 1.632)
- (3.39, 6.632)
- (8.39, 11.632)
+julia> eti(x)
+3-element Vector{IntervalSets.ClosedInterval{Float64}}:
+ -1.610045656629508 .. 1.6318466811022705
+ 3.389954343370492 .. 6.63184668110227
+ 8.38995434337049 .. 11.631846681102271
 ```
 """
 function eti(
