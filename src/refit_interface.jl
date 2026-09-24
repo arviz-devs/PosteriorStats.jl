@@ -42,3 +42,176 @@ independent observations. `rng` is as for [`PosteriorStats.refit_loglikelihoods`
 """
 function refit_joint_loglikelihoods end
 
+"""
+    slice_axes(cells::AbstractVector{<:CartesianIndex}) -> Tuple
+
+Per-dimension index vectors whose product is the set of `cells`.
+
+For a wrapper whose model needs a rectangular block of an observation array `y`,
+`y[slice_axes(CartesianIndices(y)[train_indices])...]` selects the block held in
+`train_indices`. Throws an `ArgumentError` if the cells do not form a block, as when
+[`reloo`](@ref) holds out single cells.
+
+# Examples
+
+```jldoctest
+julia> y = reshape(1:12, 3, 4);
+
+julia> PosteriorStats.slice_axes(CartesianIndices(y)[vec(LinearIndices(y)[:, [1, 3]])])
+([1, 2, 3], [1, 3])
+```
+"""
+function slice_axes(cells::AbstractArray{CartesianIndex{M}}) where {M}
+    slice = ntuple(d -> sort!(unique(getindex.(cells, d))), M)
+    if !allunique(cells) || prod(length, slice) != length(cells)
+        throw(
+            ArgumentError(
+                "the observation indices do not form a rectangular block of the" *
+                " observation array.",
+            ),
+        )
+    end
+    return slice
+end
+
+# the cell of each observation in an array of the observations' shape, so that `cells[i]`
+# is the position of observation `i` in its column-major numbering, whatever the axes of `x`
+_observation_cells(x::AbstractArray) = vec(collect(CartesianIndices(x)))
+
+# Helpers shared by the statistics built on the interface
+
+function _check_nobs(wrapper, nobservations, source)
+    nobs_wrapper = StatsAPI.nobs(wrapper)
+    if nobs_wrapper != nobservations
+        throw(
+            DimensionMismatch(
+                "`wrapper` has $nobs_wrapper observations, but `$source` has" *
+                " $nobservations.",
+            ),
+        )
+    end
+    return nothing
+end
+
+# the interface methods, with their results validated
+function _loglikelihoods(rng, wrapper, fit, eval_indices)
+    log_like = refit_loglikelihoods(rng, wrapper, fit, eval_indices)
+    _check_loglikelihoods(log_like, eval_indices)
+    return log_like
+end
+function _joint_loglikelihoods(rng, wrapper, fit, eval_indices)
+    log_like = refit_joint_loglikelihoods(rng, wrapper, fit, eval_indices)
+    _check_joint_loglikelihoods(log_like, eval_indices)
+    return log_like
+end
+
+function _check_loglikelihoods(log_like, eval_indices)
+    if ndims(log_like) != 3
+        throw(
+            DimensionMismatch(
+                "`PosteriorStats.refit_loglikelihoods` must return a 3-dimensional array" *
+                " with shape `(draws, chains, length(eval_indices))`, but it returned a" *
+                " $(ndims(log_like))-dimensional array. Reshape the array if the draws" *
+                " were not drawn in multiple chains.",
+            ),
+        )
+    end
+    nvals = size(log_like, 3)
+    if nvals != length(eval_indices)
+        throw(
+            DimensionMismatch(
+                "`PosteriorStats.refit_loglikelihoods` must return one log-likelihood" *
+                " value per entry of `eval_indices`, but it returned $nvals values for" *
+                " $(length(eval_indices)) indices $(eval_indices).",
+            ),
+        )
+    end
+    return nothing
+end
+
+function _check_joint_loglikelihoods(log_like, eval_indices)
+    if ndims(log_like) != 2
+        throw(
+            DimensionMismatch(
+                "`PosteriorStats.refit_joint_loglikelihoods` must return a 2-dimensional" *
+                " array with shape `(draws, chains)`, but it returned a" *
+                " $(ndims(log_like))-dimensional array for $(length(eval_indices))" *
+                " observations. It must return one value per draw, not one per" *
+                " observation.",
+            ),
+        )
+    end
+    return nothing
+end
+
+# refit on `train_indices` and estimate the ELPD of each observation in `eval_indices`
+function _refit_pointwise_elpd(rng, wrapper, train_indices, eval_indices)
+    fit = refit(rng, wrapper, train_indices, eval_indices)
+    return fit, _exact_elpd_pointwise(_loglikelihoods(rng, wrapper, fit, eval_indices))
+end
+
+# refit on `train_indices` and estimate the joint ELPD of the observations in `eval_indices`
+function _refit_joint_elpd(rng, wrapper, train_indices, eval_indices)
+    fit = refit(rng, wrapper, train_indices, eval_indices)
+    return fit, _exact_elpd_joint(_joint_loglikelihoods(rng, wrapper, fit, eval_indices))
+end
+
+function _check_ntasks(ntasks::Int)
+    ntasks ≥ 1 || throw(ArgumentError("`ntasks` must be at least 1, got $ntasks."))
+    return nothing
+end
+
+# `map(f, xs)` where `f(rng_x, x)` receives a copy of `rng` seeded with a seed drawn from
+# `rng` for `x` up front, as AbstractMCMC seeds its chains, running at most `ntasks` calls
+# concurrently. The results depend on neither `ntasks` nor the order the calls run in.
+function _map_seeded(f, rng::Random.AbstractRNG, xs::AbstractVector, ntasks::Int)
+    seeds = rand(rng, UInt, length(xs))
+    call(x, seed) = f(Random.seed!(copy(rng), seed), x)
+    ntasks == 1 && return map(call, xs, seeds)
+    n = length(xs)
+    results = Vector{Any}(undef, n)
+    next = Threads.Atomic{Int}(1)
+    tasks = map(1:min(ntasks, n)) do _
+        # each task takes the next unprocessed element until none are left, so the work is
+        # balanced even when the calls take different times
+        return Threads.@spawn try
+            while (k = Threads.atomic_add!(next, 1)) ≤ n
+                results[k] = call(xs[k], seeds[k])
+            end
+        catch
+            # stop the other tasks from taking further elements after a failure
+            next[] = n + 1
+            rethrow()
+        end
+    end
+    foreach(wait, tasks)
+    return map(identity, results)
+end
+
+# exact pointwise ELPD estimates from log-likelihood values evaluated at draws from the
+# corresponding cross-validation posteriors
+function _exact_elpd_pointwise(log_like::AbstractArray{<:Real,3})
+    dims = (1, 2)
+    ndraws = prod(Base.Fix1(size, log_like), dims)
+    T = typeof(float(one(eltype(log_like))))
+    if ndraws == 1
+        # a single draw is a predictive density known in closed form, without Monte Carlo
+        # error (see the Refitting interface)
+        elpd = dropdims(T.(log_like); dims)
+        return (elpd, se_elpd=zero(elpd), reff=one.(elpd))
+    end
+    log_weights = -log(T(ndraws))
+    elpd = _log_mean(log_like, log_weights; dims)
+    like = LogExpFunctions.softmax(log_like; dims)
+    reff = MCMCDiagnosticTools.ess(like; kind=:basic, split_chains=1, relative=true)
+    se_elpd = _se_log_mean(log_like, log_weights; dims, log_mean=elpd)
+    return (;
+        elpd=dropdims(elpd; dims), se_elpd=dropdims(se_elpd; dims) ./ sqrt.(reff), reff
+    )
+end
+
+# the same for a set of observations scored as one predictive event, which is a single
+# observation to the pointwise machinery
+function _exact_elpd_joint(log_like::AbstractMatrix{<:Real})
+    return map(only, _exact_elpd_pointwise(reshape(log_like, size(log_like)..., 1)))
+end

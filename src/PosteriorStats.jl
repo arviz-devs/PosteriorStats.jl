@@ -37,6 +37,10 @@ export PSIS, PSISResult, psis, psis!
 export AbstractELPDResult, PSISLOOResult
 export elpd_estimates, information_criterion, loo
 
+# ELPD estimation by refitting
+export CrossValidationELPDResult, cross_validate
+export kfold_split_grouped, kfold_split_random, kfold_split_stratified
+
 # Model weighting and comparison
 export AbstractModelWeightsMethod, BootstrappedPseudoBMA, PseudoBMA, Stacking, model_weights
 export ModelComparisonResult, compare
@@ -67,6 +71,7 @@ include("elpdresult.jl")
 include("pointwise_loglikelihoods.jl")
 include("loo.jl")
 include("refit_interface.jl")
+include("cross_validate.jl")
 include("model_weights.jl")
 include("compare.jl")
 include("loo_pit.jl")
