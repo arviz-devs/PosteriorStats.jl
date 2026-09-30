@@ -45,6 +45,13 @@ function _copymutable(x::AbstractArray)
     return y
 end
 
+# copy of `x` whose eltype admits `missing`
+function _allowmissing(x::AbstractArray)
+    y = similar(x, Union{Missing,eltype(x)})
+    copyto!(y, x)
+    return y
+end
+
 function _skipmissing(x::AbstractArray)
     Missing <: eltype(x) && return skipmissing(x)
     return x
@@ -100,12 +107,20 @@ end
 
 # compute sum and estimate of standard error of sum
 function _sum_and_se(x; dims=:)
+    if Missing <: eltype(x)
+        # pointwise estimates are `missing` for observations that were never held out
+        dims isa Colon ||
+            throw(ArgumentError("`dims` must be `:` when values may be `missing`"))
+        return _sum_and_se(_cskipmissing(x))
+    end
     s = sum(x; dims)
     n = dims isa Colon ? length(x) : prod(Base.Fix1(size, x), dims)
     se = Statistics.std(x; dims) * sqrt(oftype(one(eltype(s)), n))
     return s, se
 end
 _sum_and_se(x::Number; kwargs...) = (x, oftype(float(x), NaN))
+# estimates that are not defined, such as `p` for results that do not compute it
+_sum_and_se(::AbstractArray{Missing}; kwargs...) = (missing, missing)
 
 function _log_mean(logx, log_weights; dims=:)
     log_expectand = logx .+ log_weights
