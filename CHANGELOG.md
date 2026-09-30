@@ -12,6 +12,14 @@
 
 ### Documentation
 
+## v0.4.12 (2026-09-30)
+
+### Maintenance
+
+- Support OrderedCollections v2 ([#102](https://github.com/arviz-devs/PosteriorStats.jl/pull/102))
+
+### Documentation
+
 - Make numerical doctests robust to floating-point differences across Julia versions ([#117](https://github.com/arviz-devs/PosteriorStats.jl/pull/117))
 
 ## v0.4.11 (2026-06-19)
