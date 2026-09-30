@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: r-lib/actions/setup-r@v2
       - name: Install R loo
         uses: r-lib/actions/setup-r-dependencies@v2
@@ -29,7 +29,7 @@ jobs:
           dependencies: '"hard"'
       - name: Set R lib path for RCall.jl
         run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-      - uses: julia-actions/setup-julia@v2
+      - uses: julia-actions/setup-julia@v3
         id: setup-julia
         with:
           version: '1'
@@ -44,5 +44,6 @@ jobs:
         run: |
           using Pkg
           Pkg.instantiate()
+          Pkg.build("RCall")
           include(joinpath(pwd(), "test", "reference", "runtests.jl"))
         shell: julia --color=yes --project=test/reference/ {0}

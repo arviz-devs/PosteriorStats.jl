@@ -96,6 +96,11 @@ end
                 @test_throws ArgumentError hdi(fill(0.0); method)
             end
 
+            @testset "errors for invalid method" begin
+                @test_throws ArgumentError hdi(randn(2); method=:nonexistent)
+                @test_throws "method `nonexistent` not recognized" hdi(randn(2); method=:nonexistent)
+            end
+
             @testset "errors for prob not in (0, 1)" begin
                 x = randn(1_000)
                 @test_throws ArgumentError hdi(x; method, prob=-0.1)
