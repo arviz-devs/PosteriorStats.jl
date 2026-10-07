@@ -1,9 +1,32 @@
-@deprecate pointwise_loglikelihoods(y, dists) pointwise_conditional_loglikelihoods(y, dists) false
+function _depwarn_pointwise_conditional_loglikelihoods(f::Symbol)
+    msg = """
+        `$f(y, dists)` is deprecated. Use `pointwise_conditional_logpdfs` from \
+        PartitionedDistributions.jl instead:
+
+            using PartitionedDistributions
+            log_like = stack(dist -> pointwise_conditional_logpdfs(dist, y), dists; dims=1)
+
+        If `dists` has more than one dimension (e.g. `(draws, chains)`), then `reshape` \
+        `log_like` to `(size(dists)..., size(y)...)`. If `y` is a `NamedTuple`, then use \
+        `map` instead of `stack`."""
+    Base.depwarn(msg, f)
+    return nothing
+end
+
+function pointwise_loglikelihoods(y, dists)
+    _depwarn_pointwise_conditional_loglikelihoods(:pointwise_loglikelihoods)
+    return _pointwise_conditional_loglikelihoods(y, dists)
+end
 
 @doc """
     pointwise_conditional_loglikelihoods(y, dists)
 
 Compute pointwise conditional log-likelihoods of `y` for non-factorized distributions.
+
+!!! warning "Deprecated"
+    This function is deprecated. Use
+    [`PartitionedDistributions.pointwise_conditional_logpdfs`](@extref) instead, as shown in
+    the example below.
 
 A non-factorized observation model ``p(y \\mid \\theta)``, where ``y`` is an observation
 in its support and ``\\theta`` are model parameters, can be factorized as
@@ -19,31 +42,21 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
     If the distribution is array-variate, `y` is an array with shape `(params...,)`.
   - `dists`: array of shape `(draws[, chains])` containing parametrized
     `Distributions.Distribution`s representing a non-factorized observation
-    model, one for each posterior draw. The following distributions are currently supported:
-    + [`Distributions.MvNormal`](@extref) [Burkner2021](@citep)
-    + [`Distributions.MvNormalCanon`](@extref)
-    + [`Distributions.MatrixNormal`](@extref)
-    + [`Distributions.MvLogNormal`](@extref)
-    + `Distributions.GenericMvTDist` [Burkner2021; but uses a more efficient implementation](@citep)
-    + [`Distributions.AbstractMixtureModel`](@extref) for mixtures of any of the above multivariate
-        distributions
-    + [`Distributions.JointOrderStatistics`](@extref) for joint distributions of order statistics
-    + [`Distributions.ProductDistribution`](@extref) for products of univariate distributions and
-        any of the above array-variate distributions
-    + `Distributions.ReshapedDistribution` for any of the above distributions reshaped
-    + [`Distributions.ProductNamedTupleDistribution`](@extref) for `NamedTuple`-variate distributions
-        comprised of univariate distributions and any of the above distributions.
+    model, one for each posterior draw. Any distribution supported by
+    [`PartitionedDistributions.pointwise_conditional_logpdfs`](@extref) may be used.
 
 # Returns
 
   - `log_like`: Array with pointwise conditional log-likelihood values. If the distributions are array-variate,
-      then the shape is `(draws[, chains], params...)` with real values. Otherwise, the shape is `(draws[, chains])`, 
+      then the shape is `(draws[, chains], params...)` with real values. Otherwise, the shape is `(draws[, chains])`,
       with values of a similar eltype to `y`.
 
 # Examples
 
+Compute the pointwise conditional log-likelihoods with PartitionedDistributions.jl:
+
 ```jldoctest
-julia> using Distributions
+julia> using Distributions, PartitionedDistributions
 
 julia> dists = [
            MvNormal([ 0.8, -0.9], [1.3  0.7;  0.7 0.5])
@@ -53,12 +66,15 @@ julia> dists = [
 
 julia> y = [2.9, 0.4];
 
-julia> PosteriorStats.pointwise_conditional_loglikelihoods(y, dists)
+julia> log_like = stack(dist -> pointwise_conditional_logpdfs(dist, y), dists; dims=1)
 3×2 Matrix{Float64}:
  -0.471721   0.0121882
  -5.77002   -2.81539
  -8.46362   -1.5339
 ```
+
+If `dists` has shape `(draws, chains)`, then `reshape(log_like, size(dists)..., size(y)...)`
+has shape `(draws, chains, params...)`.
 
 # References
 
@@ -66,7 +82,12 @@ julia> PosteriorStats.pointwise_conditional_loglikelihoods(y, dists)
 - [LOOFactorized](@cite) Vehtari et al. Leave-one-out cross-validation for non-factorized
     models
 """
-function pointwise_conditional_loglikelihoods(
+function pointwise_conditional_loglikelihoods(y, dists)
+    _depwarn_pointwise_conditional_loglikelihoods(:pointwise_conditional_loglikelihoods)
+    return _pointwise_conditional_loglikelihoods(y, dists)
+end
+
+function _pointwise_conditional_loglikelihoods(
     y::AbstractArray{<:Real,N},
     dists::AbstractArray{
         <:Distributions.Distribution{<:Distributions.ArrayLikeVariate{N}},M
@@ -75,117 +96,22 @@ function pointwise_conditional_loglikelihoods(
     T = _loglikelihood_eltype(first(dists), y)
     sample_dims = ntuple(identity, M)
     log_like = similar(y, T, (axes(dists)..., axes(y)...))
-    cache = _build_loglikelihood_cache(dists, log_like)
     for (dist, ll) in zip(dists, eachslice(log_like; dims=sample_dims))
-        pointwise_conditional_loglikelihoods!!(ll, y, dist; cache...)
+        PartitionedDistributions.pointwise_conditional_logpdfs!!(ll, dist, y)
     end
     return log_like
 end
-
-_build_loglikelihood_cache(dists, log_like) = ()
+function _pointwise_conditional_loglikelihoods(
+    y::NamedTuple, dists::AbstractArray{<:Distributions.ProductNamedTupleDistribution{K}}
+) where {K}
+    _y = NamedTuple{K}(y)
+    return map(dists) do dist
+        return PartitionedDistributions.pointwise_conditional_logpdfs(dist, _y)
+    end
+end
 
 function _loglikelihood_eltype(dist::Distributions.Distribution, y)
     return typeof(log(one(promote_type(eltype(y), Distributions.partype(dist)))))
-end
-
-# Array-variate normal distribution
-function pointwise_conditional_loglikelihoods!!(
-    log_like::AbstractVector{<:Real},
-    y::AbstractVector{<:Real},
-    dist::Distributions.MvNormal,
-)
-    (; μ, Σ) = dist
-    λ = _pd_diag_inv(Σ)
-    g = Σ \ (y - μ)
-    return @. log_like = (log(λ) - g^2 / λ - log2π) / 2
-end
-function pointwise_conditional_loglikelihoods!!(
-    log_like::AbstractVector{<:Real},
-    y::AbstractVector{<:Real},
-    dist::Distributions.MvNormalCanon,
-)
-    (; h, J) = dist
-    λ = LinearAlgebra.diag(J)
-    cov_inv_y = _pdmul(J, y)
-    return @. log_like = (log(λ) - (cov_inv_y - h)^2 / λ - log2π) / 2
-end
-function pointwise_conditional_loglikelihoods!!(
-    log_like::AbstractMatrix{<:Real},
-    y::AbstractMatrix{<:Real},
-    dist::Distributions.MatrixNormal,
-)
-    (; M, U, V) = dist
-    λU = _pd_diag_inv(U)
-    λV = _pd_diag_inv(V)
-    g = U \ (y - M) / V
-    return @. log_like = (log(λU) + log(λV') - g^2 / λU / λV' - log2π) / 2
-end
-
-# Multivariate log-normal distribution
-function pointwise_conditional_loglikelihoods!!(
-    log_like::AbstractVector{<:Real},
-    y::AbstractVector{<:Real},
-    dist::Distributions.MvLogNormal,
-)
-    logy = log.(y)
-    pointwise_conditional_loglikelihoods!!(log_like, logy, dist.normal)
-    log_like .-= logy
-    return log_like
-end
-
-# Array-variate t-distribution
-function pointwise_conditional_loglikelihoods!!(
-    log_like::AbstractVector{T},
-    y::AbstractVector{<:Real},
-    dist::Distributions.GenericMvTDist,
-) where {T<:Real}
-    (; μ, Σ) = dist
-    ν = dist.df
-    νi = ν + length(dist) - 1
-    α = (νi + 1) / 2
-    logc = SpecialFunctions.loggamma(α) - SpecialFunctions.loggamma(νi / 2) - T(logπ) / 2
-    λ = _pd_diag_inv(Σ)
-    d = y - μ
-    g = Σ \ d
-    sqmahal = LinearAlgebra.dot(d, g)
-    return map!(log_like, λ, g) do λi, gi
-        γ = gi^2 / λi
-        β = ν + sqmahal - γ
-        return logc - α * log1p(γ / β) + (log(λi) - log(β)) / 2
-    end
-end
-
-# Mixtures of multivariate distributions
-# NOTE: rand and loglikelihood for mixture fails on matrix-variate and higher-dimensional distributions
-function pointwise_conditional_loglikelihoods!!(
-    log_like::AbstractVector{<:Real},
-    y::AbstractVector{<:Real},
-    dist::Distributions.AbstractMixtureModel{Distributions.Multivariate};
-    log_like_k::AbstractVector{<:Real}=similar(log_like),
-)
-    fill!(log_like, -Inf)
-    logp_y = first(log_like)
-
-    K = Distributions.ncomponents(dist)
-    for (k, w_k) in zip(1:K, Distributions.probs(dist))
-        dist_k = Distributions.component(dist, k)
-        logp_y_k = log(w_k) + Distributions.loglikelihood(dist_k, y)
-        logp_y = LogExpFunctions.logaddexp(logp_y, logp_y_k)
-        pointwise_conditional_loglikelihoods!!(log_like_k, y, dist_k)
-        log_like .= LogExpFunctions.logaddexp.(log_like, logp_y_k .- log_like_k)
-    end
-
-    log_like .= logp_y .- log_like
-
-    return log_like
-end
-function _build_loglikelihood_cache(
-    ::AbstractArray{<:Distributions.AbstractMixtureModel{Distributions.Multivariate}},
-    log_like::AbstractArray{<:Real},
-)
-    sample_dims = ntuple(identity, ndims(log_like) - 1)
-    log_like_draw = first(eachslice(log_like; dims=sample_dims))
-    return (; log_like_k=similar(log_like_draw))
 end
 
 # work around type instability in partype(::AbstractMixtureModel)
@@ -199,156 +125,4 @@ function _loglikelihood_eltype(dist::Distributions.AbstractMixtureModel, y::Abst
         mapreduce(Base.Fix2(_loglikelihood_eltype, y), promote_type, components)
     end
     return promote_type(component_type, typeof(log(oneunit(prob_type))))
-end
-
-if isdefined(Distributions, :JointOrderStatistics)
-    function pointwise_conditional_loglikelihoods!!(
-        log_like::AbstractVector{T},
-        y::AbstractVector{<:Real},
-        dist::Distributions.JointOrderStatistics,
-    ) where {T<:Real}
-        (; n, ranks) = dist
-        m = length(y)
-
-        if m == 1
-            log_like[begin] = Distributions.loglikelihood(dist, y)
-            return log_like
-        end
-
-        y_ext = Iterators.flatten((y, last(y)))
-        ranks_ext = Iterators.flatten((ranks, n + 1))
-
-        udist = dist.dist
-        yi = first(y)
-        ri = si = first(ranks)
-        loggi = SpecialFunctions.loggamma(T(si))
-        logdi = Distributions.logcdf(udist, yi)
-        for (i, (yi_plus, ri_plus)) in enumerate(Iterators.drop(zip(y_ext, ranks_ext), 1))
-            si_plus = ri_plus - ri
-            si_gap = si + si_plus
-            logdi_plus = if i == m
-                Distributions.logccdf(udist, yi_plus)
-            else
-                Distributions.logdiffcdf(udist, yi_plus, yi)
-            end
-            logdi_gap = LogExpFunctions.logaddexp(logdi, logdi_plus)
-
-            loggi_plus = SpecialFunctions.loggamma(T(si_plus))
-            loggi_gap = SpecialFunctions.loggamma(T(si_gap))
-            log_beta = loggi + loggi_plus - loggi_gap
-
-            logpi = Distributions.logpdf(udist, yi)
-
-            # likelihood is basically a change-of-variables times a ratio of Dirichlets,
-            # where all terms cancel except for the ones that change depending on whether
-            # ranks[i] is observed or not.
-            log_like[i] =
-                logpi + (si - 1) * logdi + (si_plus - 1) * logdi_plus -
-                (si_gap - 1) * logdi_gap - log_beta
-
-            (yi, ri, si, logdi, loggi) = (yi_plus, ri_plus, si_plus, logdi_plus, loggi_plus)
-        end
-        return log_like
-    end
-end
-
-# Product of array-variate distributions
-if isdefined(Distributions, :ProductDistribution)
-    function pointwise_conditional_loglikelihoods!!(
-        log_like::AbstractArray{<:Real,N},
-        y::AbstractArray{<:Real,N},
-        dist::Distributions.ProductDistribution{N,M},
-    ) where {N,M}
-        if M == 0
-            log_like .= Distributions.loglikelihood.(dist.dists, y)
-        else
-            dims = ntuple(i -> i + M, Val(N - M))  # product dimensions
-            for (y_i, log_like_i, dist_i) in
-                zip(eachslice(y; dims), eachslice(log_like; dims), dist.dists)
-                pointwise_conditional_loglikelihoods!!(log_like_i, y_i, dist_i)
-            end
-        end
-        return log_like
-    end
-end
-if isdefined(Distributions, :Product)
-    function pointwise_conditional_loglikelihoods!!(
-        log_like::AbstractVector{<:Real},
-        y::AbstractVector{<:Real},
-        dist::Distributions.Product,
-    )
-        log_like .= Distributions.loglikelihood.(dist.v, y)
-        return log_like
-    end
-end
-if isdefined(Distributions, :ProductNamedTupleDistribution)
-    function _similar_loglikelihood(
-        dist::Distributions.ProductNamedTupleDistribution, y::NamedTuple
-    )
-        return map(_similar_loglikelihood, dist.dists, y)
-    end
-    function pointwise_conditional_loglikelihoods(
-        y::NamedTuple,
-        dists::AbstractArray{<:Distributions.ProductNamedTupleDistribution{K,V}},
-    ) where {K,V}
-        _y = NamedTuple{K}(y)
-        return map(dists) do dist
-            log_like = _similar_loglikelihood(dist, _y)
-            return pointwise_conditional_loglikelihoods!!(log_like, _y, dist)
-        end
-    end
-
-    function pointwise_conditional_loglikelihoods!!(
-        log_like::NamedTuple,
-        y::NamedTuple,
-        dist::Distributions.ProductNamedTupleDistribution,
-    )
-        dists = dist.dists
-        _log_like = NamedTuple{keys(log_like)}(log_like)
-        _y = NamedTuple{keys(y)}(y)
-        return map(dists, _log_like, _y) do dist_k, log_like_k, y_k
-            if dist_k isa Distributions.UnivariateDistribution
-                return Distributions.loglikelihood(dist_k, y_k)
-            else
-                return pointwise_conditional_loglikelihoods!!(log_like_k, y_k, dist_k)
-            end
-        end
-    end
-end
-
-function pointwise_conditional_loglikelihoods!!(
-    log_like::AbstractArray{<:Real,N},
-    y::AbstractArray{<:Real,N},
-    dist::Distributions.ReshapedDistribution{N},
-) where {N}
-    y_reshape = reshape(y, size(dist.dist))
-    log_like_reshape = reshape(log_like, size(dist.dist))
-    pointwise_conditional_loglikelihoods!!(log_like_reshape, y_reshape, dist.dist)
-    return log_like
-end
-
-# Helper functions
-
-function _pd_diag_inv(A::PDMats.AbstractPDMat)
-    T = typeof(float(oneunit(eltype(A))))
-    I = LinearAlgebra.Diagonal(ones(T, axes(A, 1)))
-    return PDMats.invquad(A, I)
-end
-
-# hack to aboid ambiguity with *(::AbstractPDMat, ::DimArray)
-_pdmul(A::PDMats.AbstractPDMat, b::StridedVector) = A * b
-function _pdmul(A::PDMats.AbstractPDMat, b::AbstractVector)
-    T = Base.promote_eltype(A, b)
-    y = similar(b, T)
-    mul!(y, A, b)
-    return y
-end
-
-function _similar_loglikelihood(dist::Distributions.UnivariateDistribution, y)
-    zero(_loglikelihood_eltype(dist, y))
-end
-function _similar_loglikelihood(
-    dist::Distributions.Distribution{<:Distributions.ArrayLikeVariate}, y
-)
-    similar(y, _loglikelihood_eltype(dist, y))
 end
