@@ -1,9 +1,32 @@
-@deprecate pointwise_loglikelihoods(y, dists) pointwise_conditional_loglikelihoods(y, dists) false
+function _depwarn_pointwise_conditional_loglikelihoods(f::Symbol)
+    msg = """
+        `$f(y, dists)` is deprecated. Use `pointwise_conditional_logpdfs` from \
+        PartitionedDistributions.jl instead:
+
+            using PartitionedDistributions
+            log_like = stack(dist -> pointwise_conditional_logpdfs(dist, y), dists; dims=1)
+
+        If `dists` has more than one dimension (e.g. `(draws, chains)`), then `reshape` \
+        `log_like` to `(size(dists)..., size(y)...)`. If `y` is a `NamedTuple`, then use \
+        `map` instead of `stack`."""
+    Base.depwarn(msg, f)
+    return nothing
+end
+
+function pointwise_loglikelihoods(y, dists)
+    _depwarn_pointwise_conditional_loglikelihoods(:pointwise_loglikelihoods)
+    return _pointwise_conditional_loglikelihoods(y, dists)
+end
 
 @doc """
     pointwise_conditional_loglikelihoods(y, dists)
 
 Compute pointwise conditional log-likelihoods of `y` for non-factorized distributions.
+
+!!! warning "Deprecated"
+    This function is deprecated. Use
+    [`PartitionedDistributions.pointwise_conditional_logpdfs`](@extref) instead, as shown in
+    the example below.
 
 A non-factorized observation model ``p(y \\mid \\theta)``, where ``y`` is an observation
 in its support and ``\\theta`` are model parameters, can be factorized as
@@ -19,31 +42,21 @@ PPL. This utility function computes ``\\log p(y_i \\mid y_{-i}, \\theta)`` terms
     If the distribution is array-variate, `y` is an array with shape `(params...,)`.
   - `dists`: array of shape `(draws[, chains])` containing parametrized
     `Distributions.Distribution`s representing a non-factorized observation
-    model, one for each posterior draw. The following distributions are currently supported:
-    + [`Distributions.MvNormal`](@extref) [Burkner2021](@citep)
-    + [`Distributions.MvNormalCanon`](@extref)
-    + [`Distributions.MatrixNormal`](@extref)
-    + [`Distributions.MvLogNormal`](@extref)
-    + `Distributions.GenericMvTDist` [Burkner2021; but uses a more efficient implementation](@citep)
-    + [`Distributions.AbstractMixtureModel`](@extref) for mixtures of any of the above multivariate
-        distributions
-    + [`Distributions.JointOrderStatistics`](@extref) for joint distributions of order statistics
-    + [`Distributions.ProductDistribution`](@extref) for products of univariate distributions and
-        any of the above array-variate distributions
-    + `Distributions.ReshapedDistribution` for any of the above distributions reshaped
-    + [`Distributions.ProductNamedTupleDistribution`](@extref) for `NamedTuple`-variate distributions
-        comprised of univariate distributions and any of the above distributions.
+    model, one for each posterior draw. Any distribution supported by
+    [`PartitionedDistributions.pointwise_conditional_logpdfs`](@extref) may be used.
 
 # Returns
 
   - `log_like`: Array with pointwise conditional log-likelihood values. If the distributions are array-variate,
-      then the shape is `(draws[, chains], params...)` with real values. Otherwise, the shape is `(draws[, chains])`, 
+      then the shape is `(draws[, chains], params...)` with real values. Otherwise, the shape is `(draws[, chains])`,
       with values of a similar eltype to `y`.
 
 # Examples
 
+Compute the pointwise conditional log-likelihoods with PartitionedDistributions.jl:
+
 ```jldoctest
-julia> using Distributions
+julia> using Distributions, PartitionedDistributions
 
 julia> dists = [
            MvNormal([ 0.8, -0.9], [1.3  0.7;  0.7 0.5])
@@ -53,12 +66,15 @@ julia> dists = [
 
 julia> y = [2.9, 0.4];
 
-julia> PosteriorStats.pointwise_conditional_loglikelihoods(y, dists)
+julia> log_like = stack(dist -> pointwise_conditional_logpdfs(dist, y), dists; dims=1)
 3×2 Matrix{Float64}:
  -0.471721   0.0121882
  -5.77002   -2.81539
  -8.46362   -1.5339
 ```
+
+If `dists` has shape `(draws, chains)`, then `reshape(log_like, size(dists)..., size(y)...)`
+has shape `(draws, chains, params...)`.
 
 # References
 
@@ -67,6 +83,7 @@ julia> PosteriorStats.pointwise_conditional_loglikelihoods(y, dists)
     models
 """
 function pointwise_conditional_loglikelihoods(y, dists)
+    _depwarn_pointwise_conditional_loglikelihoods(:pointwise_conditional_loglikelihoods)
     return _pointwise_conditional_loglikelihoods(y, dists)
 end
 

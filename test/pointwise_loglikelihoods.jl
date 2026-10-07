@@ -54,6 +54,19 @@ function rand_dist(
 end
 
 @testset "pointwise loglikelihoods" begin
+    @testset "deprecations" begin
+        dists = [rand_dist(MvNormal, Float64, (3,)) for _ in 1:10]
+        y = rand(first(dists))
+        log_like_ref = PosteriorStats._pointwise_conditional_loglikelihoods(y, dists)
+        @testset for f in (
+            PosteriorStats.pointwise_loglikelihoods,
+            PosteriorStats.pointwise_conditional_loglikelihoods,
+        )
+            log_like = @test_deprecated r"PartitionedDistributions" f(y, dists)
+            @test log_like == log_like_ref
+        end
+    end
+
     @testset "array-variate" begin
         dist_configs = [
             (MvNormal, (1,)),
