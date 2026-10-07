@@ -27,7 +27,7 @@ PosteriorStats = {path = ".."}
 
 [compat]
 BSON = "0.3"
-DimensionalData = "0.29.18, 0.30"
+DimensionalData = "0.28.5, 0.29.18, 0.30"
 Distributions = "0.25.57"
 FiniteDifferences = "0.12.17"
 GLM = "1.8.0"
