@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.13 (2026-10-07)
+
+### Maintenance
+
+- Deprecate `pointwise_conditional_loglikelihoods` in favor of `PartitionedDistributions.pointwise_conditional_logpdfs`, which it now uses internally ([#123](https://github.com/arviz-devs/PosteriorStats.jl/pull/123))
+
 ## v0.4.12 (2026-09-30)
 
 ### Maintenance
