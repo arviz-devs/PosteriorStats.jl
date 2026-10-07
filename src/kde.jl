@@ -32,8 +32,7 @@ function isj_bandwidth(
     hist = StatsBase.fit(StatsBase.Histogram, data, edges)
     bin_probs = normalize(hist; mode=:probability).weights
 
-    ft = @views FFTW.dct(bin_probs)[2:end]
-    ft .*= sqrt(2npoints)
+    ft = @views _dct2(bin_probs)[2:end]
     t = (1:(npoints - 1)) * π
 
     bw_sq = _find_root(bw_sq -> _fixed_point(bw_sq, n, t, ft, max_order), n, data)
@@ -41,6 +40,22 @@ function isj_bandwidth(
     bandwidth = sqrt(bw_sq) * data_range
 
     return bandwidth
+end
+
+# Unnormalized DCT-II, i.e. 2 ∑ₙ x[n] cos(πk(2n + 1) / 2N) for k = 0, …, N - 1, computed
+# with an FFT of the even extension of x
+function _dct2(x::AbstractVector{<:Real})
+    N = length(x)
+    T = float(eltype(x))
+    x_even = similar(x, T, 2N)  # FFTA.rfft requires one-based indexing
+    copyto!(x_even, Iterators.flatten((x, Iterators.reverse(x))))
+    y = FFTA.rfft(x_even)
+    # FFTA.rfft is not type-inferrable, so write into an output of known type
+    dct = similar(x, T)
+    map!(dct, 0:(N - 1), first(y, N)) do k, yk
+        return real(cispi(k / T(-2N)) * yk)
+    end
+    return dct
 end
 
 function _fixed_point(bw_sq, n, t, ft_dens, max_order=7)
