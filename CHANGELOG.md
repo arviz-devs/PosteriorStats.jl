@@ -12,6 +12,12 @@
 
 ### Documentation
 
+## v0.4.14 (2026-10-08)
+
+### Maintenance
+
+- Replace FFTW dependency with FFTA ([#124](https://github.com/arviz-devs/PosteriorStats.jl/pull/124))
+
 ## v0.4.13 (2026-10-07)
 
 ### Maintenance
