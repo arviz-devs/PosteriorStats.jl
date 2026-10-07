@@ -3,6 +3,9 @@ uuid = "7f36be82-ad55-44ba-a5c0-b8b5480d7aa5"
 version = "0.4.12"
 authors = ["Seth Axen <seth@sethaxen.com> and contributors"]
 
+[workspace]
+projects = ["docs", "test"]
+
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -33,14 +36,10 @@ TableTraits = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [compat]
-BSON = "0.3"
 Compat = "4.10"
-DimensionalData = "0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30"
 Distributions = "0.25.57"
 DocStringExtensions = "0.8, 0.9"
 FFTW = "1.6.0"
-FiniteDifferences = "0.12.17"
-GLM = "1.8.0"
 IntervalSets = "0.5, 0.6, 0.7"
 IrrationalConstants = "0.1, 0.2"
 IteratorInterfaceExtensions = "1"
@@ -50,7 +49,6 @@ LogExpFunctions = "0.3.3, 1"
 MCMCDiagnosticTools = "0.3.4"
 Markdown = "1"
 NLSolversBase = "7.8.0, 8"
-OffsetArrays = "1.1.3"
 Optim = "1.7.2, 2"
 OrderedCollections = "1.3.0, 2"
 PDMats = "0.11.11"
@@ -66,15 +64,3 @@ StatsBase = "0.33.17, 0.34"
 TableTraits = "1"
 Tables = "1.9"
 julia = "1.10"
-
-[extras]
-BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
-DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
-FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
-GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
-Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["BSON", "DimensionalData", "FiniteDifferences", "GLM", "Logging", "OffsetArrays", "Test"]
