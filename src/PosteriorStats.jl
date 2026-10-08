@@ -22,6 +22,7 @@ using Random: Random
 using Roots: Roots
 using Setfield: Setfield
 using Statistics: Statistics
+using StatsAPI: StatsAPI
 using StatsBase: StatsBase
 using Tables: Tables
 using TableTraits: TableTraits
@@ -34,6 +35,10 @@ export PSIS, PSISResult, psis, psis!
 # LOO-CV
 export AbstractELPDResult, PSISLOOResult
 export elpd_estimates, information_criterion, loo
+
+# ELPD estimation by refitting
+export CrossValidationELPDResult, cross_validate
+export kfold_split_grouped, kfold_split_random, kfold_split_stratified
 
 # Model weighting and comparison
 export AbstractModelWeightsMethod, BootstrappedPseudoBMA, PseudoBMA, Stacking, model_weights
@@ -49,6 +54,8 @@ export eti, eti!, hdi, hdi!
 # Others
 export loo_pit, r2_score
 Compat.@compat public kde_reflected, pointwise_conditional_loglikelihoods
+# Refitting interface
+Compat.@compat public refit, refit_joint_loglikelihoods, refit_loglikelihoods, slice_axes
 
 const DEFAULT_CI_PROB = 0.89f0
 const INFORMATION_CRITERION_SCALES = (deviance=-2, log=1, negative_log=-1)
@@ -62,6 +69,8 @@ include("hdi.jl")
 include("elpdresult.jl")
 include("pointwise_loglikelihoods.jl")
 include("loo.jl")
+include("refit_interface.jl")
+include("cross_validate.jl")
 include("model_weights.jl")
 include("compare.jl")
 include("loo_pit.jl")
