@@ -15,6 +15,7 @@ links = InterLinks(
         joinpath(@__DIR__, "inventories", "IntervalSets.toml"),
     ),
     "MCMCDiagnosticTools" => "https://julia.arviz.org/MCMCDiagnosticTools/stable/",
+    "PartitionedDistributions" => "https://sethaxen.github.io/PartitionedDistributions.jl/stable/",
     "PSIS" => "https://julia.arviz.org/PSIS/stable/",
     "Statistics" => "https://docs.julialang.org/en/v1/",
     "StatsBase" => (

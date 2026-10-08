@@ -3,8 +3,8 @@ module PosteriorStats
 using Compat: Compat
 using Distributions: Distributions
 using DocStringExtensions: FIELDS, FUNCTIONNAME, TYPEDEF, TYPEDFIELDS, SIGNATURES
-using FFTW: FFTW
-using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2, logπ, log2π
+using FFTA: FFTA
+using IrrationalConstants: sqrthalfπ, sqrtπ, sqrt2
 using IteratorInterfaceExtensions: IteratorInterfaceExtensions
 using KernelDensity: KernelDensity
 using LinearAlgebra: LinearAlgebra, mul!, norm, normalize
@@ -14,14 +14,13 @@ using MCMCDiagnosticTools: MCMCDiagnosticTools
 using NLSolversBase: NLSolversBase
 using Optim: Optim
 using OrderedCollections: OrderedCollections
+using PartitionedDistributions: PartitionedDistributions
 using PrettyTables: PrettyTables
 using Printf: Printf
-using PDMats: PDMats
 using PSIS: PSIS, PSISResult, psis, psis!
 using Random: Random
 using Roots: Roots
 using Setfield: Setfield
-using SpecialFunctions: SpecialFunctions
 using Statistics: Statistics
 using StatsAPI: StatsAPI
 using StatsBase: StatsBase

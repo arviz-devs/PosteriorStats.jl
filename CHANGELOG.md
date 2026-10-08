@@ -12,6 +12,26 @@
 
 ### Documentation
 
+## v0.4.14 (2026-10-08)
+
+### Maintenance
+
+- Replace FFTW dependency with FFTA ([#124](https://github.com/arviz-devs/PosteriorStats.jl/pull/124))
+
+## v0.4.13 (2026-10-07)
+
+### Maintenance
+
+- Deprecate `pointwise_conditional_loglikelihoods` in favor of `PartitionedDistributions.pointwise_conditional_logpdfs`, which it now uses internally ([#123](https://github.com/arviz-devs/PosteriorStats.jl/pull/123))
+
+## v0.4.12 (2026-09-30)
+
+### Maintenance
+
+- Support OrderedCollections v2 ([#102](https://github.com/arviz-devs/PosteriorStats.jl/pull/102))
+
+### Documentation
+
 - Make numerical doctests robust to floating-point differences across Julia versions ([#117](https://github.com/arviz-devs/PosteriorStats.jl/pull/117))
 
 ## v0.4.11 (2026-06-19)

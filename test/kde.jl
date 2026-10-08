@@ -1,9 +1,28 @@
 using Distributions
 using KernelDensity
+using OffsetArrays
 using PosteriorStats
 using Test
 
 @testset "KDE" begin
+    @testset "_dct2" begin
+        @testset for N in (1, 2, 7, 64), T in (Float64, Float32)
+            x = randn(T, N)
+            y_ref = map(0:(N - 1)) do k
+                return 2 * sum(x[n + 1] * cospi(k * (2n + 1) / 2N) for n in 0:(N - 1))
+            end
+            y = @inferred PosteriorStats._dct2(x)
+            @test y isa Vector{T}
+            @test y ≈ y_ref
+
+            xoff = OffsetArray(x, -3)
+            yoff = @inferred PosteriorStats._dct2(xoff)
+            @test yoff isa OffsetVector{T}
+            @test axes(yoff) == axes(xoff)
+            @test collect(yoff) ≈ y
+        end
+    end
+
     @testset "bandwidth_isj" begin
         @testset "converges to normal reference rule" begin
             n = 1_000_000
