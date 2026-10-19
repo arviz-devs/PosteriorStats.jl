@@ -37,7 +37,7 @@ Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 [compat]
 Compat = "4.10"
 Distributions = "0.25.119"
-DocStringExtensions = "0.8, 0.9"
+DocStringExtensions = "0.8, 0.9, 0.10"
 FFTA = "0.3"
 IntervalSets = "0.5, 0.6, 0.7"
 IrrationalConstants = "0.1, 0.2"
